@@ -345,20 +345,31 @@
             <!-- Input Section -->
             <div class="input-section bg-[--color-bg--500] rounded-lg p-2">
                 <div class="grid grid-cols-1 gap-2">
-                    <!-- Coin Selection -->
+                    <!-- Coin Search -->
                     <div class="form-group">
-                        <label class="block text-xs text-[--color-primary-silver]">Select Coin</label>
-                        <select
-                            v-model="selectedCoin"
-                            @change="updateCoinPrice"
-                            class="form-control bg-[--color-bg--300] text-white p-1.5 rounded w-full text-sm">
-                            <option value="">---</option>
-                            <option v-for="ticker in filteredTickers" 
-                                    :key="ticker.symbol" 
-                                    :value="ticker.symbol">
-                                {{ ticker.pair }} ({{ formatPrice(ticker.close) }})
-                            </option>
-                        </select>
+                        <label class="block text-xs text-[--color-primary-silver]">Search Coin</label>
+                        <input 
+                            v-model="searchQuery"
+                            @keypress="handleKeyPress"
+                            ref="searchInput"
+                            type="text"
+                            class="form-control bg-[--color-bg--300] text-white p-1.5 rounded w-full text-sm mb-2"
+                            placeholder="Search..." />
+                        
+                        <div class="grid grid-cols-2 gap-2 max-h-[120px] overflow-y-auto pr-1">
+                            <div v-for="ticker in filteredTickers" 
+                                 :key="ticker.symbol"
+                                 @click="selectCoin(ticker)"
+                                 :class="[
+                                     'p-1.5 rounded cursor-pointer transition-colors text-sm',
+                                     selectedCoin === ticker.symbol
+                                         ? 'bg-[--color-primary-purple] text-white'
+                                         : 'bg-[--color-bg--300] hover:bg-[--color-primary-purple] hover:bg-opacity-50'
+                                 ]">
+                                <div class="text-xs font-bold">{{ ticker.pair }}</div>
+                                <div :class="ticker.style">{{ formatPrice(ticker.close) }}</div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Initial Investment -->
@@ -367,6 +378,7 @@
                         <input 
                             v-model="settings.investment"
                             @change="saveChanges()"
+                            @keypress="handleKeyPress"
                             type="number"
                             min="0"
                             inputmode="decimal"
@@ -380,6 +392,7 @@
                         <input
                             v-model="settings.initialPrice"
                             @change="saveChanges()"
+                            @keypress="handleKeyPress"
                             type="number"
                             min="0"
                             inputmode="decimal"
@@ -393,6 +406,7 @@
                         <input
                             v-model="settings.projectedPrice"
                             @change="saveChanges()"
+                            @keypress="handleKeyPress"
                             type="number"
                             min="0"
                             inputmode="decimal"
@@ -406,6 +420,7 @@
                         <input
                             v-model="settings.serviceFee"
                             @change="saveChanges()"
+                            @keypress="handleKeyPress"
                             type="number"
                             min="0"
                             max="100"
@@ -420,6 +435,7 @@
                         <input
                             v-model="settings.taxRate"
                             @change="saveChanges()"
+                            @keypress="handleKeyPress"
                             type="number"
                             min="0"
                             max="100"
@@ -459,15 +475,25 @@
         </div>`,
         data() {
             return {
-                selectedCoin: ''
+                selectedCoin: '',
+                searchQuery: ''
             };
         },
         computed: {
             filteredTickers() {
                 if (!this.tickers) return [];
-                return Object.values(this.tickers)
-                    .filter(ticker => ticker.symbol.endsWith('USDT'))
-                    .sort((a, b) => a.pair.localeCompare(b.pair));
+                let tickers = Object.values(this.tickers)
+                    .filter(ticker => ticker.symbol.endsWith('USDT'));
+                
+                if (this.searchQuery) {
+                    const query = this.searchQuery.toLowerCase();
+                    tickers = tickers.filter(ticker => 
+                        ticker.pair.toLowerCase().includes(query) ||
+                        ticker.symbol.toLowerCase().includes(query)
+                    );
+                }
+                
+                return tickers.sort((a, b) => a.pair.localeCompare(b.pair));
             },
             hasValidInputs() {
                 return this.settings.investment > 0 && 
@@ -494,20 +520,16 @@
             }
         },
         methods: {
-            formatPrice(price) {
-                return new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD',
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }).format(price);
-            },
-            updateCoinPrice() {
-                if (this.selectedCoin && this.tickers[this.selectedCoin]) {
-                    this.settings.initialPrice = parseFloat(this.tickers[this.selectedCoin].close);
-                    this.settings.projectedPrice = parseFloat(this.tickers[this.selectedCoin].close);
-                    this.saveChanges();
+            handleKeyPress(event) {
+                if (event.key === 'Enter') {
+                    event.target.blur();
                 }
+            },
+            selectCoin(ticker) {
+                this.selectedCoin = ticker.symbol;
+                this.settings.initialPrice = parseFloat(ticker.close);
+                this.settings.projectedPrice = parseFloat(ticker.close);
+                this.saveChanges();
             },
             saveChanges() {
                 this.$emit('update-settings', this.settings);
