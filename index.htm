@@ -422,7 +422,13 @@
                         <!-- Add Button -->
                         <div class="form-group flex items-end">
                             <button @click="addPortfolioPosition" 
-                                    class="bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm w-full">
+                                    :disabled="!portfolioForm.selectedCoin || !portfolioForm.amount || !portfolioForm.buyPrice"
+                                    :class="[
+                                        'text-white px-4 py-2 rounded text-sm w-full',
+                                        (!portfolioForm.selectedCoin || !portfolioForm.amount || !portfolioForm.buyPrice)
+                                            ? 'bg-gray-500 cursor-not-allowed'
+                                            : 'bg-[--color-primary-blue] hover:bg-[--color-primary-purple]'
+                                    ]">
                                 Add Position
                             </button>
                         </div>
@@ -793,8 +799,10 @@
                 showPortfolio: false,
                 portfolioForm: {
                     searchQuery: '',
+                    selectedCoin: null,
                     amount: '',
-                    buyPrice: ''
+                    buyPrice: '',
+                    showPortfolioDropdown: false
                 },
                 portfolioPositions: [],
                 totalInvestment: 0,
@@ -1145,7 +1153,51 @@
                     document.body.style.overflow = 'auto';
                 }
             },
+            selectPortfolioCoin(ticker) {
+                this.portfolioForm.searchQuery = ticker.pair;
+                this.portfolioForm.selectedCoin = ticker;
+                this.showPortfolioDropdown = false;
+            },
+            addPortfolioPosition() {
+                if (!this.portfolioForm.selectedCoin || !this.portfolioForm.amount || !this.portfolioForm.buyPrice) {
+                    console.log('Missing required fields:', {
+                        selectedCoin: this.portfolioForm.selectedCoin,
+                        amount: this.portfolioForm.amount,
+                        buyPrice: this.portfolioForm.buyPrice
+                    });
+                    return;
+                }
+
+                const position = {
+                    symbol: this.portfolioForm.selectedCoin.symbol,
+                    pair: this.portfolioForm.selectedCoin.pair,
+                    token: this.portfolioForm.selectedCoin.token,
+                    asset: this.portfolioForm.selectedCoin.asset,
+                    amount: parseFloat(this.portfolioForm.amount),
+                    buyPrice: parseFloat(this.portfolioForm.buyPrice),
+                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice),
+                    currentPrice: parseFloat(this.portfolioForm.selectedCoin.close),
+                    currentValue: 0,
+                    profit: 0,
+                    profitPercent: 0
+                };
+
+                this.portfolioPositions.push(position);
+                this.updatePortfolioTotals();
+                this.savePortfolio();
+
+                // Reset form
+                this.portfolioForm.searchQuery = '';
+                this.portfolioForm.selectedCoin = null;
+                this.portfolioForm.amount = '';
+                this.portfolioForm.buyPrice = '';
+            },
             filterPortfolioCoins() {
+                if (!this.portfolioForm.searchQuery) {
+                    this.showPortfolioDropdown = false;
+                    return;
+                }
+
                 const query = this.portfolioForm.searchQuery.toLowerCase();
                 this.filteredPortfolioCoins = Object.values(this.tickers)
                     .filter(ticker => {
@@ -1162,42 +1214,8 @@
                         if (!aExact && bExact) return 1;
                         return a.pair.localeCompare(b.pair);
                     });
-            },
-            selectPortfolioCoin(ticker) {
-                this.portfolioForm.searchQuery = ticker.pair;
-                this.portfolioForm.selectedCoin = {
-                    symbol: ticker.symbol,
-                    pair: ticker.pair,
-                    token: ticker.token,
-                    asset: ticker.asset,
-                    close: ticker.close
-                };
-                this.showPortfolioDropdown = false;
-            },
-            addPortfolioPosition() {
-                if (!this.portfolioForm.selectedCoin || !this.portfolioForm.amount || !this.portfolioForm.buyPrice) {
-                    return;
-                }
 
-                const position = {
-                    symbol: this.portfolioForm.selectedCoin.symbol,
-                    pair: this.portfolioForm.selectedCoin.pair,
-                    token: this.portfolioForm.selectedCoin.token,
-                    asset: this.portfolioForm.selectedCoin.asset,
-                    amount: parseFloat(this.portfolioForm.amount),
-                    buyPrice: parseFloat(this.portfolioForm.buyPrice),
-                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice)
-                };
-
-                this.portfolioPositions.push(position);
-                this.updatePortfolioTotals();
-                this.savePortfolio(); // Сразу сохраняем после добавления
-
-                // Reset form
-                this.portfolioForm.searchQuery = '';
-                this.portfolioForm.selectedCoin = null;
-                this.portfolioForm.amount = '';
-                this.portfolioForm.buyPrice = '';
+                this.showPortfolioDropdown = this.filteredPortfolioCoins.length > 0;
             },
             removePosition(index) {
                 this.portfolioPositions.splice(index, 1);
