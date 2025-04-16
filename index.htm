@@ -992,11 +992,16 @@
             selectOrderBookCoin(ticker) {
                 this.orderBookSearchQuery = ticker.pair;
                 this.currentTicker = ticker.symbol;
+                this.ticker = ticker.symbol;
                 this.showOrderBookDropdown = false;
             },
             searchOrderBook() {
                 if (this.currentTicker) {
+                    this.ticker = this.currentTicker;
                     this.prepareOrderBook();
+                    if (window.tvWidget) {
+                        window.tvWidget.setSymbol('BINANCE:' + this.currentTicker);
+                    }
                 }
             },
             handleOrderBookModalClick(event) {
