@@ -75,6 +75,9 @@
                     <button @click="toggleCalculator" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
                         Calculator
                     </button>
+                    <button @click="togglePortfolio" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
+                        Portfolio
+                    </button>
                     <h2 class="text-glow font-bold text-xl ml-2"></h2>
                   </div>
                   <div class="delimiter2 my-4"></div>
@@ -357,6 +360,124 @@
                         :tickers="tickers"
                         @update-settings="updateCalcSettings">
                     </calculator-component>
+                </div>
+            </div>
+          </div>
+
+          <!-- Portfolio Modal -->
+          <div v-if="showPortfolio" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div class="bg-[--color-bg--300] rounded-lg p-4 w-full max-w-2xl mx-4" @click.stop>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Portfolio</h2>
+                    <button @click="togglePortfolio" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
+                </div>
+
+                <!-- Add Position Form -->
+                <div class="mb-6 bg-[--color-bg--500] p-4 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <!-- Coin Selection -->
+                        <div class="form-group relative">
+                            <input
+                                v-model="portfolioForm.searchQuery"
+                                @input="filterPortfolioCoins"
+                                @focus="showPortfolioDropdown = true"
+                                type="text"
+                                class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full text-sm"
+                                placeholder="Search coin..." />
+                            
+                            <!-- Dropdown for filtered results -->
+                            <div v-if="showPortfolioDropdown && filteredPortfolioCoins.length > 0" 
+                                 class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                <div v-for="ticker in filteredPortfolioCoins" 
+                                     :key="ticker.symbol"
+                                     @click="selectPortfolioCoin(ticker)"
+                                     class="p-2 hover:bg-[--color-primary-purple] cursor-pointer text-sm">
+                                    {{ ticker.pair }} ({{ formatTickerPrice(ticker) }})
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="form-group">
+                            <input 
+                                v-model="portfolioForm.amount"
+                                type="number"
+                                min="0"
+                                step="0.00000001"
+                                class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full text-sm"
+                                placeholder="Amount of coins" />
+                        </div>
+
+                        <!-- Buy Price -->
+                        <div class="form-group">
+                            <input 
+                                v-model="portfolioForm.buyPrice"
+                                type="number"
+                                min="0"
+                                step="0.00000001"
+                                class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full text-sm"
+                                placeholder="Buy price per coin" />
+                        </div>
+
+                        <!-- Add Button -->
+                        <div class="form-group flex items-end">
+                            <button @click="addPortfolioPosition" 
+                                    class="bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm w-full">
+                                Add Position
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Portfolio Positions -->
+                <div class="bg-[--color-bg--500] rounded-lg p-4">
+                    <div class="grid grid-cols-1 gap-3">
+                        <div v-for="(position, index) in portfolioPositions" 
+                             :key="index"
+                             class="bg-[--color-bg--300] p-3 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <div class="flex-1">
+                                    <div class="font-bold">{{ position.pair }}</div>
+                                    <div class="text-sm">
+                                        Amount: {{ position.amount }} coins
+                                        <span class="mx-2">|</span>
+                                        Buy Price: ${{ position.buyPrice }}
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div :class="position.profit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="font-bold">
+                                        {{ position.profit >= 0 ? '+' : '' }}${{ position.profit.toFixed(2) }}
+                                    </div>
+                                    <div :class="position.profitPercent >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="text-sm">
+                                        {{ position.profitPercent >= 0 ? '+' : '' }}{{ position.profitPercent.toFixed(2) }}%
+                                    </div>
+                                </div>
+                                <button @click="removePosition(index)" class="ml-4 text-red-500 hover:text-red-700">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Summary -->
+                    <div class="mt-6 bg-[--color-primary-purple] p-4 rounded-lg">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-sm text-white">Total Investment:</div>
+                                <div class="text-lg font-bold text-white">${{ totalInvestment.toFixed(2) }}</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-white">Current Value:</div>
+                                <div class="text-lg font-bold" 
+                                     :class="totalProfit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                                    ${{ currentValue.toFixed(2) }}
+                                    <span class="text-sm ml-2">
+                                        ({{ totalProfit >= 0 ? '+' : '' }}{{ totalProfitPercent.toFixed(2) }}%)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
           </div>
@@ -661,7 +782,18 @@
                 coins: null,
                 orderBookSearchQuery: '',
                 showOrderBookDropdown: false,
-                filteredOrderBookCoins: []
+                filteredOrderBookCoins: [],
+                showPortfolio: false,
+                portfolioForm: {
+                    searchQuery: '',
+                    amount: '',
+                    buyPrice: ''
+                },
+                portfolioPositions: [],
+                totalInvestment: 0,
+                currentValue: 0,
+                totalProfit: 0,
+                totalProfitPercent: 0
             }
         },
         methods: {
@@ -973,9 +1105,8 @@
                         return (symbol.includes(query) || pair.includes(query)) && 
                                ticker.symbol.endsWith('USDT');
                     })
-                    .slice(0, 5) // Limit to top 5 results
+                    .slice(0, 5)
                     .sort((a, b) => {
-                        // Exact matches first
                         const aExact = a.symbol.toLowerCase().startsWith(query);
                         const bExact = b.symbol.toLowerCase().startsWith(query);
                         if (aExact && !bExact) return -1;
@@ -999,6 +1130,89 @@
                     this.showOrderBookDropdown = false;
                 }
             },
+            togglePortfolio() {
+                this.showPortfolio = !this.showPortfolio;
+                if (this.showPortfolio) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = 'auto';
+                }
+            },
+            filterPortfolioCoins() {
+                const query = this.portfolioForm.searchQuery.toLowerCase();
+                this.filteredPortfolioCoins = Object.values(this.tickers)
+                    .filter(ticker => {
+                        const symbol = ticker.symbol.toLowerCase();
+                        const pair = ticker.pair.toLowerCase();
+                        return (symbol.includes(query) || pair.includes(query)) && 
+                               ticker.symbol.endsWith('USDT');
+                    })
+                    .slice(0, 5)
+                    .sort((a, b) => {
+                        const aExact = a.symbol.toLowerCase().startsWith(query);
+                        const bExact = b.symbol.toLowerCase().startsWith(query);
+                        if (aExact && !bExact) return -1;
+                        if (!aExact && bExact) return 1;
+                        return a.pair.localeCompare(b.pair);
+                    });
+            },
+            selectPortfolioCoin(ticker) {
+                this.portfolioForm.searchQuery = ticker.pair;
+                this.portfolioForm.selectedCoin = ticker;
+                this.showPortfolioDropdown = false;
+            },
+            addPortfolioPosition() {
+                if (!this.portfolioForm.selectedCoin || !this.portfolioForm.amount || !this.portfolioForm.buyPrice) {
+                    return;
+                }
+
+                const position = {
+                    symbol: this.portfolioForm.selectedCoin.symbol,
+                    pair: this.portfolioForm.selectedCoin.pair,
+                    amount: parseFloat(this.portfolioForm.amount),
+                    buyPrice: parseFloat(this.portfolioForm.buyPrice),
+                    currentPrice: parseFloat(this.portfolioForm.selectedCoin.close),
+                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice),
+                    currentValue: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.selectedCoin.close),
+                };
+
+                position.profit = position.currentValue - position.investment;
+                position.profitPercent = (position.profit / position.investment) * 100;
+
+                this.portfolioPositions.push(position);
+                this.updatePortfolioTotals();
+                this.savePortfolio();
+
+                // Reset form
+                this.portfolioForm.searchQuery = '';
+                this.portfolioForm.selectedCoin = null;
+                this.portfolioForm.amount = '';
+                this.portfolioForm.buyPrice = '';
+            },
+            removePosition(index) {
+                this.portfolioPositions.splice(index, 1);
+                this.updatePortfolioTotals();
+                this.savePortfolio();
+            },
+            updatePortfolioTotals() {
+                this.totalInvestment = this.portfolioPositions.reduce((sum, pos) => sum + pos.investment, 0);
+                this.currentValue = this.portfolioPositions.reduce((sum, pos) => {
+                    const currentPrice = this.tickers[pos.symbol] ? parseFloat(this.tickers[pos.symbol].close) : pos.currentPrice;
+                    return sum + (pos.amount * currentPrice);
+                }, 0);
+                this.totalProfit = this.currentValue - this.totalInvestment;
+                this.totalProfitPercent = (this.totalProfit / this.totalInvestment) * 100;
+            },
+            savePortfolio() {
+                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
+            },
+            loadPortfolio() {
+                const savedPortfolio = localStorage.getItem('portfolioPositions');
+                if (savedPortfolio) {
+                    this.portfolioPositions = JSON.parse(savedPortfolio);
+                    this.updatePortfolioTotals();
+                }
+            }
         },
         mounted() {
             this.sockInit();
@@ -1007,8 +1221,15 @@
             this.prepareOrderBook();
             this.initWidget(); 
             this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
+            this.loadPortfolio();
 
-            
+            // Add portfolio update interval
+            setInterval(() => {
+                if (this.portfolioPositions.length > 0) {
+                    this.updatePortfolioTotals();
+                }
+            }, 5000);
+
             window.addEventListener('click', this.handleClick);
 
             // Load saved calculator settings
