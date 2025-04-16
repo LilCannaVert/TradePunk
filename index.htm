@@ -1212,19 +1212,21 @@
                 this.portfolioPositions.forEach((pos, index) => {
                     const investment = pos.amount * pos.buyPrice;
                     const ticker = this.tickers[pos.symbol];
+                    
+                    // Получаем текущую цену из тикера
                     const currentPrice = ticker ? parseFloat(ticker.close) : pos.buyPrice;
                     const currentValue = pos.amount * currentPrice;
                     const profit = currentValue - investment;
                     const profitPercent = (profit / investment) * 100;
 
                     // Обновляем позицию с текущими данными
-                    this.portfolioPositions[index] = {
+                    Vue.set(this.portfolioPositions, index, {
                         ...pos,
                         currentPrice,
                         currentValue,
                         profit,
                         profitPercent
-                    };
+                    });
 
                     // Добавляем к общим суммам
                     this.totalInvestment += investment;
@@ -1234,9 +1236,6 @@
                 // Вычисляем общую прибыль/убыток
                 this.totalProfit = this.currentValue - this.totalInvestment;
                 this.totalProfitPercent = this.totalInvestment > 0 ? (this.totalProfit / this.totalInvestment) * 100 : 0;
-
-                // Сохраняем в localStorage
-                this.savePortfolio();
             },
             savePortfolio() {
                 const portfolioData = {
@@ -1247,7 +1246,7 @@
                         asset: pos.asset,
                         amount: pos.amount,
                         buyPrice: pos.buyPrice,
-                        investment: pos.investment
+                        investment: pos.amount * pos.buyPrice
                     }))
                 };
                 localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
@@ -1258,8 +1257,27 @@
                     try {
                         const data = JSON.parse(savedPortfolio);
                         if (data && data.positions) {
-                            this.portfolioPositions = data.positions;
-                            this.updatePortfolioTotals(); // Обновляем значения сразу после загрузки
+                            // Восстанавливаем позиции с сохранением всех необходимых полей
+                            this.portfolioPositions = data.positions.map(pos => ({
+                                symbol: pos.symbol,
+                                pair: pos.pair,
+                                token: pos.token,
+                                asset: pos.asset,
+                                amount: parseFloat(pos.amount),
+                                buyPrice: parseFloat(pos.buyPrice),
+                                investment: parseFloat(pos.amount) * parseFloat(pos.buyPrice),
+                                currentPrice: 0,
+                                currentValue: 0,
+                                profit: 0,
+                                profitPercent: 0
+                            }));
+                            
+                            // Обновляем значения после загрузки всех тикеров
+                            this.$nextTick(() => {
+                                setTimeout(() => {
+                                    this.updatePortfolioTotals();
+                                }, 1000);
+                            });
                         }
                     } catch (error) {
                         console.error('Error loading portfolio:', error);
@@ -1269,6 +1287,7 @@
             }
         },
         mounted() {
+            // Инициализируем WebSocket и другие компоненты
             this.sockInit();
             this.startClock();
             this.appendScript(this.initWidget);
@@ -1276,19 +1295,21 @@
             this.initWidget(); 
             this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
             
-            // Загружаем сохраненные данные портфолио
-            this.loadPortfolio();
+            // Загружаем сохраненные данные портфолио после инициализации
+            setTimeout(() => {
+                this.loadPortfolio();
+            }, 1000);
 
-            // Обновляем данные портфолио каждую секунду
+            // Обновляем данные портфолио каждые 100ms
             setInterval(() => {
                 if (this.portfolioPositions.length > 0) {
                     this.updatePortfolioTotals();
                 }
-            }, 1000);
+            }, 100);
 
             window.addEventListener('click', this.handleClick);
 
-            // Load saved calculator settings
+            // Загружаем сохраненные настройки калькулятора
             const savedSettings = localStorage.getItem('calcSettings');
             if (savedSettings) {
                 this.calcSettings = JSON.parse(savedSettings);
