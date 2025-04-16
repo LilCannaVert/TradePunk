@@ -839,7 +839,6 @@
                 let data = JSON.parse(e.data);
                 if (Array.isArray(data)) {
                     data.forEach(ticker => {
-                        
                         if (ticker.s.endsWith('BTC')) {
                             this.tickers[ticker.s] = {
                                 symbol: ticker.s,
@@ -879,6 +878,12 @@
                             }
                         }
                     });
+
+                    // Обновляем портфолио сразу после обновления тикеров
+                    if (this.portfolioPositions.length > 0) {
+                        this.updatePortfolioTotals();
+                    }
+
                     this.status = 2;
                 }
             },
@@ -1181,13 +1186,12 @@
                     pair: this.portfolioForm.selectedCoin.pair,
                     amount: parseFloat(this.portfolioForm.amount),
                     buyPrice: parseFloat(this.portfolioForm.buyPrice),
-                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice),
-                    timestamp: Date.now()
+                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice)
                 };
 
                 this.portfolioPositions.push(position);
-                this.updatePortfolioTotals();
                 this.savePortfolio();
+                this.updatePortfolioTotals();
 
                 // Reset form
                 this.portfolioForm.searchQuery = '';
@@ -1201,20 +1205,12 @@
                 this.savePortfolio();
             },
             updatePortfolioTotals() {
-                if (!this.portfolioPositions || !this.portfolioPositions.length) return;
-                
-                let now = Date.now();
-                if (now - this.lastUpdate < 500) return; // Ограничиваем частоту обновлений
-                this.lastUpdate = now;
+                if (!this.portfolioPositions.length) return;
 
                 this.totalInvestment = 0;
                 this.currentValue = 0;
 
                 this.portfolioPositions.forEach((pos, index) => {
-                    // Обновляем базовые значения
-                    this.totalInvestment += pos.investment;
-
-                    // Получаем текущую цену из тикера
                     const ticker = this.tickers[pos.symbol];
                     if (ticker) {
                         const currentPrice = parseFloat(ticker.close);
@@ -1222,25 +1218,22 @@
                         const profit = currentValue - pos.investment;
                         const profitPercent = pos.investment > 0 ? (profit / pos.investment) * 100 : 0;
 
-                        // Обновляем позицию с новыми значениями
                         this.portfolioPositions[index] = {
                             ...pos,
                             currentPrice,
                             currentValue,
                             profit,
-                            profitPercent,
-                            lastUpdate: now
+                            profitPercent
                         };
 
+                        this.totalInvestment += pos.investment;
                         this.currentValue += currentValue;
                     }
                 });
 
-                // Обновляем общие показатели
                 this.totalProfit = this.currentValue - this.totalInvestment;
                 this.totalProfitPercent = this.totalInvestment > 0 ? (this.totalProfit / this.totalInvestment) * 100 : 0;
 
-                // Сохраняем обновленные данные
                 this.savePortfolio();
             },
             savePortfolio() {
@@ -1251,36 +1244,26 @@
                         pair: pos.pair,
                         amount: pos.amount,
                         buyPrice: pos.buyPrice,
-                        investment: pos.investment,
-                        timestamp: pos.timestamp
-                    })),
-                    totalInvestment: this.totalInvestment,
-                    lastUpdate: Date.now()
+                        investment: pos.investment
+                    }))
                 };
-
-                try {
-                    localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
-                } catch (error) {
-                    console.error('Error saving portfolio:', error);
-                }
+                localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
             },
             loadPortfolio() {
                 try {
-                    const savedPortfolio = localStorage.getItem('portfolioData');
-                    if (savedPortfolio) {
-                        const data = JSON.parse(savedPortfolio);
+                    const savedData = localStorage.getItem('portfolioData');
+                    if (savedData) {
+                        const data = JSON.parse(savedData);
                         this.portfolioPositions = data.positions || [];
-                        this.totalInvestment = data.totalInvestment || 0;
                         
-                        // Немедленно обновляем текущие цены
-                        if (this.portfolioPositions.length > 0) {
+                        // Обновляем значения если есть тикеры
+                        if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
                             this.updatePortfolioTotals();
                         }
                     }
                 } catch (error) {
                     console.error('Error loading portfolio:', error);
                     this.portfolioPositions = [];
-                    this.totalInvestment = 0;
                 }
             },
             onSockData(e) {
@@ -1305,8 +1288,8 @@
             this.startClock();
             this.appendScript(this.initWidget);
             this.prepareOrderBook();
-            this.initWidget();
-            this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT'];
+            this.initWidget(); 
+            this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
             
             // Загружаем сохраненные данные портфолио
             this.loadPortfolio();
