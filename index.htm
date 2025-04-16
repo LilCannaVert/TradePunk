@@ -58,13 +58,6 @@
                 </div>
               </div>
             </Transition>
-
-            <div class="flex gap-2">
-              <button @click="toggleReferralModal" class="bg-[--color-primary-blue] text-white px-4 py-2 rounded flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                Referrals
-              </button>
-            </div>
           </header>
             <div class="delimiter my-4"></div>
           
@@ -78,6 +71,9 @@
                     </button>
                     <button @click="openShareModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
                         Share
+                    </button>
+                    <button @click="toggleCalculator" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
+                        Calculator
                     </button>
                     <h2 class="text-glow font-bold text-xl ml-2">Ticker List</h2>
                   </div>
@@ -131,7 +127,6 @@
                 </div>
               </div>
 
-              <!-- TradingView Chart -->
               <div class="chart flex-grow mt-0">
                 <div class="flex items-center justify-between">
                   <h2 class="text-glow font-bold text-xl">Trading Chart</h2>
@@ -151,7 +146,7 @@
                   </div>
                   <div class="mt-4">
                     <div class="flex flex-col lg:flex-row gap-4">
-                      <!-- Order Book Sale -->
+                      
                       <div class="cb pr-4 pb-0 flex-1 overflow-hidden">
                         <h3 class="text-glow font-bold text-lg">Order Book Sale</h3>
                         <div class="flex gap-2 items-center h-8 px-2">
@@ -174,7 +169,7 @@
                         </div>
                       </div>
 
-                      <!-- Order Book Buy -->
+                      
                       <div class="cb pr-4 pb-0 flex-1 overflow-hidden">
                         <h3 class="text-glow font-bold text-lg">Order Book Buy</h3>
                         <div class="flex gap-2 items-center h-8 px-2">
@@ -251,70 +246,83 @@
             </div>
           </div>
 
-          <div v-if="showShareModal" id="shareModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl">
+          <div v-if="showShareModal" 
+               id="shareModal" 
+               class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+               @click="handleShareModalClick">
+            <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
                 <div class="flex justify-between items-center">
-                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Поделиться тикером</h2>
+                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Share Tickers</h2>
                     <button @click="toggleShareModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
                 </div>
                 <div class="mt-4">
-                    <select v-model="selectedTicker" class="w-full p-2 border rounded">
-                        <option value="" disabled selected>-- Выберите тикер --</option>
-                        <option v-for="ticker in filterTickers" :key="ticker.symbol" :value="ticker.symbol">
-                            {{ ticker.pair }} - Price: {{ ticker.close }}
-                        </option>
-                    </select>
+                    <div class="mb-4">
+                        <ul class="flex gap-2 justify-between h-10 flex-wrap"> 
+                            <li @click="shareFilterAsset('USDT')" 
+                                :class="['cb2 flex flex-grow items-center justify-center cursor-pointer', 
+                                        shareAssetFilter === 'USDT' ? 'active' : '']">USDT</li>
+                            <li @click="shareFilterAsset('BTC')" 
+                                :class="['cb2 flex flex-grow items-center justify-center cursor-pointer', 
+                                        shareAssetFilter === 'BTC' ? 'active' : '']">BTC</li>
+                            <li @click="shareFilterAsset('FAV')" 
+                                :class="['cb2 flex flex-grow items-center justify-center cursor-pointer', 
+                                        shareAssetFilter === 'FAV' ? 'active' : '']">
+                                FAV
+                                <span v-if="favorites.length > 0" class="text-[--color-primary-yellow]">★</span> 
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <input v-model="tickerSearch" 
+                           ref="tickerSearchInput"
+                           placeholder="Search tickers..." 
+                           class="w-full p-2 mb-4 border rounded bg-[--color-bg--500] text-white">
+                    <div class="grid grid-cols-4 gap-2 max-h-[400px] overflow-y-auto overflow-x-hidden">
+                        <div v-for="ticker in filteredShareTickers" 
+                             :key="ticker.symbol" 
+                             @click="toggleSelectedTicker(ticker.symbol)"
+                             :class="[
+                                 'p-2 rounded cursor-pointer transition-colors text-sm',
+                                 selectedTickers.includes(ticker.symbol) 
+                                     ? 'bg-[--color-primary-purple] text-white' 
+                                     : 'bg-[--color-bg--500] hover:bg-[--color-primary-purple] hover:bg-opacity-50'
+                             ]">
+                            <div class="text-xs font-bold">{{ ticker.pair }}</div>
+                            <div :class="[
+                                ticker.style,
+                                selectedTickers.includes(ticker.symbol) ? 'text-white' : ''
+                            ]">
+                                {{ formatTickerPrice(ticker) }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="mt-4 flex justify-end">
-                    <button @click="shareTicker(selectedTicker)" class="bg-[--color-primary-blue] text-white px-4 py-2 rounded">Share</button>
+                <div class="mt-4 flex justify-between items-center">
+                    <div class="text-sm">
+                        Selected: {{ selectedTickers.length }} tickers
+                    </div>
+                    <button @click="shareMultipleTickers" 
+                            :disabled="!selectedTickers.length"
+                            :class="[
+                                'bg-[--color-primary-blue] text-white px-4 py-2 rounded',
+                                !selectedTickers.length ? 'opacity-50 cursor-not-allowed' : ''
+                            ]">
+                        Share Selected
+                    </button>
                 </div>
             </div>
           </div>
 
-          <!-- Referral Modal -->
-          <div v-if="showReferralModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div class="bg-[--color-bg--300] rounded-lg p-6 w-96">
-              <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-[--color-primary-silver]">Referral Program</h2>
-                <button @click="toggleReferralModal" class="text-red-500">×</button>
-              </div>
-
-              <div class="space-y-4">
-                <div class="bg-[--color-bg--500] p-4 rounded">
-                  <p class="text-sm mb-2">Your Referral Stats</p>
-                  <div class="grid grid-cols-2 gap-4">
-                    <div>
-                      <p class="text-[--color-primary-blue]">{{referralStats.totalReferrals}}</p>
-                      <p class="text-xs">Total Referrals</p>
-                    </div>
-                    <div>
-                      <p class="text-[--color-primary-green]">{{referralStats.totalRewards}} USDT</p>
-                      <p class="text-xs">Total Rewards</p>
-                    </div>
-                  </div>
+          <!-- Calculator Modal -->
+          <div v-if="showCalculator" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Investment Calculator</h2>
+                    <button @click="toggleCalculator" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
                 </div>
-
-                <div>
-                  <p class="text-sm mb-2">Share Your Referral Link</p>
-                  <button 
-                    @click="copyReferralLink"
-                    class="w-full bg-[--color-primary-blue] text-white px-4 py-2 rounded flex items-center justify-center gap-2"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                    Copy Referral Link
-                  </button>
+                <div class="calculator-container">
+                    <calculator-component :settings="calcSettings" :coins="coins" @update-settings="updateCalcSettings"></calculator-component>
                 </div>
-
-                <div class="text-sm">
-                  <h3 class="font-bold mb-2">How it works:</h3>
-                  <ul class="list-disc pl-4 space-y-1">
-                    <li>Share your referral link with friends</li>
-                    <li>Earn 10% of their trading fees</li>
-                    <li>No limit on referrals</li>
-                    <li>Instant rewards distribution</li>
-                  </ul>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -322,7 +330,155 @@
 <script>
     const { createApp } = Vue
     
+    // Calculator component
+    const CalculatorComponent = {
+        props: ['settings', 'coins'],
+        template: `
+        <div>
+          <div class="leftPanel">
+            <h4>Projection Criteria</h4>
+            <div class="form-group">
+              <label>Initial Investment</label>
+              <div class="input-group">
+                <input 
+                  v-model="settings.investment"
+                  @change="saveChanges()"
+                  onfocus="this.select()"
+                  type="number"
+                  min="0"
+                  inputmode="decimal"
+                  ref="initialInvestment"
+                  class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full"
+                  placeholder="Initial Investment" />
+                <span class="input-group-append">
+                  <button class="btn bg-[--color-primary-blue] text-white px-4 py-2 rounded ml-2" @click="resetInitialInvestment">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Initial Coin Price</label>
+              <select
+                v-if="coins && coins.length > 0 && settings.initialPrice === null"
+                class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full"
+                v-model="selectedCoin"
+                @change="changeInitialPrice">
+                  <option value="" selected>Select A Coin</option>
+                  <option v-for="(coin, index) in coins" :key="index" :value="index">{{ coin.name }} ({{ coin.symbol }})</option>
+              </select>
+              <div v-else class="input-group">
+                <input
+                  v-model="settings.initialPrice"
+                  @change="saveChanges()"
+                  onfocus="this.select()"
+                  type="number"
+                  min="0"
+                  inputmode="decimal"
+                  ref="initialPrice"
+                  class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full"
+                  placeholder="Initial Coin Price" />
+                <span class="input-group-append">
+                  <button v-show="settings.initialPrice" class="btn bg-[--color-primary-blue] text-white px-4 py-2 rounded ml-2" @click="resetInitialPrice">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Projected Coin Price</label>
+              <div class="input-group">
+                <input
+                  v-model="settings.projectedPrice"
+                  @change="saveChanges()"
+                  onfocus="this.select()"
+                  type="number"
+                  min="0"
+                  inputmode="decimal"
+                  ref="projectedPrice"
+                  class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full"
+                  placeholder="Projected Coin Price" />
+                <span class="input-group-append">
+                  <button class="btn bg-[--color-primary-blue] text-white px-4 py-2 rounded ml-2" @click="resetProjectedPrice">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="main mt-4">
+            <div class="projections">
+              <h4>Forecast</h4>
+              <div class="total text-[--color-primary-green]">{{ projectedSubTotal - fees - taxes | currency }}</div>
+              <div class="profit text-[--color-primary-blue]">{{ projectedTotal | currency }}</div>
+              <div class="coins text-[--color-primary-silver]">Coin {{ totalCoins.toFixed(8) }}</div>
+              <div class="fees text-[--color-primary--500]">Fee {{ fees | currency }}</div>
+              <div class="taxes text-[--color-primary-yellow]">Tax {{ taxes | currency }}</div>
+            </div>
+          </div>
+        </div>`,
+        data() {
+            return {
+                selectedCoin: ''
+            };
+        },
+        computed: {
+            totalCoins() {
+                return this.settings.investment / this.settings.initialPrice;
+            },
+            projectedSubTotal() {
+                return (this.settings.projectedPrice * this.totalCoins);
+            },
+            projectedProfit() {
+                return (this.projectedSubTotal - this.settings.investment);
+            },
+            fees() {
+                return this.settings.investment * (this.settings.serviceFee / 100);
+            },
+            taxes() {
+                return (this.projectedProfit - this.fees) * (this.settings.taxRate / 100);
+            },
+            projectedTotal() {
+                let total = this.projectedProfit - this.fees - this.taxes;
+                return total;
+            }
+        },
+        methods: {
+            changeInitialPrice() {
+                if (this.selectedCoin !== '') {
+                    let history = this.coins[this.selectedCoin].history;
+                    this.settings.initialPrice = parseInt(history[history.length - 1]);
+                    this.saveChanges();
+                }
+            },
+            saveChanges() {
+                this.$emit('update-settings', this.settings);
+            },
+            resetInitialInvestment() {
+                this.settings.investment = null;
+                this.$refs['initialInvestment'].focus();
+                this.resetSelectedCoin();
+            },
+            resetInitialPrice() {
+                this.settings.initialPrice = null;
+                this.$refs['initialPrice'].focus();
+                this.resetSelectedCoin();
+            },
+            resetProjectedPrice() {
+                this.settings.projectedPrice = null;
+                this.$refs['projectedPrice'].focus();
+                this.resetSelectedCoin();
+            },
+            resetSelectedCoin() {
+                this.selectedCoin = '';
+            }
+        }
+    };
+    
     createApp({
+        components: {
+            'calculator-component': CalculatorComponent
+        },
         data() {
             return {
                 sock: null,
@@ -378,15 +534,20 @@
                 showOrderBookModal: false, 
                 currentTicker: '', 
                 showShareModal: false,
-                selectedTicker: '',
-                showReferralModal: false,
-                referralStats: {
-                    totalReferrals: 0,
-                    totalRewards: 0
+                selectedTickers: [],
+                tickerSearch: '',
+                shareAssetFilter: 'USDT',
+                tonPrice: null,
+                tonUpdateInterval: null,
+                showCalculator: false,
+                calcSettings: {
+                    investment: 18000,
+                    initialPrice: 500,
+                    projectedPrice: 550,
+                    serviceFee: 0.3,
+                    taxRate: 0
                 },
-                currentUser: {
-                    id: '12345' // This should be replaced with actual user ID from your auth system
-                }
+                coins: null
             }
         },
         methods: {
@@ -406,6 +567,8 @@
                 this.sock.onmessage = this.sockMessage;
                 this.sock.onclose = this.sockClose;
                 this.sock.onerror = this.sockError;
+                this.updateTonPrice();
+                this.tonUpdateInterval = setInterval(() => this.updateTonPrice(), 30000);
             },
             sockOpen() {
                 this.status = 1;
@@ -421,13 +584,13 @@
                 let data = JSON.parse(e.data);
                 if (Array.isArray(data)) {
                     data.forEach(ticker => {
-                        // Изменено: добавлено условие для фильтрации по активу
-                        if (this.asset === 'BTC' && ticker.s.endsWith('BTC')) {
+                        
+                        if (ticker.s.endsWith('BTC')) {
                             this.tickers[ticker.s] = {
                                 symbol: ticker.s,
                                 pair: ticker.s.replace('BTC', '') + '/BTC',
                                 token: ticker.s.replace('BTC', ''),
-                                asset: this.asset,
+                                asset: 'BTC',
                                 close: parseFloat(ticker.c).toFixed(8),
                                 open: parseFloat(ticker.o).toFixed(8),
                                 high: parseFloat(ticker.h).toFixed(8),
@@ -440,12 +603,13 @@
                                 arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
                                 style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
                             }
-                        } else if (this.asset === 'USDT' && ticker.s.endsWith('USDT')) {
+                        }
+                        if (ticker.s.endsWith('USDT')) {
                             this.tickers[ticker.s] = {
                                 symbol: ticker.s,
                                 pair: ticker.s.replace('USDT', '') + '/USDT',
                                 token: ticker.s.replace('USDT', ''),
-                                asset: this.asset,
+                                asset: 'USDT',
                                 close: parseFloat(ticker.c).toFixed(8),
                                 open: parseFloat(ticker.o).toFixed(8),
                                 high: parseFloat(ticker.h).toFixed(8),
@@ -573,31 +737,119 @@
                     this.closeKeyboard(); 
                 }
             },
+            toggleBodyScroll(disable) {
+                if (disable && this.showShareModal) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = 'auto';
+                }
+            },
             openShareModal() {
                 this.showShareModal = true;
+                this.toggleBodyScroll(true);
             },
             toggleShareModal() {
                 this.showShareModal = !this.showShareModal;
+                this.toggleBodyScroll(this.showShareModal);
             },
-            shareTicker(ticker) {
-                const selectedTickerData = this.tickers[ticker];
-                const telegramMessage = `${selectedTickerData.pair}, Price: ${selectedTickerData.close} @TraderPunkbot!`;
+            toggleSelectedTicker(symbol) {
+                const index = this.selectedTickers.indexOf(symbol);
+                if (index === -1) {
+                    this.selectedTickers.push(symbol);
+                    const element = event.currentTarget;
+                    element.classList.add('selected-ticker');
+                } else {
+                    this.selectedTickers.splice(index, 1);
+                    const element = event.currentTarget;
+                    element.classList.remove('selected-ticker');
+                }
+            },
+            formatTickerPrice(ticker) {
+                if (ticker.symbol === 'BTCUSDT' || ticker.symbol === 'ETHUSDT' || ticker.symbol === 'BNBUSDT') {
+                    return parseFloat(ticker.close).toFixed(2);
+                }
+                if (ticker.symbol.endsWith('BTC')) {
+                    return ticker.close; 
+                }
+                if (ticker.symbol.endsWith('USDT')) {
+                    return parseFloat(ticker.close).toFixed(4);
+                }
+                return ticker.close;
+            },
+            shareMultipleTickers() {
+                if (!this.selectedTickers.length) return;
+                
+                const tickersInfo = this.selectedTickers.map(symbol => {
+                    const ticker = this.tickers[symbol];
+                    let formattedPrice;
+                    
+                    if (symbol === 'BTCUSDT' || symbol === 'ETHUSDT' || symbol === 'BNBUSDT') {
+                        formattedPrice = parseFloat(ticker.close).toFixed(2);
+                    } else if (symbol.endsWith('BTC')) {
+                        formattedPrice = ticker.close; 
+                    } else if (symbol.endsWith('USDT')) {
+                        formattedPrice = parseFloat(ticker.close).toFixed(4);
+                    }
+                    
+                    return `${ticker.pair}: ${formattedPrice}`;
+                }).join('\n');
+                
+                const telegramMessage = `Prices:\n${tickersInfo}\n@BTCPunkTradebot`;
                 const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(telegramMessage)}`;
                 
-                // Открываем ссылку в новой вкладке
                 window.open(telegramUrl, '_blank');
-                
-                // Закрываем модальное окно после отправки
+                this.selectedTickers = [];
                 this.toggleShareModal();
             },
-            toggleReferralModal() {
-                this.showReferralModal = !this.showReferralModal;
+            handleShareModalClick(event) {
+              
+                if (this.$refs.tickerSearchInput) {
+                    this.$refs.tickerSearchInput.blur();
+                }
             },
-            copyReferralLink() {
-                const referralLink = `https://t.me/BTCPunkTradebot?start=${this.currentUser.id}`;
-                navigator.clipboard.writeText(referralLink);
-                alert('Referral link copied to clipboard!');
+            shareFilterAsset(asset) {
+                this.shareAssetFilter = asset;
             },
+            async updateTonPrice() {
+                try {
+                    const response = await fetch('https://tonapi.io/v2/rates?tokens=ton&currencies=usd');
+                    const data = await response.json();
+                    const price = data.rates.TON.prices.USD;
+                    const diff24h = data.rates.TON.diff_24h.USD.replace('%', '');
+                    
+                    this.tickers['TONUSDT'] = {
+                        symbol: 'TONUSDT',
+                        pair: 'TON/USDT',
+                        token: 'TON',
+                        asset: 'USDT',
+                        close: price.toFixed(8),
+                        open: price.toFixed(8), 
+                        high: price.toFixed(8), 
+                        low: price.toFixed(8),  
+                        volume: '0',            
+                        quoteVolume: '0',       
+                        tokenVolume: '0',      
+                        assetVolume: '0',     
+                        percent: parseFloat(diff24h),
+                        arrow: parseFloat(diff24h) >= 0 ? '↑' : '↓',
+                        style: parseFloat(diff24h) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
+                    };
+                } catch (error) {
+                    console.error('Error fetching TON price:', error);
+                }
+            },
+            toggleCalculator() {
+                this.showCalculator = !this.showCalculator;
+                if (this.showCalculator) {
+                    document.body.classList.add('no-scroll');
+                } else {
+                    document.body.classList.remove('no-scroll');
+                }
+            },
+            updateCalcSettings(settings) {
+                this.calcSettings = { ...settings };
+                localStorage.setItem('calcSettings', JSON.stringify(settings));
+            }
         },
         mounted() {
             this.sockInit();
@@ -609,12 +861,24 @@
 
             
             window.addEventListener('click', this.handleClick);
+
+            // Load saved calculator settings
+            const savedSettings = localStorage.getItem('calcSettings');
+            if (savedSettings) {
+                this.calcSettings = JSON.parse(savedSettings);
+            }
+            
+            // Get coins data
+            axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
+                this.coins = response.data.data.coins;
+            });
         },
         beforeUnmount() {
             this.sockClose();
-
-          
             window.removeEventListener('click', this.handleClick);
+            if (this.tonUpdateInterval) {
+                clearInterval(this.tonUpdateInterval);
+            }
         },
         computed: {
             statusMsg() {
@@ -633,15 +897,15 @@
             filterTickers() {
                 let tickers = Object.values(this.tickers);
         
-                // Фильтрация по избранным тикерам
+                
                 if (this.asset === 'FAV') {
                     tickers = tickers.filter(ticker => this.favorites.includes(ticker.symbol));
                 } else {
-                    // Фильтрация по текущему активу (USDT или BTC)
+                    
                     tickers = tickers.filter(ticker => ticker.symbol.includes(this.asset));
                 }
         
-                // Фильтрация по поисковому запросу
+                
                 if (this.inputSearch) {
                     tickers = tickers.filter(ticker => 
                         ticker.token.toLowerCase().includes(this.inputSearch.toLowerCase())
@@ -657,6 +921,23 @@
             },
             latestTrades() {
                 return this.showLatestTrades ? this.trades : [];
+            },
+            filteredShareTickers() {
+                let tickers = Object.values(this.tickers);
+                
+                if (this.shareAssetFilter === 'FAV') {
+                    tickers = tickers.filter(ticker => this.favorites.includes(ticker.symbol));
+                } else {
+                    tickers = tickers.filter(ticker => ticker.symbol.endsWith(this.shareAssetFilter));
+                }
+                
+                if (this.tickerSearch) {
+                    tickers = tickers.filter(ticker => 
+                        ticker.pair.toLowerCase().includes(this.tickerSearch.toLowerCase())
+                    );
+                }
+                
+                return tickers;
             }
         }
     }).mount('#app')
@@ -906,7 +1187,85 @@
     }
 
     select {
-        color: black; /* Устанавливаем цвет текста на черный */
+        color: black; 
+    }
+
+    .grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .grid::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+    }
+
+    .grid::-webkit-scrollbar-thumb {
+        background: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .grid::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary-blue);
+    }
+
+    #shareModal .grid {
+        max-height: 60vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        -ms-overflow-style: none;
+        padding-right: 10px;
+    }
+
+    #shareModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+    }
+
+    #shareModal .bg-[--color-bg--300] {
+        max-height: 90vh;
+        overflow: hidden;
+        width: 90%;
+        max-width: 900px;
+    }
+
+    .selected-ticker {
+        background-color: var(--color-primary-purple) !important;
+        color: white !important;
+        box-shadow: 0 0 10px var(--color-primary-purple);
+    }
+
+    .transition-colors {
+        transition: all 0.3s ease;
+    }
+
+    .selected-ticker {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(122, 11, 122, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0);
+        }
+    }
+
+    .ticker-cell {
+        min-width: 120px; 
+        max-width: 200px; 
+    }
+
+    .cb2.active {
+        background-color: var(--color-primary-purple);
+        color: white;
     }
 </style>
 </body>
