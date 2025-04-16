@@ -477,6 +477,13 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="mt-4 text-center">
+                            <div class="text-sm text-white">Total Profit/Loss:</div>
+                            <div class="text-xl font-bold" 
+                                 :class="totalProfit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                                {{ totalProfit >= 0 ? '+' : '' }}${{ totalProfit.toFixed(2) }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1198,18 +1205,47 @@
                 this.totalInvestment = this.portfolioPositions.reduce((sum, pos) => sum + pos.investment, 0);
                 this.currentValue = this.portfolioPositions.reduce((sum, pos) => {
                     const currentPrice = this.tickers[pos.symbol] ? parseFloat(this.tickers[pos.symbol].close) : pos.currentPrice;
-                    return sum + (pos.amount * currentPrice);
+                    const currentValue = pos.amount * currentPrice;
+                    
+                    // Обновляем значения для каждой позиции
+                    const index = this.portfolioPositions.findIndex(p => p === pos);
+                    if (index !== -1) {
+                        this.portfolioPositions[index].currentValue = currentValue;
+                        this.portfolioPositions[index].profit = currentValue - pos.investment;
+                        this.portfolioPositions[index].profitPercent = ((currentValue - pos.investment) / pos.investment) * 100;
+                    }
+                    
+                    return sum + currentValue;
                 }, 0);
+                
                 this.totalProfit = this.currentValue - this.totalInvestment;
-                this.totalProfitPercent = (this.totalProfit / this.totalInvestment) * 100;
+                this.totalProfitPercent = this.totalInvestment > 0 ? (this.totalProfit / this.totalInvestment) * 100 : 0;
+                
+                // Сохраняем обновленные данные
+                this.savePortfolio();
             },
             savePortfolio() {
-                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
+                const portfolioData = {
+                    positions: this.portfolioPositions,
+                    totalInvestment: this.totalInvestment,
+                    currentValue: this.currentValue,
+                    totalProfit: this.totalProfit,
+                    totalProfitPercent: this.totalProfitPercent,
+                    lastUpdate: new Date().toISOString()
+                };
+                localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
             },
             loadPortfolio() {
-                const savedPortfolio = localStorage.getItem('portfolioPositions');
+                const savedPortfolio = localStorage.getItem('portfolioData');
                 if (savedPortfolio) {
-                    this.portfolioPositions = JSON.parse(savedPortfolio);
+                    const data = JSON.parse(savedPortfolio);
+                    this.portfolioPositions = data.positions;
+                    this.totalInvestment = data.totalInvestment;
+                    this.currentValue = data.currentValue;
+                    this.totalProfit = data.totalProfit;
+                    this.totalProfitPercent = data.totalProfitPercent;
+                    
+                    // Сразу обновляем данные, чтобы получить актуальные цены
                     this.updatePortfolioTotals();
                 }
             }
