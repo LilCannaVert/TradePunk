@@ -803,7 +803,7 @@
                     amount: '',
                     buyPrice: ''
                 },
-                portfolioPositions: [],
+                portfolioPositions: JSON.parse(localStorage.getItem('portfolioPositions')) || [],
                 showPortfolioDropdown: false,
                 filteredPortfolioCoins: [],
                 totalInvestment: 0,
@@ -1246,18 +1246,7 @@
                 this.totalProfitPercent = totalInvestment > 0 ? (this.totalProfit / totalInvestment) * 100 : 0;
             },
             savePortfolio() {
-                const portfolioData = {
-                    positions: this.portfolioPositions.map(pos => ({
-                        symbol: pos.symbol,
-                        pair: pos.pair,
-                        token: pos.token,
-                        asset: pos.asset,
-                        amount: pos.amount,
-                        buyPrice: pos.buyPrice,
-                        investment: pos.amount * pos.buyPrice
-                    }))
-                };
-                localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
+                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
             },
             loadPortfolio() {
                 const savedPortfolio = localStorage.getItem('portfolioData');
