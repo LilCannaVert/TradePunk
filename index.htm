@@ -1178,7 +1178,11 @@
                     pair: this.portfolioForm.selectedCoin.pair,
                     amount: parseFloat(this.portfolioForm.amount),
                     buyPrice: parseFloat(this.portfolioForm.buyPrice),
-                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice)
+                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice),
+                    currentPrice: parseFloat(this.portfolioForm.selectedCoin.close),
+                    currentValue: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.selectedCoin.close),
+                    profit: 0,
+                    profitPercent: 0
                 };
 
                 this.portfolioPositions.push(position);
@@ -1196,11 +1200,13 @@
                 this.savePortfolio();
             },
             updatePortfolioTotals() {
+                if (!this.portfolioPositions) return;
+
                 this.totalInvestment = this.portfolioPositions.reduce((sum, pos) => sum + pos.investment, 0);
                 
                 // Обновляем текущие значения для каждой позиции
                 this.portfolioPositions.forEach((pos, index) => {
-                    const currentPrice = this.tickers[pos.symbol] ? parseFloat(this.tickers[pos.symbol].close) : pos.buyPrice;
+                    const currentPrice = this.tickers[pos.symbol] ? parseFloat(this.tickers[pos.symbol].close) : pos.currentPrice;
                     const currentValue = pos.amount * currentPrice;
                     const profit = currentValue - pos.investment;
                     const profitPercent = ((currentValue - pos.investment) / pos.investment) * 100;
@@ -1229,18 +1235,39 @@
                         pair: pos.pair,
                         amount: pos.amount,
                         buyPrice: pos.buyPrice,
-                        investment: pos.investment
-                    }))
+                        investment: pos.investment,
+                        currentPrice: pos.currentPrice,
+                        currentValue: pos.currentValue,
+                        profit: pos.profit,
+                        profitPercent: pos.profitPercent
+                    })),
+                    totalInvestment: this.totalInvestment,
+                    currentValue: this.currentValue,
+                    totalProfit: this.totalProfit,
+                    totalProfitPercent: this.totalProfitPercent
                 };
                 localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
             },
             loadPortfolio() {
-                const savedPortfolio = localStorage.getItem('portfolioData');
-                if (savedPortfolio) {
-                    const data = JSON.parse(savedPortfolio);
-                    this.portfolioPositions = data.positions;
-                    // Сразу обновляем все значения
-                    this.updatePortfolioTotals();
+                try {
+                    const savedPortfolio = localStorage.getItem('portfolioData');
+                    if (savedPortfolio) {
+                        const data = JSON.parse(savedPortfolio);
+                        this.portfolioPositions = data.positions || [];
+                        this.totalInvestment = data.totalInvestment || 0;
+                        this.currentValue = data.currentValue || 0;
+                        this.totalProfit = data.totalProfit || 0;
+                        this.totalProfitPercent = data.totalProfitPercent || 0;
+                    } else {
+                        this.portfolioPositions = [];
+                        this.totalInvestment = 0;
+                        this.currentValue = 0;
+                        this.totalProfit = 0;
+                        this.totalProfitPercent = 0;
+                    }
+                } catch (error) {
+                    console.error('Error loading portfolio:', error);
+                    this.portfolioPositions = [];
                 }
             }
         },
@@ -1255,12 +1282,12 @@
             // Загружаем сохраненные данные портфолио
             this.loadPortfolio();
 
-            // Обновляем данные портфолио каждые 2 секунды
+            // Обновляем данные портфолио каждую секунду
             setInterval(() => {
-                if (this.portfolioPositions.length > 0) {
+                if (this.portfolioPositions && this.portfolioPositions.length > 0) {
                     this.updatePortfolioTotals();
                 }
-            }, 2000);
+            }, 1000);
 
             window.addEventListener('click', this.handleClick);
 
