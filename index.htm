@@ -422,13 +422,7 @@
                         <!-- Add Button -->
                         <div class="form-group flex items-end">
                             <button @click="addPortfolioPosition" 
-                                    :disabled="!portfolioForm.selectedCoin || !portfolioForm.amount || !portfolioForm.buyPrice"
-                                    :class="[
-                                        'text-white px-4 py-2 rounded text-sm w-full',
-                                        (!portfolioForm.selectedCoin || !portfolioForm.amount || !portfolioForm.buyPrice)
-                                            ? 'bg-gray-500 cursor-not-allowed'
-                                            : 'bg-[--color-primary-blue] hover:bg-[--color-primary-purple]'
-                                    ]">
+                                    class="bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm w-full">
                                 Add Position
                             </button>
                         </div>
@@ -799,13 +793,10 @@
                 showPortfolio: false,
                 portfolioForm: {
                     searchQuery: '',
-                    selectedCoin: null,
                     amount: '',
                     buyPrice: ''
                 },
-                portfolioPositions: JSON.parse(localStorage.getItem('portfolioPositions')) || [],
-                showPortfolioDropdown: false,
-                filteredPortfolioCoins: [],
+                portfolioPositions: [],
                 totalInvestment: 0,
                 currentValue: 0,
                 totalProfit: 0,
@@ -1154,42 +1145,7 @@
                     document.body.style.overflow = 'auto';
                 }
             },
-            selectPortfolioCoin(ticker) {
-                this.portfolioForm.searchQuery = ticker.pair;
-                this.portfolioForm.selectedCoin = ticker;
-                this.showPortfolioDropdown = false;
-            },
-            addPortfolioPosition() {
-                if (!this.portfolioForm.selectedCoin || !this.portfolioForm.amount || !this.portfolioForm.buyPrice) {
-                    return;
-                }
-
-                const position = {
-                    symbol: this.portfolioForm.selectedCoin.symbol,
-                    pair: this.portfolioForm.selectedCoin.pair,
-                    token: this.portfolioForm.selectedCoin.token,
-                    asset: this.portfolioForm.selectedCoin.asset,
-                    amount: parseFloat(this.portfolioForm.amount),
-                    buyPrice: parseFloat(this.portfolioForm.buyPrice),
-                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice)
-                };
-
-                this.portfolioPositions.push(position);
-                this.updatePortfolioTotals();
-                this.savePortfolio();
-
-                // Reset form
-                this.portfolioForm.searchQuery = '';
-                this.portfolioForm.selectedCoin = null;
-                this.portfolioForm.amount = '';
-                this.portfolioForm.buyPrice = '';
-            },
             filterPortfolioCoins() {
-                if (!this.portfolioForm.searchQuery) {
-                    this.showPortfolioDropdown = false;
-                    return;
-                }
-
                 const query = this.portfolioForm.searchQuery.toLowerCase();
                 this.filteredPortfolioCoins = Object.values(this.tickers)
                     .filter(ticker => {
@@ -1206,8 +1162,33 @@
                         if (!aExact && bExact) return 1;
                         return a.pair.localeCompare(b.pair);
                     });
+            },
+            selectPortfolioCoin(ticker) {
+                this.portfolioForm.searchQuery = ticker.pair;
+                this.portfolioForm.selectedCoin = ticker;
+                this.showPortfolioDropdown = false;
+            },
+            addPortfolioPosition() {
+                if (!this.portfolioForm.selectedCoin || !this.portfolioForm.amount || !this.portfolioForm.buyPrice) {
+                    return;
+                }
 
-                this.showPortfolioDropdown = this.filteredPortfolioCoins.length > 0;
+                const position = {
+                    symbol: this.portfolioForm.selectedCoin.symbol,
+                    pair: this.portfolioForm.selectedCoin.pair,
+                    amount: parseFloat(this.portfolioForm.amount),
+                    buyPrice: parseFloat(this.portfolioForm.buyPrice),
+                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice)
+                };
+
+                this.portfolioPositions.push(position);
+                this.updatePortfolioTotals();
+
+                // Reset form
+                this.portfolioForm.searchQuery = '';
+                this.portfolioForm.selectedCoin = null;
+                this.portfolioForm.amount = '';
+                this.portfolioForm.buyPrice = '';
             },
             removePosition(index) {
                 this.portfolioPositions.splice(index, 1);
@@ -1215,57 +1196,55 @@
                 this.savePortfolio();
             },
             updatePortfolioTotals() {
-                let totalInvestment = 0;
-                let currentValue = 0;
-
+                this.totalInvestment = this.portfolioPositions.reduce((sum, pos) => sum + pos.investment, 0);
+                
+                // Обновляем текущие значения для каждой позиции
                 this.portfolioPositions.forEach((pos, index) => {
-                    const investment = pos.amount * pos.buyPrice;
-                    const ticker = this.tickers[pos.symbol];
-                    const currentPrice = ticker ? parseFloat(ticker.close) : pos.buyPrice;
-                    const positionCurrentValue = pos.amount * currentPrice;
-                    const profit = positionCurrentValue - investment;
-                    const profitPercent = (profit / investment) * 100;
+                    const currentPrice = this.tickers[pos.symbol] ? parseFloat(this.tickers[pos.symbol].close) : pos.buyPrice;
+                    const currentValue = pos.amount * currentPrice;
+                    const profit = currentValue - pos.investment;
+                    const profitPercent = ((currentValue - pos.investment) / pos.investment) * 100;
 
-                    // Обновляем позицию
-                    this.$set(this.portfolioPositions, index, {
+                    this.portfolioPositions[index] = {
                         ...pos,
                         currentPrice,
-                        currentValue: positionCurrentValue,
+                        currentValue,
                         profit,
                         profitPercent
-                    });
-
-                    totalInvestment += investment;
-                    currentValue += positionCurrentValue;
+                    };
                 });
 
                 // Обновляем общие суммы
-                this.totalInvestment = totalInvestment;
-                this.currentValue = currentValue;
-                this.totalProfit = currentValue - totalInvestment;
-                this.totalProfitPercent = totalInvestment > 0 ? (this.totalProfit / totalInvestment) * 100 : 0;
+                this.currentValue = this.portfolioPositions.reduce((sum, pos) => sum + pos.currentValue, 0);
+                this.totalProfit = this.currentValue - this.totalInvestment;
+                this.totalProfitPercent = this.totalInvestment > 0 ? (this.totalProfit / this.totalInvestment) * 100 : 0;
+
+                // Сохраняем в localStorage
+                this.savePortfolio();
             },
             savePortfolio() {
-                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
+                const portfolioData = {
+                    positions: this.portfolioPositions.map(pos => ({
+                        symbol: pos.symbol,
+                        pair: pos.pair,
+                        amount: pos.amount,
+                        buyPrice: pos.buyPrice,
+                        investment: pos.investment
+                    }))
+                };
+                localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
             },
             loadPortfolio() {
                 const savedPortfolio = localStorage.getItem('portfolioData');
                 if (savedPortfolio) {
-                    try {
-                        const data = JSON.parse(savedPortfolio);
-                        if (data && data.positions) {
-                            this.portfolioPositions = data.positions;
-                            this.updatePortfolioTotals();
-                        }
-                    } catch (error) {
-                        console.error('Error loading portfolio:', error);
-                        this.portfolioPositions = [];
-                    }
+                    const data = JSON.parse(savedPortfolio);
+                    this.portfolioPositions = data.positions;
+                    // Сразу обновляем все значения
+                    this.updatePortfolioTotals();
                 }
             }
         },
         mounted() {
-            // Инициализируем WebSocket и другие компоненты
             this.sockInit();
             this.startClock();
             this.appendScript(this.initWidget);
@@ -1285,7 +1264,7 @@
 
             window.addEventListener('click', this.handleClick);
 
-            // Загружаем сохраненные настройки калькулятора
+            // Load saved calculator settings
             const savedSettings = localStorage.getItem('calcSettings');
             if (savedSettings) {
                 this.calcSettings = JSON.parse(savedSettings);
