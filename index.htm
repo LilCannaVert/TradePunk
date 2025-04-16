@@ -770,8 +770,8 @@
                         }
                     ],
                 },
-                showOrderBookModal: false, 
-                currentTicker: '', 
+                showOrderBookModal: false,
+                currentTicker: '',
                 showShareModal: false,
                 selectedTickers: [],
                 tickerSearch: '',
@@ -793,6 +793,7 @@
                 showPortfolio: false,
                 portfolioForm: {
                     searchQuery: '',
+                    selectedCoin: null,
                     amount: '',
                     buyPrice: ''
                 },
@@ -800,7 +801,8 @@
                 totalInvestment: 0,
                 currentValue: 0,
                 totalProfit: 0,
-                totalProfitPercent: 0
+                totalProfitPercent: 0,
+                lastUpdate: Date.now()
             }
         },
         methods: {
@@ -1174,25 +1176,24 @@
                 }
 
                 const position = {
-                    id: Date.now(), // Добавляем уникальный идентификатор
+                    id: Date.now(),
                     symbol: this.portfolioForm.selectedCoin.symbol,
                     pair: this.portfolioForm.selectedCoin.pair,
                     amount: parseFloat(this.portfolioForm.amount),
                     buyPrice: parseFloat(this.portfolioForm.buyPrice),
-                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice)
+                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice),
+                    timestamp: Date.now()
                 };
 
                 this.portfolioPositions.push(position);
                 this.updatePortfolioTotals();
+                this.savePortfolio();
 
                 // Reset form
                 this.portfolioForm.searchQuery = '';
                 this.portfolioForm.selectedCoin = null;
                 this.portfolioForm.amount = '';
                 this.portfolioForm.buyPrice = '';
-
-                // Сохраняем в localStorage
-                this.savePortfolio();
             },
             removePosition(index) {
                 this.portfolioPositions.splice(index, 1);
@@ -1201,11 +1202,19 @@
             },
             updatePortfolioTotals() {
                 if (!this.portfolioPositions || !this.portfolioPositions.length) return;
-
-                this.totalInvestment = this.portfolioPositions.reduce((sum, pos) => sum + pos.investment, 0);
                 
-                // Обновляем текущие значения для каждой позиции
+                let now = Date.now();
+                if (now - this.lastUpdate < 500) return; // Ограничиваем частоту обновлений
+                this.lastUpdate = now;
+
+                this.totalInvestment = 0;
+                this.currentValue = 0;
+
                 this.portfolioPositions.forEach((pos, index) => {
+                    // Обновляем базовые значения
+                    this.totalInvestment += pos.investment;
+
+                    // Получаем текущую цену из тикера
                     const ticker = this.tickers[pos.symbol];
                     if (ticker) {
                         const currentPrice = parseFloat(ticker.close);
@@ -1213,18 +1222,21 @@
                         const profit = currentValue - pos.investment;
                         const profitPercent = pos.investment > 0 ? (profit / pos.investment) * 100 : 0;
 
+                        // Обновляем позицию с новыми значениями
                         this.portfolioPositions[index] = {
                             ...pos,
                             currentPrice,
                             currentValue,
                             profit,
-                            profitPercent
+                            profitPercent,
+                            lastUpdate: now
                         };
+
+                        this.currentValue += currentValue;
                     }
                 });
 
-                // Обновляем общие суммы
-                this.currentValue = this.portfolioPositions.reduce((sum, pos) => sum + (pos.currentValue || 0), 0);
+                // Обновляем общие показатели
                 this.totalProfit = this.currentValue - this.totalInvestment;
                 this.totalProfitPercent = this.totalInvestment > 0 ? (this.totalProfit / this.totalInvestment) * 100 : 0;
 
@@ -1239,11 +1251,18 @@
                         pair: pos.pair,
                         amount: pos.amount,
                         buyPrice: pos.buyPrice,
-                        investment: pos.investment
+                        investment: pos.investment,
+                        timestamp: pos.timestamp
                     })),
-                    totalInvestment: this.totalInvestment
+                    totalInvestment: this.totalInvestment,
+                    lastUpdate: Date.now()
                 };
-                localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
+
+                try {
+                    localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
+                } catch (error) {
+                    console.error('Error saving portfolio:', error);
+                }
             },
             loadPortfolio() {
                 try {
@@ -1253,14 +1272,32 @@
                         this.portfolioPositions = data.positions || [];
                         this.totalInvestment = data.totalInvestment || 0;
                         
-                        // Сразу обновляем текущие цены и значения
-                        this.updatePortfolioTotals();
+                        // Немедленно обновляем текущие цены
+                        if (this.portfolioPositions.length > 0) {
+                            this.updatePortfolioTotals();
+                        }
                     }
                 } catch (error) {
                     console.error('Error loading portfolio:', error);
                     this.portfolioPositions = [];
                     this.totalInvestment = 0;
                 }
+            },
+            onSockData(e) {
+                let data = JSON.parse(e.data) || [];
+                let tickersUpdated = false;
+
+                for (let item of data) {
+                    let c = this.getCoinData(item);
+                    this.tickers[c.symbol] = c;
+                    tickersUpdated = true;
+                }
+
+                if (tickersUpdated && this.portfolioPositions.length > 0) {
+                    this.updatePortfolioTotals();
+                }
+
+                this.status = 2;
             }
         },
         mounted() {
@@ -1268,15 +1305,15 @@
             this.startClock();
             this.appendScript(this.initWidget);
             this.prepareOrderBook();
-            this.initWidget(); 
-            this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
+            this.initWidget();
+            this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT'];
             
             // Загружаем сохраненные данные портфолио
             this.loadPortfolio();
 
-            // Обновляем данные портфолио каждую секунду, если есть позиции
+            // Обновляем данные портфолио при получении новых цен
             setInterval(() => {
-                if (this.portfolioPositions && this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
+                if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
                     this.updatePortfolioTotals();
                 }
             }, 1000);
