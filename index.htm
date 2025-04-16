@@ -346,19 +346,26 @@
             <div class="input-section bg-[--color-bg--500] rounded-lg p-2">
                 <div class="grid grid-cols-1 gap-2">
                     <!-- Coin Selection -->
-                    <div class="form-group">
+                    <div class="form-group relative">
                         <label class="block text-xs text-[--color-primary-silver]">Select Coin</label>
-                        <select
-                            v-model="selectedCoin"
-                            @change="updateCoinPrice"
-                            class="form-control bg-[--color-bg--300] text-white p-1.5 rounded w-full text-sm">
-                            <option value="">---</option>
-                            <option v-for="ticker in filteredTickers" 
-                                    :key="ticker.symbol" 
-                                    :value="ticker.symbol">
+                        <input
+                            v-model="searchQuery"
+                            @input="filterCoins"
+                            @focus="showDropdown = true"
+                            type="text"
+                            class="form-control bg-[--color-bg--300] text-white p-1.5 rounded w-full text-sm"
+                            placeholder="Search coin..." />
+                        
+                        <!-- Dropdown for filtered results -->
+                        <div v-if="showDropdown && filteredCoins.length > 0" 
+                             class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                            <div v-for="ticker in filteredCoins" 
+                                 :key="ticker.symbol"
+                                 @click="selectCoin(ticker)"
+                                 class="p-2 hover:bg-[--color-primary-purple] cursor-pointer text-sm">
                                 {{ ticker.pair }} ({{ formatPrice(ticker.close) }})
-                            </option>
-                        </select>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Initial Investment -->
@@ -459,15 +466,31 @@
         </div>`,
         data() {
             return {
+                searchQuery: '',
+                showDropdown: false,
                 selectedCoin: ''
             };
         },
         computed: {
-            filteredTickers() {
-                if (!this.tickers) return [];
+            filteredCoins() {
+                if (!this.tickers || !this.searchQuery) return [];
+                const query = this.searchQuery.toLowerCase();
                 return Object.values(this.tickers)
-                    .filter(ticker => ticker.symbol.endsWith('USDT'))
-                    .sort((a, b) => a.pair.localeCompare(b.pair));
+                    .filter(ticker => {
+                        const symbol = ticker.symbol.toLowerCase();
+                        const pair = ticker.pair.toLowerCase();
+                        return (symbol.includes(query) || pair.includes(query)) && 
+                               ticker.symbol.endsWith('USDT');
+                    })
+                    .slice(0, 5) // Limit to top 5 results
+                    .sort((a, b) => {
+                        // Exact matches first
+                        const aExact = a.symbol.toLowerCase().startsWith(query);
+                        const bExact = b.symbol.toLowerCase().startsWith(query);
+                        if (aExact && !bExact) return -1;
+                        if (!aExact && bExact) return 1;
+                        return a.pair.localeCompare(b.pair);
+                    });
             },
             hasValidInputs() {
                 return this.settings.investment > 0 && 
@@ -494,6 +517,15 @@
             }
         },
         methods: {
+            filterCoins() {
+                this.showDropdown = true;
+            },
+            selectCoin(ticker) {
+                this.searchQuery = ticker.pair;
+                this.selectedCoin = ticker.symbol;
+                this.showDropdown = false;
+                this.updateCoinPrice();
+            },
             formatPrice(price) {
                 return new Intl.NumberFormat('en-US', {
                     style: 'currency',
@@ -512,6 +544,17 @@
             saveChanges() {
                 this.$emit('update-settings', this.settings);
             }
+        },
+        mounted() {
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.form-group')) {
+                    this.showDropdown = false;
+                }
+            });
+        },
+        beforeUnmount() {
+            document.removeEventListener('click', () => {});
         }
     };
     
