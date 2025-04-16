@@ -1210,6 +1210,7 @@
                     // Обновляем значения для каждой позиции
                     const index = this.portfolioPositions.findIndex(p => p === pos);
                     if (index !== -1) {
+                        this.portfolioPositions[index].currentPrice = currentPrice;
                         this.portfolioPositions[index].currentValue = currentValue;
                         this.portfolioPositions[index].profit = currentValue - pos.investment;
                         this.portfolioPositions[index].profitPercent = ((currentValue - pos.investment) / pos.investment) * 100;
@@ -1226,7 +1227,17 @@
             },
             savePortfolio() {
                 const portfolioData = {
-                    positions: this.portfolioPositions,
+                    positions: this.portfolioPositions.map(pos => ({
+                        symbol: pos.symbol,
+                        pair: pos.pair,
+                        amount: pos.amount,
+                        buyPrice: pos.buyPrice,
+                        investment: pos.investment,
+                        currentPrice: pos.currentPrice,
+                        currentValue: pos.currentValue,
+                        profit: pos.profit,
+                        profitPercent: pos.profitPercent
+                    })),
                     totalInvestment: this.totalInvestment,
                     currentValue: this.currentValue,
                     totalProfit: this.totalProfit,
@@ -1244,9 +1255,6 @@
                     this.currentValue = data.currentValue;
                     this.totalProfit = data.totalProfit;
                     this.totalProfitPercent = data.totalProfitPercent;
-                    
-                    // Сразу обновляем данные, чтобы получить актуальные цены
-                    this.updatePortfolioTotals();
                 }
             }
         },
@@ -1257,14 +1265,16 @@
             this.prepareOrderBook();
             this.initWidget(); 
             this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
+            
+            // Загружаем сохраненные данные портфолио
             this.loadPortfolio();
 
-            // Add portfolio update interval
+            // Обновляем данные портфолио каждую секунду
             setInterval(() => {
                 if (this.portfolioPositions.length > 0) {
                     this.updatePortfolioTotals();
                 }
-            }, 5000);
+            }, 1000);
 
             window.addEventListener('click', this.handleClick);
 
