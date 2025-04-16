@@ -334,88 +334,136 @@
     const CalculatorComponent = {
         props: ['settings', 'coins'],
         template: `
-        <div>
-          <div class="leftPanel">
-            <h4>Projection Criteria</h4>
-            <div class="form-group">
-              <label>Initial Investment</label>
-              <div class="input-group">
-                <input 
-                  v-model="settings.investment"
-                  @change="saveChanges()"
-                  onfocus="this.select()"
-                  type="number"
-                  min="0"
-                  inputmode="decimal"
-                  ref="initialInvestment"
-                  class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full"
-                  placeholder="Initial Investment" />
-                <span class="input-group-append">
-                  <button class="btn bg-[--color-primary-blue] text-white px-4 py-2 rounded ml-2" @click="resetInitialInvestment">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </span>
-              </div>
+        <div class="calculator-wrapper p-4">
+            <!-- Input Section -->
+            <div class="input-section bg-[--color-bg--500] rounded-lg p-6 mb-6">
+                <h4 class="text-xl font-bold mb-6 text-[--color-primary-blue]">Параметры инвестиции</h4>
+                
+                <!-- Initial Investment -->
+                <div class="form-group mb-6">
+                    <label class="block text-sm mb-2 text-[--color-primary-silver]">Начальная инвестиция</label>
+                    <div class="input-group">
+                        <input 
+                            v-model="settings.investment"
+                            @change="saveChanges()"
+                            onfocus="this.select()"
+                            type="number"
+                            min="0"
+                            inputmode="decimal"
+                            ref="initialInvestment"
+                            class="form-control bg-[--color-bg--300] text-white p-3 rounded w-full"
+                            placeholder="Введите сумму инвестиции" />
+                    </div>
+                </div>
+
+                <!-- Initial Coin Price -->
+                <div class="form-group mb-6">
+                    <label class="block text-sm mb-2 text-[--color-primary-silver]">Начальная цена монеты</label>
+                    <select
+                        v-if="coins && coins.length > 0 && settings.initialPrice === null"
+                        class="form-control bg-[--color-bg--300] text-white p-3 rounded w-full"
+                        v-model="selectedCoin"
+                        @change="changeInitialPrice">
+                        <option value="" selected>Выберите монету</option>
+                        <option v-for="(coin, index) in coins" :key="index" :value="index">{{ coin.name }} ({{ coin.symbol }})</option>
+                    </select>
+                    <div v-else class="input-group">
+                        <input
+                            v-model="settings.initialPrice"
+                            @change="saveChanges()"
+                            onfocus="this.select()"
+                            type="number"
+                            min="0"
+                            inputmode="decimal"
+                            ref="initialPrice"
+                            class="form-control bg-[--color-bg--300] text-white p-3 rounded w-full"
+                            placeholder="Введите начальную цену" />
+                    </div>
+                </div>
+
+                <!-- Projected Coin Price -->
+                <div class="form-group mb-6">
+                    <label class="block text-sm mb-2 text-[--color-primary-silver]">Ожидаемая цена монеты</label>
+                    <div class="input-group">
+                        <input
+                            v-model="settings.projectedPrice"
+                            @change="saveChanges()"
+                            onfocus="this.select()"
+                            type="number"
+                            min="0"
+                            inputmode="decimal"
+                            ref="projectedPrice"
+                            class="form-control bg-[--color-bg--300] text-white p-3 rounded w-full"
+                            placeholder="Введите ожидаемую цену" />
+                    </div>
+                </div>
+
+                <!-- Service Fee -->
+                <div class="form-group mb-6">
+                    <label class="block text-sm mb-2 text-[--color-primary-silver]">Комиссия сервиса (%)</label>
+                    <div class="input-group">
+                        <input
+                            v-model="settings.serviceFee"
+                            @change="saveChanges()"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            class="form-control bg-[--color-bg--300] text-white p-3 rounded w-full"
+                            placeholder="Введите комиссию в %" />
+                    </div>
+                </div>
+
+                <!-- Tax Rate -->
+                <div class="form-group mb-6">
+                    <label class="block text-sm mb-2 text-[--color-primary-silver]">Налог (%)</label>
+                    <div class="input-group">
+                        <input
+                            v-model="settings.taxRate"
+                            @change="saveChanges()"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            class="form-control bg-[--color-bg--300] text-white p-3 rounded w-full"
+                            placeholder="Введите налог в %" />
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-              <label>Initial Coin Price</label>
-              <select
-                v-if="coins && coins.length > 0 && settings.initialPrice === null"
-                class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full"
-                v-model="selectedCoin"
-                @change="changeInitialPrice">
-                  <option value="" selected>Select A Coin</option>
-                  <option v-for="(coin, index) in coins" :key="index" :value="index">{{ coin.name }} ({{ coin.symbol }})</option>
-              </select>
-              <div v-else class="input-group">
-                <input
-                  v-model="settings.initialPrice"
-                  @change="saveChanges()"
-                  onfocus="this.select()"
-                  type="number"
-                  min="0"
-                  inputmode="decimal"
-                  ref="initialPrice"
-                  class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full"
-                  placeholder="Initial Coin Price" />
-                <span class="input-group-append">
-                  <button v-show="settings.initialPrice" class="btn bg-[--color-primary-blue] text-white px-4 py-2 rounded ml-2" @click="resetInitialPrice">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </span>
-              </div>
+
+            <!-- Results Section -->
+            <div v-if="hasValidInputs" class="results-section bg-[--color-bg--500] rounded-lg p-6">
+                <h4 class="text-xl font-bold mb-6 text-[--color-primary-blue]">Результаты расчета</h4>
+                
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="result-item p-4 bg-[--color-bg--300] rounded">
+                        <div class="text-sm text-[--color-primary-silver] mb-1">Количество монет:</div>
+                        <div class="text-lg font-bold text-white">{{ totalCoins.toFixed(8) }}</div>
+                    </div>
+
+                    <div class="result-item p-4 bg-[--color-bg--300] rounded">
+                        <div class="text-sm text-[--color-primary-silver] mb-1">Комиссия:</div>
+                        <div class="text-lg font-bold text-[--color-primary--500]">{{ fees | currency }}</div>
+                    </div>
+
+                    <div class="result-item p-4 bg-[--color-bg--300] rounded">
+                        <div class="text-sm text-[--color-primary-silver] mb-1">Налог:</div>
+                        <div class="text-lg font-bold text-[--color-primary-yellow]">{{ taxes | currency }}</div>
+                    </div>
+
+                    <div class="result-item p-4 bg-[--color-bg--300] rounded">
+                        <div class="text-sm text-[--color-primary-silver] mb-1">Прибыль:</div>
+                        <div class="text-lg font-bold" :class="projectedTotal >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                            {{ projectedTotal | currency }}
+                        </div>
+                    </div>
+
+                    <div class="result-item p-4 bg-[--color-primary-purple] rounded">
+                        <div class="text-sm text-white mb-1">Итоговая сумма:</div>
+                        <div class="text-xl font-bold text-white">{{ projectedSubTotal - fees - taxes | currency }}</div>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-              <label>Projected Coin Price</label>
-              <div class="input-group">
-                <input
-                  v-model="settings.projectedPrice"
-                  @change="saveChanges()"
-                  onfocus="this.select()"
-                  type="number"
-                  min="0"
-                  inputmode="decimal"
-                  ref="projectedPrice"
-                  class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full"
-                  placeholder="Projected Coin Price" />
-                <span class="input-group-append">
-                  <button class="btn bg-[--color-primary-blue] text-white px-4 py-2 rounded ml-2" @click="resetProjectedPrice">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="main mt-4">
-            <div class="projections">
-              <h4>Forecast</h4>
-              <div class="total text-[--color-primary-green]">{{ projectedSubTotal - fees - taxes | currency }}</div>
-              <div class="profit text-[--color-primary-blue]">{{ projectedTotal | currency }}</div>
-              <div class="coins text-[--color-primary-silver]">Coin {{ totalCoins.toFixed(8) }}</div>
-              <div class="fees text-[--color-primary--500]">Fee {{ fees | currency }}</div>
-              <div class="taxes text-[--color-primary-yellow]">Tax {{ taxes | currency }}</div>
-            </div>
-          </div>
         </div>`,
         data() {
             return {
@@ -423,6 +471,11 @@
             };
         },
         computed: {
+            hasValidInputs() {
+                return this.settings.investment > 0 && 
+                       this.settings.initialPrice > 0 && 
+                       this.settings.projectedPrice > 0;
+            },
             totalCoins() {
                 return this.settings.investment / this.settings.initialPrice;
             },
@@ -439,8 +492,7 @@
                 return (this.projectedProfit - this.fees) * (this.settings.taxRate / 100);
             },
             projectedTotal() {
-                let total = this.projectedProfit - this.fees - this.taxes;
-                return total;
+                return this.projectedProfit - this.fees - this.taxes;
             }
         },
         methods: {
@@ -453,24 +505,6 @@
             },
             saveChanges() {
                 this.$emit('update-settings', this.settings);
-            },
-            resetInitialInvestment() {
-                this.settings.investment = null;
-                this.$refs['initialInvestment'].focus();
-                this.resetSelectedCoin();
-            },
-            resetInitialPrice() {
-                this.settings.initialPrice = null;
-                this.$refs['initialPrice'].focus();
-                this.resetSelectedCoin();
-            },
-            resetProjectedPrice() {
-                this.settings.projectedPrice = null;
-                this.$refs['projectedPrice'].focus();
-                this.resetSelectedCoin();
-            },
-            resetSelectedCoin() {
-                this.selectedCoin = '';
             }
         }
     };
