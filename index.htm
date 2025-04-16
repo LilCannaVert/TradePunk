@@ -138,12 +138,48 @@
               </div>
 
               
-              <div v-if="showOrderBookModal" id="orderBookModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl">
+              <div v-if="showOrderBookModal" 
+                   id="orderBookModal" 
+                   class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+                   @click="handleOrderBookModalClick">
+                <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
                   <div class="flex justify-between items-center">
                     <h2 class="text-lg font-bold text-[--color-primary-silver]">Order Book for {{ currentTicker }}</h2>
                     <button @click="toggleOrderBookModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
                   </div>
+                  
+                  <!-- Search Section -->
+                  <div class="mt-4 mb-4">
+                    <div class="form-group relative">
+                        <div class="flex gap-2">
+                            <div class="flex-grow relative">
+                                <input
+                                    v-model="orderBookSearchQuery"
+                                    @input="filterOrderBookCoins"
+                                    @focus="showOrderBookDropdown = true"
+                                    type="text"
+                                    class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm"
+                                    placeholder="Search ticker..." />
+                                
+                                <!-- Dropdown for filtered results -->
+                                <div v-if="showOrderBookDropdown && filteredOrderBookCoins.length > 0" 
+                                     class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                    <div v-for="ticker in filteredOrderBookCoins" 
+                                         :key="ticker.symbol"
+                                         @click="selectOrderBookCoin(ticker)"
+                                         class="p-2 hover:bg-[--color-primary-purple] cursor-pointer text-sm">
+                                        {{ ticker.pair }} ({{ formatTickerPrice(ticker) }})
+                                    </div>
+                                </div>
+                            </div>
+                            <button @click="searchOrderBook" 
+                                    class="bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm font-rajdhani">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                  </div>
+
                   <div class="mt-4">
                     <div class="flex flex-col lg:flex-row gap-4">
                       
@@ -628,7 +664,10 @@
                     serviceFee: null,
                     taxRate: null
                 },
-                coins: null
+                coins: null,
+                orderBookSearchQuery: '',
+                showOrderBookDropdown: false,
+                filteredOrderBookCoins: []
             }
         },
         methods: {
@@ -930,7 +969,41 @@
             updateCalcSettings(settings) {
                 this.calcSettings = { ...settings };
                 localStorage.setItem('calcSettings', JSON.stringify(settings));
-            }
+            },
+            filterOrderBookCoins() {
+                const query = this.orderBookSearchQuery.toLowerCase();
+                this.filteredOrderBookCoins = Object.values(this.tickers)
+                    .filter(ticker => {
+                        const symbol = ticker.symbol.toLowerCase();
+                        const pair = ticker.pair.toLowerCase();
+                        return (symbol.includes(query) || pair.includes(query)) && 
+                               ticker.symbol.endsWith('USDT');
+                    })
+                    .slice(0, 5) // Limit to top 5 results
+                    .sort((a, b) => {
+                        // Exact matches first
+                        const aExact = a.symbol.toLowerCase().startsWith(query);
+                        const bExact = b.symbol.toLowerCase().startsWith(query);
+                        if (aExact && !bExact) return -1;
+                        if (!aExact && bExact) return 1;
+                        return a.pair.localeCompare(b.pair);
+                    });
+            },
+            selectOrderBookCoin(ticker) {
+                this.orderBookSearchQuery = ticker.pair;
+                this.currentTicker = ticker.symbol;
+                this.showOrderBookDropdown = false;
+            },
+            searchOrderBook() {
+                if (this.currentTicker) {
+                    this.prepareOrderBook();
+                }
+            },
+            handleOrderBookModalClick(event) {
+                if (!event.target.closest('.form-group')) {
+                    this.showOrderBookDropdown = false;
+                }
+            },
         },
         mounted() {
             this.sockInit();
