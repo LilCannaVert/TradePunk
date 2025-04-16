@@ -151,31 +151,25 @@
                   <!-- Search Section -->
                   <div class="mt-4 mb-4">
                     <div class="form-group relative">
-                        <div class="flex gap-2">
-                            <div class="flex-grow relative">
-                                <input
-                                    v-model="orderBookSearchQuery"
-                                    @input="filterOrderBookCoins"
-                                    @focus="showOrderBookDropdown = true"
-                                    type="text"
-                                    class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm"
-                                    placeholder="Search ticker..." />
-                                
-                                <!-- Dropdown for filtered results -->
-                                <div v-if="showOrderBookDropdown && filteredOrderBookCoins.length > 0" 
-                                     class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                    <div v-for="ticker in filteredOrderBookCoins" 
-                                         :key="ticker.symbol"
-                                         @click="selectOrderBookCoin(ticker)"
-                                         class="p-2 hover:bg-[--color-primary-purple] cursor-pointer text-sm">
-                                        {{ ticker.pair }} ({{ formatTickerPrice(ticker) }})
-                                    </div>
+                        <div class="flex-grow relative">
+                            <input
+                                v-model="orderBookSearchQuery"
+                                @input="filterOrderBookCoins"
+                                @focus="showOrderBookDropdown = true"
+                                type="text"
+                                class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm"
+                                placeholder="Search ticker..." />
+                            
+                            <!-- Dropdown for filtered results -->
+                            <div v-if="showOrderBookDropdown && filteredOrderBookCoins.length > 0" 
+                                 class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                <div v-for="ticker in filteredOrderBookCoins" 
+                                     :key="ticker.symbol"
+                                     @click="selectOrderBookCoin(ticker)"
+                                     class="p-2 hover:bg-[--color-primary-purple] cursor-pointer text-sm">
+                                    {{ ticker.pair }} ({{ formatTickerPrice(ticker) }})
                                 </div>
                             </div>
-                            <button @click="searchOrderBook" 
-                                    class="bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm font-rajdhani">
-                                Search
-                            </button>
                         </div>
                     </div>
                   </div>
@@ -994,14 +988,10 @@
                 this.currentTicker = ticker.symbol;
                 this.ticker = ticker.symbol;
                 this.showOrderBookDropdown = false;
-            },
-            searchOrderBook() {
-                if (this.currentTicker) {
-                    this.ticker = this.currentTicker;
-                    this.prepareOrderBook();
-                    if (window.tvWidget) {
-                        window.tvWidget.setSymbol('BINANCE:' + this.currentTicker);
-                    }
+                // Сразу обновляем Order Book и график
+                this.prepareOrderBook();
+                if (window.tvWidget) {
+                    window.tvWidget.setSymbol('BINANCE:' + this.currentTicker);
                 }
             },
             handleOrderBookModalClick(event) {
