@@ -1165,7 +1165,13 @@
             },
             selectPortfolioCoin(ticker) {
                 this.portfolioForm.searchQuery = ticker.pair;
-                this.portfolioForm.selectedCoin = ticker;
+                this.portfolioForm.selectedCoin = {
+                    symbol: ticker.symbol,
+                    pair: ticker.pair,
+                    token: ticker.token,
+                    asset: ticker.asset,
+                    close: ticker.close
+                };
                 this.showPortfolioDropdown = false;
             },
             addPortfolioPosition() {
@@ -1180,8 +1186,7 @@
                     asset: this.portfolioForm.selectedCoin.asset,
                     amount: parseFloat(this.portfolioForm.amount),
                     buyPrice: parseFloat(this.portfolioForm.buyPrice),
-                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice),
-                    currentPrice: parseFloat(this.portfolioForm.selectedCoin.close)
+                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice)
                 };
 
                 this.portfolioPositions.push(position);
@@ -1204,17 +1209,16 @@
 
                 // Обновляем значения для каждой позиции
                 this.portfolioPositions.forEach((pos, index) => {
-                    // Обновляем базовые значения
                     const investment = pos.amount * pos.buyPrice;
-                    const currentPrice = this.tickers[pos.symbol] ? parseFloat(this.tickers[pos.symbol].close) : pos.currentPrice;
+                    const ticker = this.tickers[pos.symbol];
+                    const currentPrice = ticker ? parseFloat(ticker.close) : pos.buyPrice;
                     const currentValue = pos.amount * currentPrice;
                     const profit = currentValue - investment;
                     const profitPercent = (profit / investment) * 100;
 
-                    // Обновляем позицию
+                    // Обновляем позицию с текущими данными
                     this.portfolioPositions[index] = {
                         ...pos,
-                        investment,
                         currentPrice,
                         currentValue,
                         profit,
@@ -1242,11 +1246,7 @@
                         asset: pos.asset,
                         amount: pos.amount,
                         buyPrice: pos.buyPrice,
-                        investment: pos.investment,
-                        currentPrice: pos.currentPrice,
-                        currentValue: pos.currentValue,
-                        profit: pos.profit,
-                        profitPercent: pos.profitPercent
+                        investment: pos.investment
                     }))
                 };
                 localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
