@@ -1191,6 +1191,7 @@
 
                 this.portfolioPositions.push(position);
                 this.updatePortfolioTotals();
+                this.savePortfolio(); // Сразу сохраняем после добавления
 
                 // Reset form
                 this.portfolioForm.searchQuery = '';
@@ -1256,10 +1257,9 @@
                 if (savedPortfolio) {
                     try {
                         const data = JSON.parse(savedPortfolio);
-                        this.portfolioPositions = data.positions || [];
-                        // Сразу обновляем значения с текущими ценами
-                        if (this.portfolioPositions.length > 0) {
-                            this.updatePortfolioTotals();
+                        if (data && data.positions) {
+                            this.portfolioPositions = data.positions;
+                            this.updatePortfolioTotals(); // Обновляем значения сразу после загрузки
                         }
                     } catch (error) {
                         console.error('Error loading portfolio:', error);
@@ -1276,10 +1276,8 @@
             this.initWidget(); 
             this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
             
-            // Загружаем сохраненные данные портфолио после инициализации WebSocket
-            setTimeout(() => {
-                this.loadPortfolio();
-            }, 1000);
+            // Загружаем сохраненные данные портфолио
+            this.loadPortfolio();
 
             // Обновляем данные портфолио каждую секунду
             setInterval(() => {
