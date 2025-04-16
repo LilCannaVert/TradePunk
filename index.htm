@@ -315,10 +315,12 @@
 
           <!-- Calculator Modal -->
           <div v-if="showCalculator" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
+            <div class="bg-[--color-bg--300] rounded-lg p-4 w-full max-w-md mx-4" @click.stop>
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Investment Calculator</h2>
-                    <button @click="toggleCalculator" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
+                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Калькулятор</h2>
+                    <button @click="toggleCalculator" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+                        ✕
+                    </button>
                 </div>
                 <div class="calculator-container">
                     <calculator-component :settings="calcSettings" :coins="coins" @update-settings="updateCalcSettings"></calculator-component>
@@ -334,74 +336,52 @@
     const CalculatorComponent = {
         props: ['settings', 'coins'],
         template: `
-        <div class="calculator-wrapper p-4">
+        <div class="calculator-wrapper">
             <!-- Input Section -->
-            <div class="input-section bg-[--color-bg--500] rounded-lg p-6 mb-6">
-                <h4 class="text-xl font-bold mb-6 text-[--color-primary-blue]">Параметры инвестиции</h4>
-                
-                <!-- Initial Investment -->
-                <div class="form-group mb-6">
-                    <label class="block text-sm mb-2 text-[--color-primary-silver]">Начальная инвестиция</label>
-                    <div class="input-group">
+            <div class="input-section bg-[--color-bg--500] rounded-lg p-4">
+                <div class="grid grid-cols-1 gap-4">
+                    <!-- Initial Investment -->
+                    <div class="form-group">
+                        <label class="block text-sm mb-1 text-[--color-primary-silver]">Начальная инвестиция ($)</label>
                         <input 
                             v-model="settings.investment"
                             @change="saveChanges()"
-                            onfocus="this.select()"
                             type="number"
                             min="0"
                             inputmode="decimal"
-                            ref="initialInvestment"
-                            class="form-control bg-[--color-bg--300] text-white p-3 rounded w-full"
-                            placeholder="Введите сумму инвестиции" />
+                            class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full"
+                            placeholder="---" />
                     </div>
-                </div>
 
-                <!-- Initial Coin Price -->
-                <div class="form-group mb-6">
-                    <label class="block text-sm mb-2 text-[--color-primary-silver]">Начальная цена монеты</label>
-                    <select
-                        v-if="coins && coins.length > 0 && settings.initialPrice === null"
-                        class="form-control bg-[--color-bg--300] text-white p-3 rounded w-full"
-                        v-model="selectedCoin"
-                        @change="changeInitialPrice">
-                        <option value="" selected>Выберите монету</option>
-                        <option v-for="(coin, index) in coins" :key="index" :value="index">{{ coin.name }} ({{ coin.symbol }})</option>
-                    </select>
-                    <div v-else class="input-group">
+                    <!-- Initial Coin Price -->
+                    <div class="form-group">
+                        <label class="block text-sm mb-1 text-[--color-primary-silver]">Начальная цена ($)</label>
                         <input
                             v-model="settings.initialPrice"
                             @change="saveChanges()"
-                            onfocus="this.select()"
                             type="number"
                             min="0"
                             inputmode="decimal"
-                            ref="initialPrice"
-                            class="form-control bg-[--color-bg--300] text-white p-3 rounded w-full"
-                            placeholder="Введите начальную цену" />
+                            class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full"
+                            placeholder="---" />
                     </div>
-                </div>
 
-                <!-- Projected Coin Price -->
-                <div class="form-group mb-6">
-                    <label class="block text-sm mb-2 text-[--color-primary-silver]">Ожидаемая цена монеты</label>
-                    <div class="input-group">
+                    <!-- Projected Coin Price -->
+                    <div class="form-group">
+                        <label class="block text-sm mb-1 text-[--color-primary-silver]">Ожидаемая цена ($)</label>
                         <input
                             v-model="settings.projectedPrice"
                             @change="saveChanges()"
-                            onfocus="this.select()"
                             type="number"
                             min="0"
                             inputmode="decimal"
-                            ref="projectedPrice"
-                            class="form-control bg-[--color-bg--300] text-white p-3 rounded w-full"
-                            placeholder="Введите ожидаемую цену" />
+                            class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full"
+                            placeholder="---" />
                     </div>
-                </div>
 
-                <!-- Service Fee -->
-                <div class="form-group mb-6">
-                    <label class="block text-sm mb-2 text-[--color-primary-silver]">Комиссия сервиса (%)</label>
-                    <div class="input-group">
+                    <!-- Service Fee -->
+                    <div class="form-group">
+                        <label class="block text-sm mb-1 text-[--color-primary-silver]">Комиссия (%)</label>
                         <input
                             v-model="settings.serviceFee"
                             @change="saveChanges()"
@@ -409,15 +389,13 @@
                             min="0"
                             max="100"
                             step="0.1"
-                            class="form-control bg-[--color-bg--300] text-white p-3 rounded w-full"
-                            placeholder="Введите комиссию в %" />
+                            class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full"
+                            placeholder="---" />
                     </div>
-                </div>
 
-                <!-- Tax Rate -->
-                <div class="form-group mb-6">
-                    <label class="block text-sm mb-2 text-[--color-primary-silver]">Налог (%)</label>
-                    <div class="input-group">
+                    <!-- Tax Rate -->
+                    <div class="form-group">
+                        <label class="block text-sm mb-1 text-[--color-primary-silver]">Налог (%)</label>
                         <input
                             v-model="settings.taxRate"
                             @change="saveChanges()"
@@ -425,42 +403,35 @@
                             min="0"
                             max="100"
                             step="0.1"
-                            class="form-control bg-[--color-bg--300] text-white p-3 rounded w-full"
-                            placeholder="Введите налог в %" />
+                            class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full"
+                            placeholder="---" />
                     </div>
                 </div>
             </div>
 
             <!-- Results Section -->
-            <div v-if="hasValidInputs" class="results-section bg-[--color-bg--500] rounded-lg p-6">
-                <h4 class="text-xl font-bold mb-6 text-[--color-primary-blue]">Результаты расчета</h4>
-                
-                <div class="grid grid-cols-1 gap-4">
-                    <div class="result-item p-4 bg-[--color-bg--300] rounded">
-                        <div class="text-sm text-[--color-primary-silver] mb-1">Количество монет:</div>
+            <div v-if="hasValidInputs" class="results-section bg-[--color-bg--500] rounded-lg p-4 mt-4">
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="result-item p-3 bg-[--color-bg--300] rounded">
+                        <div class="text-sm text-[--color-primary-silver]">Монет:</div>
                         <div class="text-lg font-bold text-white">{{ totalCoins.toFixed(8) }}</div>
                     </div>
 
-                    <div class="result-item p-4 bg-[--color-bg--300] rounded">
-                        <div class="text-sm text-[--color-primary-silver] mb-1">Комиссия:</div>
+                    <div class="result-item p-3 bg-[--color-bg--300] rounded">
+                        <div class="text-sm text-[--color-primary-silver]">Комиссия:</div>
                         <div class="text-lg font-bold text-[--color-primary--500]">{{ fees | currency }}</div>
                     </div>
 
-                    <div class="result-item p-4 bg-[--color-bg--300] rounded">
-                        <div class="text-sm text-[--color-primary-silver] mb-1">Налог:</div>
+                    <div class="result-item p-3 bg-[--color-bg--300] rounded">
+                        <div class="text-sm text-[--color-primary-silver]">Налог:</div>
                         <div class="text-lg font-bold text-[--color-primary-yellow]">{{ taxes | currency }}</div>
                     </div>
 
-                    <div class="result-item p-4 bg-[--color-bg--300] rounded">
-                        <div class="text-sm text-[--color-primary-silver] mb-1">Прибыль:</div>
-                        <div class="text-lg font-bold" :class="projectedTotal >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
-                            {{ projectedTotal | currency }}
+                    <div class="result-item p-3 bg-[--color-primary-purple] rounded">
+                        <div class="text-sm text-white">Результат:</div>
+                        <div class="text-xl font-bold" :class="projectedTotal >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                            {{ projectedTotal >= 0 ? '+' : '' }}{{ projectedTotal | currency }}
                         </div>
-                    </div>
-
-                    <div class="result-item p-4 bg-[--color-primary-purple] rounded">
-                        <div class="text-sm text-white mb-1">Итоговая сумма:</div>
-                        <div class="text-xl font-bold text-white">{{ projectedSubTotal - fees - taxes | currency }}</div>
                     </div>
                 </div>
             </div>
@@ -496,13 +467,6 @@
             }
         },
         methods: {
-            changeInitialPrice() {
-                if (this.selectedCoin !== '') {
-                    let history = this.coins[this.selectedCoin].history;
-                    this.settings.initialPrice = parseInt(history[history.length - 1]);
-                    this.saveChanges();
-                }
-            },
             saveChanges() {
                 this.$emit('update-settings', this.settings);
             }
@@ -575,11 +539,11 @@
                 tonUpdateInterval: null,
                 showCalculator: false,
                 calcSettings: {
-                    investment: 18000,
-                    initialPrice: 500,
-                    projectedPrice: 550,
-                    serviceFee: 0.3,
-                    taxRate: 0
+                    investment: null,
+                    initialPrice: null,
+                    projectedPrice: null,
+                    serviceFee: null,
+                    taxRate: null
                 },
                 coins: null
             }
