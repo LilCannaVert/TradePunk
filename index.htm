@@ -315,15 +315,20 @@
 
           <!-- Calculator Modal -->
           <div v-if="showCalculator" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div class="bg-[--color-bg--300] rounded-lg p-4 w-full max-w-md mx-4" @click.stop>
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Калькулятор</h2>
-                    <button @click="toggleCalculator" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+            <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-sm mx-4" @click.stop>
+                <div class="flex justify-between items-center mb-2 sticky top-0 bg-[--color-bg--300] z-10">
+                    <h2 class="text-base font-bold text-[--color-primary-silver]">Calculator</h2>
+                    <button @click="toggleCalculator" class="bg-red-500 hover:bg-red-600 text-white px-2 py-0.5 rounded text-sm">
                         ✕
                     </button>
                 </div>
                 <div class="calculator-container">
-                    <calculator-component :settings="calcSettings" :coins="coins" @update-settings="updateCalcSettings"></calculator-component>
+                    <calculator-component 
+                        :settings="calcSettings" 
+                        :coins="coins" 
+                        :tickers="tickers"
+                        @update-settings="updateCalcSettings">
+                    </calculator-component>
                 </div>
             </div>
           </div>
@@ -334,54 +339,70 @@
     
     // Calculator component
     const CalculatorComponent = {
-        props: ['settings', 'coins'],
+        props: ['settings', 'coins', 'tickers'],
         template: `
         <div class="calculator-wrapper">
             <!-- Input Section -->
-            <div class="input-section bg-[--color-bg--500] rounded-lg p-4">
-                <div class="grid grid-cols-1 gap-4">
+            <div class="input-section bg-[--color-bg--500] rounded-lg p-2">
+                <div class="grid grid-cols-1 gap-2">
+                    <!-- Coin Selection -->
+                    <div class="form-group">
+                        <label class="block text-xs text-[--color-primary-silver]">Select Coin</label>
+                        <select
+                            v-model="selectedCoin"
+                            @change="updateCoinPrice"
+                            class="form-control bg-[--color-bg--300] text-white p-1.5 rounded w-full text-sm">
+                            <option value="">---</option>
+                            <option v-for="ticker in filteredTickers" 
+                                    :key="ticker.symbol" 
+                                    :value="ticker.symbol">
+                                {{ ticker.pair }} ({{ formatPrice(ticker.close) }})
+                            </option>
+                        </select>
+                    </div>
+
                     <!-- Initial Investment -->
                     <div class="form-group">
-                        <label class="block text-sm mb-1 text-[--color-primary-silver]">Начальная инвестиция ($)</label>
+                        <label class="block text-xs text-[--color-primary-silver]">Initial Investment ($)</label>
                         <input 
                             v-model="settings.investment"
                             @change="saveChanges()"
                             type="number"
                             min="0"
                             inputmode="decimal"
-                            class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full"
+                            class="form-control bg-[--color-bg--300] text-white p-1.5 rounded w-full text-sm"
                             placeholder="---" />
                     </div>
 
                     <!-- Initial Coin Price -->
                     <div class="form-group">
-                        <label class="block text-sm mb-1 text-[--color-primary-silver]">Начальная цена ($)</label>
+                        <label class="block text-xs text-[--color-primary-silver]">Initial Coin Price</label>
                         <input
                             v-model="settings.initialPrice"
                             @change="saveChanges()"
                             type="number"
                             min="0"
                             inputmode="decimal"
-                            class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full"
+                            class="form-control bg-[--color-bg--300] text-white p-1.5 rounded w-full text-sm"
                             placeholder="---" />
                     </div>
 
                     <!-- Projected Coin Price -->
                     <div class="form-group">
-                        <label class="block text-sm mb-1 text-[--color-primary-silver]">Ожидаемая цена ($)</label>
+                        <label class="block text-xs text-[--color-primary-silver]">Target Coin Price</label>
                         <input
                             v-model="settings.projectedPrice"
                             @change="saveChanges()"
                             type="number"
                             min="0"
                             inputmode="decimal"
-                            class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full"
+                            class="form-control bg-[--color-bg--300] text-white p-1.5 rounded w-full text-sm"
                             placeholder="---" />
                     </div>
 
                     <!-- Service Fee -->
                     <div class="form-group">
-                        <label class="block text-sm mb-1 text-[--color-primary-silver]">Комиссия (%)</label>
+                        <label class="block text-xs text-[--color-primary-silver]">Fee (%)</label>
                         <input
                             v-model="settings.serviceFee"
                             @change="saveChanges()"
@@ -389,13 +410,13 @@
                             min="0"
                             max="100"
                             step="0.1"
-                            class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full"
+                            class="form-control bg-[--color-bg--300] text-white p-1.5 rounded w-full text-sm"
                             placeholder="---" />
                     </div>
 
                     <!-- Tax Rate -->
                     <div class="form-group">
-                        <label class="block text-sm mb-1 text-[--color-primary-silver]">Налог (%)</label>
+                        <label class="block text-xs text-[--color-primary-silver]">Tax (%)</label>
                         <input
                             v-model="settings.taxRate"
                             @change="saveChanges()"
@@ -403,33 +424,33 @@
                             min="0"
                             max="100"
                             step="0.1"
-                            class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full"
+                            class="form-control bg-[--color-bg--300] text-white p-1.5 rounded w-full text-sm"
                             placeholder="---" />
                     </div>
                 </div>
             </div>
 
             <!-- Results Section -->
-            <div v-if="hasValidInputs" class="results-section bg-[--color-bg--500] rounded-lg p-4 mt-4">
-                <div class="grid grid-cols-1 gap-3">
-                    <div class="result-item p-3 bg-[--color-bg--300] rounded">
-                        <div class="text-sm text-[--color-primary-silver]">Монет:</div>
-                        <div class="text-lg font-bold text-white">{{ totalCoins.toFixed(8) }}</div>
+            <div v-if="hasValidInputs" class="results-section bg-[--color-bg--500] rounded-lg p-2 mt-2">
+                <div class="grid grid-cols-1 gap-2">
+                    <div class="result-item p-2 bg-[--color-bg--300] rounded">
+                        <div class="text-xs text-[--color-primary-silver]">Coins:</div>
+                        <div class="text-sm font-bold text-white">{{ totalCoins.toFixed(8) }}</div>
                     </div>
 
-                    <div class="result-item p-3 bg-[--color-bg--300] rounded">
-                        <div class="text-sm text-[--color-primary-silver]">Комиссия:</div>
-                        <div class="text-lg font-bold text-[--color-primary--500]">{{ fees | currency }}</div>
+                    <div class="result-item p-2 bg-[--color-bg--300] rounded">
+                        <div class="text-xs text-[--color-primary-silver]">Fee:</div>
+                        <div class="text-sm font-bold text-[--color-primary--500]">{{ fees | currency }}</div>
                     </div>
 
-                    <div class="result-item p-3 bg-[--color-bg--300] rounded">
-                        <div class="text-sm text-[--color-primary-silver]">Налог:</div>
-                        <div class="text-lg font-bold text-[--color-primary-yellow]">{{ taxes | currency }}</div>
+                    <div class="result-item p-2 bg-[--color-bg--300] rounded">
+                        <div class="text-xs text-[--color-primary-silver]">Tax:</div>
+                        <div class="text-sm font-bold text-[--color-primary-yellow]">{{ taxes | currency }}</div>
                     </div>
 
-                    <div class="result-item p-3 bg-[--color-primary-purple] rounded">
-                        <div class="text-sm text-white">Результат:</div>
-                        <div class="text-xl font-bold" :class="projectedTotal >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                    <div class="result-item p-2 bg-[--color-primary-purple] rounded">
+                        <div class="text-xs text-white">Result:</div>
+                        <div class="text-base font-bold" :class="projectedTotal >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
                             {{ projectedTotal >= 0 ? '+' : '' }}{{ projectedTotal | currency }}
                         </div>
                     </div>
@@ -442,6 +463,12 @@
             };
         },
         computed: {
+            filteredTickers() {
+                if (!this.tickers) return [];
+                return Object.values(this.tickers)
+                    .filter(ticker => ticker.symbol.endsWith('USDT'))
+                    .sort((a, b) => a.pair.localeCompare(b.pair));
+            },
             hasValidInputs() {
                 return this.settings.investment > 0 && 
                        this.settings.initialPrice > 0 && 
@@ -467,6 +494,21 @@
             }
         },
         methods: {
+            formatPrice(price) {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(price);
+            },
+            updateCoinPrice() {
+                if (this.selectedCoin && this.tickers[this.selectedCoin]) {
+                    this.settings.initialPrice = parseFloat(this.tickers[this.selectedCoin].close);
+                    this.settings.projectedPrice = parseFloat(this.tickers[this.selectedCoin].close);
+                    this.saveChanges();
+                }
+            },
             saveChanges() {
                 this.$emit('update-settings', this.settings);
             }
@@ -839,9 +881,9 @@
             toggleCalculator() {
                 this.showCalculator = !this.showCalculator;
                 if (this.showCalculator) {
-                    document.body.classList.add('no-scroll');
+                    document.body.style.overflow = 'hidden';
                 } else {
-                    document.body.classList.remove('no-scroll');
+                    document.body.style.overflow = 'auto';
                 }
             },
             updateCalcSettings(settings) {
