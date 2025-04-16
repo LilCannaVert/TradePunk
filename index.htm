@@ -75,7 +75,7 @@
                     <button @click="toggleCalculator" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
                         Calculator
                     </button>
-                    <h2 class="text-glow font-bold text-xl ml-2">Ticker List</h2>
+                    <h2 class="text-glow font-bold text-xl ml-2"></h2>
                   </div>
                   <div class="delimiter2 my-4"></div>
                   <div class="cb flex items-center" style="max-height: 100px;">
@@ -142,7 +142,7 @@
                 <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl">
                   <div class="flex justify-between items-center">
                     <h2 class="text-lg font-bold text-[--color-primary-silver]">Order Book for {{ currentTicker }}</h2>
-                    <button @click="toggleOrderBookModal" class="text-red-500">Close</button>
+                    <button @click="toggleOrderBookModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
                   </div>
                   <div class="mt-4">
                     <div class="flex flex-col lg:flex-row gap-4">
@@ -318,9 +318,7 @@
             <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-sm mx-4" @click.stop>
                 <div class="flex justify-between items-center mb-2 sticky top-0 bg-[--color-bg--300] z-10">
                     <h2 class="text-base font-bold text-[--color-primary-silver]">Calculator</h2>
-                    <button @click="toggleCalculator" class="bg-red-500 hover:bg-red-600 text-white px-2 py-0.5 rounded text-sm">
-                        ✕
-                    </button>
+                    <button @click="toggleCalculator" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
                 </div>
                 <div class="calculator-container">
                     <calculator-component 
