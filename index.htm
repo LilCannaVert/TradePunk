@@ -165,33 +165,35 @@
               </div>
 
               <!-- Добавляем полноэкранный Chart screen -->
-              <div v-if="showChartScreen" class="fixed inset-0 bg-[--color-bg-base] z-50 p-4 overflow-auto">
-                <div class="flex justify-between items-center mb-4">
-                  <h2 class="text-lg font-bold text-[--color-primary-silver]">Advanced Chart - {{ currentTicker }}</h2>
-                  <button @click="toggleChartScreen" class="bg-red-500 text-white px-4 py-2 rounded">
-                    Back to Main Screen
-                  </button>
-                </div>
-                
-                <!-- Chart Navigation -->
-                <div class="flex flex-wrap gap-2 mb-4">
-                  <button @click="toggleOrderBookModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
-                    Order Book
-                  </button>
-                  <button @click="openShareModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
-                    Share
-                  </button>
-                  <button @click="toggleCalculator" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
-                    Calculator
-                  </button>
-                  <button @click="togglePortfolio" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
-                    Portfolio
-                  </button>
-                </div>
-                
-                <!-- Advanced Chart Display -->
-                <div class="cb relative" style="height: calc(100vh - 150px); width: 100%;">
-                  <div id="chart_container_fullscreen" style="height: 100%; width: 100%;"></div>
+              <div v-if="showChartScreen" class="chart-screen-overlay">
+                <div class="chart-screen-content">
+                  <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Advanced Chart - {{ currentTicker }}</h2>
+                    <button @click="toggleChartScreen" class="bg-red-500 text-white px-4 py-2 rounded">
+                      Back to Main Screen
+                    </button>
+                  </div>
+                  
+                  <!-- Chart Navigation -->
+                  <div class="flex flex-wrap gap-2 mb-4">
+                    <button @click="toggleOrderBookModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                      Order Book
+                    </button>
+                    <button @click="openShareModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                      Share
+                    </button>
+                    <button @click="toggleCalculator" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                      Calculator
+                    </button>
+                    <button @click="togglePortfolio" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                      Portfolio
+                    </button>
+                  </div>
+                  
+                  <!-- Advanced Chart Display -->
+                  <div class="cb relative flex-grow" style="width: 100%;">
+                    <div id="chart_container_fullscreen" style="height: 100%; width: 100%;"></div>
+                  </div>
                 </div>
               </div>
 
@@ -1479,10 +1481,15 @@
             toggleChartScreen() {
                 this.showChartScreen = !this.showChartScreen;
                 if (this.showChartScreen) {
+                    // Блокируем прокрутку и кликабельность основного экрана
+                    document.body.classList.add('modal-open');
                     // Инициализируем график в полноэкранном режиме после того, как DOM обновится
                     this.$nextTick(() => {
                         this.initFullscreenChart();
                     });
+                } else {
+                    // Разблокируем прокрутку и кликабельность основного экрана при закрытии графика
+                    document.body.classList.remove('modal-open');
                 }
             },
             
@@ -1866,6 +1873,41 @@
     .no-scroll {
         overflow: hidden; 
         height: 100%; 
+    }
+
+    .chart-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary-black);
+        z-index: 100;
+        overflow: hidden;
+    }
+    
+    .chart-screen-content {
+        height: 100%;
+        width: 100%;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chart-screen-content .cb {
+        background-color: var(--color-bg--300);
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9);
+        height: calc(100vh - 120px);
+    }
+    
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .chart-screen-overlay {
+        pointer-events: auto;
     }
 
     .font-rajdhani {
