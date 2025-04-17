@@ -152,7 +152,7 @@
               <div v-if="showChartScreen" class="chart-screen-overlay">
                 <div class="chart-screen-content">
                   <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-[--color-primary-silver]">{{ currentTicker }}</h2>
+                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Advanced Chart - {{ currentTicker }}</h2>
                   </div>
                   
                   <!-- Advanced Chart Display -->
@@ -931,15 +931,18 @@
                         }
                     });
 
-                    // Когда получены данные о тикерах, проверяем портфолио
-                    if (Object.keys(this.tickers).length > 100 && this.portfolioPositions.length === 0) {
-                        // Если тикеры загружены, но портфолио пусто, попробуем загрузить его снова
-                        this.loadState();
-                    }
-
-                    // Обновляем портфолио при получении новых цен
-                    if (this.portfolioPositions.length > 0) {
-                        this.updatePortfolioTotals();
+                    // Проверяем наличие тикеров и статус портфолио
+                    if (Object.keys(this.tickers).length > 0) {
+                        // При первом получении тикеров попробуем загрузить портфолио, если оно еще пустое
+                        if (this.portfolioPositions.length === 0) {
+                            console.log('Tickers received, trying to load portfolio');
+                            this.loadState();
+                        }
+                        
+                        // Обновляем портфолио при получении новых цен
+                        if (this.portfolioPositions.length > 0) {
+                            this.updatePortfolioTotals();
+                        }
                     }
 
                     this.status = 2;
@@ -1323,16 +1326,21 @@
             },
             saveState() {
                 try {
-                    // Сохраняем только необходимые данные
+                    // Сохраняем только необходимые данные с дополнительной проверкой
+                    if (!Array.isArray(this.portfolioPositions)) {
+                        console.error('portfolioPositions is not an array:', this.portfolioPositions);
+                        return;
+                    }
+                    
                     const portfolioState = this.portfolioPositions.map(pos => ({
                         symbol: pos.symbol,
                         pair: pos.pair,
-                        amount: pos.amount,
-                        buyPrice: pos.buyPrice
+                        amount: parseFloat(pos.amount),  // Убедимся, что это числа
+                        buyPrice: parseFloat(pos.buyPrice)
                     }));
                     
                     localStorage.setItem('portfolioState', JSON.stringify(portfolioState));
-                    console.log('Portfolio state saved:', portfolioState); // Debug log
+                    console.log('Portfolio state saved with', portfolioState.length, 'positions:', portfolioState);
                 } catch (error) {
                     console.error('Error saving portfolio state:', error);
                 }
@@ -1341,22 +1349,45 @@
                 try {
                     const savedState = localStorage.getItem('portfolioState');
                     if (savedState) {
-                        const positions = JSON.parse(savedState);
-                        this.portfolioPositions = positions.map(pos => ({
-                            ...pos,
-                            currentPrice: 0,
-                            currentValue: 0,
-                            profit: 0,
-                            profitPercent: 0
-                        }));
-                        console.log('Portfolio state loaded:', this.portfolioPositions); // Debug log
-                        
-                        // Сразу обновляем расчеты после загрузки
-                        if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
-                            this.updatePortfolioTotals();
+                        try {
+                            const positions = JSON.parse(savedState);
+                            
+                            if (!Array.isArray(positions)) {
+                                console.error('Saved portfolio data is not an array:', positions);
+                                return;
+                            }
+                            
+                            if (positions.length > 0) {
+                                this.portfolioPositions = positions.map(pos => ({
+                                    symbol: pos.symbol,
+                                    pair: pos.pair,
+                                    amount: parseFloat(pos.amount),
+                                    buyPrice: parseFloat(pos.buyPrice),
+                                    currentPrice: 0,
+                                    currentValue: 0,
+                                    profit: 0,
+                                    profitPercent: 0
+                                }));
+                                
+                                console.log('Portfolio state loaded with', this.portfolioPositions.length, 'positions:', this.portfolioPositions);
+                                
+                                // Сразу обновляем расчеты после загрузки, если тикеры доступны
+                                if (Object.keys(this.tickers).length > 0) {
+                                    console.log('Tickers available, updating portfolio calculations');
+                                    this.updatePortfolioTotals();
+                                } else {
+                                    console.log('Tickers not yet available, will update when received');
+                                }
+                            } else {
+                                console.log('Saved portfolio state is empty array');
+                                this.portfolioPositions = [];
+                            }
+                        } catch (jsonError) {
+                            console.error('Error parsing saved portfolio state:', jsonError);
+                            this.portfolioPositions = [];
                         }
                     } else {
-                        console.log('No saved portfolio state found.'); // Debug log
+                        console.log('No saved portfolio state found in localStorage');
                         this.portfolioPositions = [];
                     }
                 } catch (error) {
@@ -1620,11 +1651,15 @@
             this.initWidget(); 
             this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
             
-            // Загружаем сохраненное состояние портфеля
-            // Важно загрузить после инициализации сокета, чтобы данные тикеров были доступны
+            // Загружаем сохраненное состояние портфеля сразу
+            this.loadState();
+            
+            // И также пробуем загрузить через 2 секунды (если к этому моменту будут загружены тикеры)
             setTimeout(() => {
-                this.loadState();
-                console.log('Delayed portfolio loading executed');
+                if (this.portfolioPositions.length === 0) {
+                    console.log('Trying to load portfolio state again after delay');
+                    this.loadState();
+                }
             }, 2000);
 
             // Обновляем данные портфолио при получении новых цен
@@ -2155,6 +2190,16 @@
             font-size: 0.65rem;
             padding: 0.35rem 0;
         }
+    }
+
+    /* Добавляем новые стили для нижней навигационной панели при открытом Chart */
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    /* Подняли график на 2 пикселя вверх */
+    .chart-screen-content {
+        margin-top: -2px;
     }
 </style>
 </body>
