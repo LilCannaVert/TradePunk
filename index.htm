@@ -1214,6 +1214,7 @@
                         buyPrice: pos.buyPrice
                     }));
                     localStorage.setItem('portfolioState', JSON.stringify(portfolioState));
+                    console.log('Portfolio state saved:', portfolioState); // Debug log
                 } catch (error) {
                     console.error('Error saving portfolio state:', error);
                 }
@@ -1230,11 +1231,14 @@
                             profit: 0,
                             profitPercent: 0
                         }));
+                        console.log('Portfolio state loaded:', this.portfolioPositions); // Debug log
                         
                         // Сразу обновляем расчеты после загрузки
                         if (this.portfolioPositions.length > 0) {
                             this.updatePortfolioTotals();
                         }
+                    } else {
+                        console.log('No saved portfolio state found.'); // Debug log
                     }
                 } catch (error) {
                     console.error('Error loading portfolio state:', error);
