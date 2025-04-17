@@ -2205,6 +2205,29 @@
     .chart-screen-content {
         margin-top: -9px;
     }
+
+    #portfolioModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start; /* Выравниваем окно к верхней части экрана */
+        justify-content: center;
+        z-index: 50;
+        padding-top: 5vh; /* Добавляем отступ сверху */
+        padding-bottom: 120px; /* Добавляем отступ снизу для учета высоты нижней панели навигации */
+    }
+
+    #portfolioModal .bg-[--color-bg--300] {
+        max-height: 70vh; /* Ограничиваем высоту окна */
+        overflow: auto; /* Добавляем прокрутку при необходимости */
+        width: 90%;
+        max-width: 900px;
+    }
+    
+    /* Отступ для нижних кнопок в портфолио */
+    #portfolioModal .mt-6 {
+        margin-bottom: 10px; /* Добавляем отступ снизу для блока с итогами портфолио */
+    }
 </style>
 </body>
 </html>
