@@ -11,8 +11,8 @@
 </head>
 <body>
     <div id="app">
-        <div class="relative p-4">
-          <header class="flex relative h-14 gap-4 items-center justify-between px-2 text-sm lg:text-xl">
+        <div class="relative p-2">
+          <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
             <div class="flex items-center">
               <!-- Индикатор статуса удален -->
             </div>
@@ -26,9 +26,9 @@
             </Transition>
            
             <Transition>
-              <div v-if="tickers[ticker]" class="flex gap-2 flex-grow items-center justify-between delay-200">
+              <div v-if="tickers[ticker]" class="flex gap-1 flex-grow items-center justify-between delay-200">
                 <div class="w-1/2">
-                  <div class="flex gap-2">
+                  <div class="flex gap-1">
                     <small>{{tickers[ticker]['pair']}}</small>
                     <span :class="tickers[ticker]['style']">
                       <span class="mr-1">{{tickers[ticker]['arrow']}}</span>
@@ -58,25 +58,25 @@
               </div>
             </Transition>
           </header>
-            <div class="delimiter my-4"></div>
+            <div class="delimiter my-2"></div>
           
-          <section class="mb-4">
-            <div class="flex gap-4 flex-col lg:flex-row">
+          <section class="mb-2">
+            <div class="flex gap-2 flex-col lg:flex-row">
               <div class="tickers w-full max-w-[500px] mx-auto"> 
-                <div class="mb-2">
+                <div class="mb-1">
                   <div class="flex items-center">
                     <h2 class="text-glow font-bold text-xl ml-2"></h2>
                   </div>
-                  <div class="delimiter2 my-4"></div>
-                  <div class="cb flex items-center" style="max-height: 100px;">
+                  <div class="delimiter2 my-2"></div>
+                  <div class="cb flex items-center" style="max-height: 80px;">
                     <div class="h-5 w-5 ml-3 mr-4">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.172 24l-7.387-7.387c-1.388.874-3.024 1.387-4.785 1.387-4.971 0-9-4.029-9-9s4.029-9 9-9 9 4.029 9 9c0 1.761-.514 3.398-1.387 4.785l7.387 7.387-2.828 2.828zm-12.172-8c3.859 0 7-3.14 7-7s-3.141-7-7-7-7 3.14-7 7 3.141 7 7 7z"></path></svg>
                     </div>
-                    <input v-model="inputSearch" ref="searchInput" class="w-full h-10 bg-transparent focus:outline-none" name="query" placeholder="Search..." type="text" @keypress="handleKeyPress">
+                    <input v-model="inputSearch" ref="searchInput" class="w-full h-8 bg-transparent focus:outline-none" name="query" placeholder="Search..." type="text" @keypress="handleKeyPress">
                   </div>
                 </div>
-                <div class="mb-2">
-                    <ul class="flex gap-2 justify-between h-10 flex-wrap"> 
+                <div class="mb-1">
+                    <ul class="flex gap-2 justify-between h-8 flex-wrap"> 
                         <li @click="filterAsset('USDT')" :class="[asset === 'USDT' ? 'active' : '']" class="cb2 flex flex-grow items-center justify-center cursor-pointer">USDT</li>
                         <li @click="filterAsset('BTC')" :class="[asset === 'BTC' ? 'active' : '']" class="cb2 flex flex-grow items-center justify-center cursor-pointer">BTC</li>
                         <li @click="filterAsset('FAV')" :class="[asset === 'FAV' ? 'active' : '']" class="cb2 flex flex-grow items-center justify-center cursor-pointer">
@@ -93,7 +93,7 @@
                     <div @click="sortBy('assetVolume', 'desc')" :class="[sort === 'assetVolume' ? 'font-bold' : '']" class="w-1/4 text-end pl-2 pr-8">Volume</div>
                   </div>
       
-                  <div class="body h-[454px] relative overflow-y-scroll px-2">
+                  <div class="body h-[490px] relative overflow-y-scroll px-2">
                     <div v-if="Object.keys(tickers).length < 200" class="h-full flex items-center justify-center">
                       <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
