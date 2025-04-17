@@ -388,33 +388,33 @@
 
           <!-- Portfolio Modal -->
           <div v-if="showPortfolio" id="portfolioModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div class="bg-[--color-bg--300] rounded-lg p-4 w-full max-w-2xl mx-4" @click.stop>
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Portfolio</h2>
-                    <button @click="togglePortfolio" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
+            <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-xl mx-4" @click.stop>
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-base font-bold text-[--color-primary-silver]">Portfolio</h2>
+                    <button @click="togglePortfolio" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Close</button>
                 </div>
 
                 <!-- Total Summary - перемещено вверх -->
-                <div class="mb-4 bg-[--color-primary-purple] p-4 rounded-lg">
-                    <div class="grid grid-cols-2 gap-4">
+                <div class="mb-2 bg-[--color-primary-purple] p-3 rounded-lg">
+                    <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <div class="text-sm text-white">Total Investment:</div>
-                            <div class="text-lg font-bold text-white">${{ totalInvestment.toFixed(2) }}</div>
+                            <div class="text-xs text-white">Total Investment:</div>
+                            <div class="text-base font-bold text-white">${{ totalInvestment.toFixed(2) }}</div>
                         </div>
                         <div>
-                            <div class="text-sm text-white">Current Value:</div>
-                            <div class="text-lg font-bold" 
+                            <div class="text-xs text-white">Current Value:</div>
+                            <div class="text-base font-bold" 
                                  :class="totalProfit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
                                 ${{ currentValue.toFixed(2) }}
-                                <span class="text-sm ml-2">
+                                <span class="text-xs ml-2">
                                     ({{ totalProfit >= 0 ? '+' : '' }}{{ totalProfitPercent.toFixed(2) }}%)
                                 </span>
                             </div>
                         </div>
                     </div>
-                    <div class="mt-4 text-center">
-                        <div class="text-sm text-white">Total Profit/Loss:</div>
-                        <div class="text-xl font-bold" 
+                    <div class="mt-2 text-center">
+                        <div class="text-xs text-white">Total Profit/Loss:</div>
+                        <div class="text-lg font-bold" 
                              :class="totalProfit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
                             {{ totalProfit >= 0 ? '+' : '' }}${{ totalProfit.toFixed(2) }}
                         </div>
@@ -422,8 +422,8 @@
                 </div>
 
                 <!-- Add Position Form -->
-                <div class="mb-4 bg-[--color-bg--500] p-4 rounded-lg">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="mb-2 bg-[--color-bg--500] p-3 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
                         <!-- Coin Selection -->
                         <div class="form-group relative">
                             <input
@@ -431,16 +431,16 @@
                                 @input="filterPortfolioCoins"
                                 @focus="showPortfolioDropdown = true"
                                 type="text"
-                                class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full text-sm"
+                                class="form-control bg-[--color-bg--300] text-white p-1 rounded w-full text-sm"
                                 placeholder="Search coin..." />
                             
                             <!-- Dropdown for filtered results -->
                             <div v-if="showPortfolioDropdown && filteredPortfolioCoins.length > 0" 
-                                 class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                 class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-36 overflow-y-auto">
                                 <div v-for="ticker in filteredPortfolioCoins" 
                                      :key="ticker.symbol"
                                      @click="selectPortfolioCoin(ticker)"
-                                     class="p-2 hover:bg-[--color-primary-purple] cursor-pointer text-sm">
+                                     class="p-1 hover:bg-[--color-primary-purple] cursor-pointer text-xs">
                                     {{ ticker.pair }} ({{ formatTickerPrice(ticker) }})
                                 </div>
                             </div>
@@ -453,7 +453,7 @@
                                 type="number"
                                 min="0"
                                 step="0.00000001"
-                                class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full text-sm"
+                                class="form-control bg-[--color-bg--300] text-white p-1 rounded w-full text-sm"
                                 placeholder="Amount of coins" />
                         </div>
 
@@ -464,14 +464,14 @@
                                 type="number"
                                 min="0"
                                 step="0.00000001"
-                                class="form-control bg-[--color-bg--300] text-white p-2 rounded w-full text-sm"
+                                class="form-control bg-[--color-bg--300] text-white p-1 rounded w-full text-sm"
                                 placeholder="Buy price per coin" />
                         </div>
 
                         <!-- Add Button -->
                         <div class="form-group flex items-end">
                             <button @click="addPortfolioPosition" 
-                                    class="bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm w-full">
+                                    class="bg-[--color-primary-blue] text-white px-3 py-1 rounded text-sm w-full">
                                 Add Position
                             </button>
                         </div>
@@ -479,29 +479,29 @@
                 </div>
 
                 <!-- Portfolio Positions с возможностью скролла -->
-                <div class="bg-[--color-bg--500] rounded-lg p-4">
-                    <div style="height: 300px; overflow-y: scroll; padding-right: 4px;" class="portfolio-positions-container">
+                <div class="bg-[--color-bg--500] rounded-lg p-3">
+                    <div style="height: 150px; overflow-y: scroll; padding-right: 4px;" class="portfolio-positions-container">
                         <div v-for="(position, index) in portfolioPositions" 
                              :key="index"
-                             class="bg-[--color-bg--300] p-3 rounded-lg mb-3">
+                             class="bg-[--color-bg--300] p-2 rounded-lg mb-2">
                             <div class="flex justify-between items-center">
                                 <div class="flex-1">
-                                    <div class="font-bold">{{ position.pair }}</div>
-                                    <div class="text-sm">
+                                    <div class="font-bold text-sm">{{ position.pair }}</div>
+                                    <div class="text-xs">
                                         Amount: {{ position.amount }} coins
-                                        <span class="mx-2">|</span>
+                                        <span class="mx-1">|</span>
                                         Buy Price: ${{ position.buyPrice }}
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <div :class="position.profit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="font-bold">
+                                    <div :class="position.profit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="font-bold text-sm">
                                         {{ position.profit >= 0 ? '+' : '' }}${{ position.profit.toFixed(2) }}
                                     </div>
-                                    <div :class="position.profitPercent >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="text-sm">
+                                    <div :class="position.profitPercent >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="text-xs">
                                         {{ position.profitPercent >= 0 ? '+' : '' }}{{ position.profitPercent.toFixed(2) }}%
                                     </div>
                                 </div>
-                                <button @click="removePosition(index)" class="ml-4 text-red-500 hover:text-red-700">
+                                <button @click="removePosition(index)" class="ml-2 text-red-500 hover:text-red-700 text-sm">
                                     ✕
                                 </button>
                             </div>
@@ -2214,11 +2214,12 @@
         justify-content: center;
         z-index: 50;
         padding-top: 2vh; /* Уменьшаем отступ сверху с 5vh до 2vh */
-        padding-bottom: 140px; /* Увеличиваем отступ снизу со 120px до 140px */
+        padding-bottom: 100px; /* Уменьшаем отступ снизу со 140px до 100px */
+        max-height: calc(100vh - 100px); /* Ограничиваем максимальную высоту модального окна */
     }
 
     #portfolioModal .bg-[--color-bg--300] {
-        max-height: 85vh; /* Увеличиваем высоту с 65vh до 85vh чтобы вместить весь контент */
+        max-height: calc(100vh - 150px); /* Уменьшаем высоту чтобы не выходило за пределы экрана */
         overflow: auto; /* Добавляем прокрутку при необходимости */
         width: 90%;
         max-width: 900px;
@@ -2236,7 +2237,7 @@
         border: 1px solid var(--color-primary-purple);
         border-radius: 4px;
         display: block;
-        height: 300px !important;
+        height: 150px !important; /* Уменьшаем высоту с 200px до 150px */
         overflow-y: scroll !important;
     }
     
