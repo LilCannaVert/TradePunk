@@ -169,9 +169,6 @@
                 <div class="chart-screen-content">
                   <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-[--color-primary-silver]">Advanced Chart - {{ currentTicker }}</h2>
-                    <button @click="toggleChartScreen" class="bg-red-500 text-white px-4 py-2 rounded">
-                      Back to Main Screen
-                    </button>
                   </div>
                   
                   <!-- Chart Navigation -->
@@ -187,6 +184,9 @@
                     </button>
                     <button @click="togglePortfolio" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
                       Portfolio
+                    </button>
+                    <button @click="toggleChartScreen" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                      Tickers
                     </button>
                   </div>
                   
