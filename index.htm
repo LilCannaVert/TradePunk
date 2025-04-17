@@ -1287,45 +1287,16 @@
                 this.totalProfitPercent = this.totalInvestment > 0 ? (this.totalProfit / this.totalInvestment) * 100 : 0;
             },
             savePortfolio() {
-                try {
-                    const portfolioData = {
-                        positions: this.portfolioPositions.map(pos => ({
-                            symbol: pos.symbol,
-                            pair: pos.pair,
-                            amount: parseFloat(pos.amount),
-                            buyPrice: parseFloat(pos.buyPrice),
-                            investment: parseFloat(pos.amount) * parseFloat(pos.buyPrice),
-                            lastUpdate: Date.now()
-                        })),
-                        totalInvestment: parseFloat(this.totalInvestment),
-                        currentValue: parseFloat(this.currentValue),
-                        totalProfit: parseFloat(this.totalProfit),
-                        totalProfitPercent: parseFloat(this.totalProfitPercent),
-                        lastUpdate: Date.now()
-                    };
-                    localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
-                } catch (error) {
-                    console.error('Error saving portfolio:', error);
-                }
+                console.log('Saving portfolio:', this.portfolio);
+                localStorage.setItem('cryptoPortfolio', JSON.stringify(this.portfolio));
             },
             loadPortfolio() {
-                try {
-                    const savedData = localStorage.getItem('portfolioData');
-                    if (savedData) {
-                        const portfolioData = JSON.parse(savedData);
-                        this.portfolioPositions = portfolioData.positions || [];
-                        this.totalInvestment = portfolioData.totalInvestment || 0;
-                        this.currentValue = portfolioData.currentValue || 0;
-                        this.totalProfit = portfolioData.totalProfit || 0;
-                        this.totalProfitPercent = portfolioData.totalProfitPercent || 0;
-                        
-                        // Обновляем текущие цены и расчеты
-                        if (this.portfolioPositions.length > 0) {
-                            this.updatePortfolioTotals();
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error loading portfolio:', error);
+                const portfolioStr = localStorage.getItem('cryptoPortfolio');
+                if (portfolioStr) {
+                    this.portfolio = JSON.parse(portfolioStr);
+                    console.log('Loaded portfolio:', this.portfolio);
+                } else {
+                    console.log('No portfolio found in localStorage.');
                 }
             },
             onSockData(e) {
