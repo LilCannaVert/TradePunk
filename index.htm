@@ -152,26 +152,7 @@
               <div v-if="showChartScreen" class="chart-screen-overlay">
                 <div class="chart-screen-content">
                   <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Advanced Chart - {{ currentTicker }}</h2>
-                  </div>
-                  
-                  <!-- Chart Navigation -->
-                  <div class="flex flex-wrap justify-center gap-2 mb-4">
-                    <button @click="toggleOrderBookModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-                      Order Book
-                    </button>
-                    <button @click="openShareModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-                      Share
-                    </button>
-                    <button @click="toggleCalculator" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-                      Calculator
-                    </button>
-                    <button @click="togglePortfolio" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-                      Portfolio
-                    </button>
-                    <button @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-                      Tickers
-                    </button>
+                    <h2 class="text-lg font-bold text-[--color-primary-silver]">{{ currentTicker }}</h2>
                   </div>
                   
                   <!-- Advanced Chart Display -->
@@ -534,8 +515,11 @@
         <!-- Добавляем навигационную панель внизу экрана -->
         <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
           <div class="container mx-auto flex justify-center">
-            <button @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button v-if="!showChartScreen" @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Chart
+            </button>
+            <button v-else @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+              Tickers
             </button>
             <button @click="toggleOrderBookModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Order Book
