@@ -1216,7 +1216,11 @@
                     return;
                 }
 
-                this.portfolioPositions.forEach((pos, index) => {
+                let updatedPositions = [];
+                let totalInv = 0;
+                let currentVal = 0;
+
+                this.portfolioPositions.forEach(pos => {
                     const ticker = this.tickers[pos.symbol];
                     if (ticker) {
                         const currentPrice = parseFloat(ticker.close);
@@ -1225,20 +1229,26 @@
                         const profit = currentValue - investment;
                         const profitPercent = investment > 0 ? (profit / investment) * 100 : 0;
 
-                        this.portfolioPositions[index] = {
+                        totalInv += investment;
+                        currentVal += currentValue;
+
+                        updatedPositions.push({
                             ...pos,
                             currentPrice,
                             currentValue,
                             investment,
                             profit,
                             profitPercent
-                        };
+                        });
+                    } else {
+                        updatedPositions.push(pos);
                     }
                 });
 
-                // Обновляем общие показатели
-                this.totalInvestment = this.portfolioPositions.reduce((sum, pos) => sum + (pos.investment || 0), 0);
-                this.currentValue = this.portfolioPositions.reduce((sum, pos) => sum + (pos.currentValue || 0), 0);
+                // Обновляем позиции и общие показатели
+                this.portfolioPositions = updatedPositions;
+                this.totalInvestment = totalInv;
+                this.currentValue = currentVal;
                 this.totalProfit = this.currentValue - this.totalInvestment;
                 this.totalProfitPercent = this.totalInvestment > 0 ? (this.totalProfit / this.totalInvestment) * 100 : 0;
 
@@ -1251,14 +1261,16 @@
                         positions: this.portfolioPositions.map(pos => ({
                             symbol: pos.symbol,
                             pair: pos.pair,
-                            amount: pos.amount,
-                            buyPrice: pos.buyPrice,
-                            investment: pos.amount * pos.buyPrice
+                            amount: parseFloat(pos.amount),
+                            buyPrice: parseFloat(pos.buyPrice),
+                            investment: parseFloat(pos.amount) * parseFloat(pos.buyPrice),
+                            lastUpdate: Date.now()
                         })),
-                        totalInvestment: this.totalInvestment,
-                        currentValue: this.currentValue,
-                        totalProfit: this.totalProfit,
-                        totalProfitPercent: this.totalProfitPercent
+                        totalInvestment: parseFloat(this.totalInvestment),
+                        currentValue: parseFloat(this.currentValue),
+                        totalProfit: parseFloat(this.totalProfit),
+                        totalProfitPercent: parseFloat(this.totalProfitPercent),
+                        lastUpdate: Date.now()
                     };
                     localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
                 } catch (error) {
