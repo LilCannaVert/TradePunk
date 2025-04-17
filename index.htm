@@ -879,7 +879,7 @@
                         }
                     });
 
-                    // Обновляем портфолио сразу после обновления тикеров
+                    // Обновляем портфолио при получении новых цен
                     if (this.portfolioPositions.length > 0) {
                         this.updatePortfolioTotals();
                     }
@@ -1185,56 +1185,56 @@
                     symbol: this.portfolioForm.selectedCoin.symbol,
                     pair: this.portfolioForm.selectedCoin.pair,
                     amount: parseFloat(this.portfolioForm.amount),
-                    buyPrice: parseFloat(this.portfolioForm.buyPrice),
-                    investment: parseFloat(this.portfolioForm.amount) * parseFloat(this.portfolioForm.buyPrice)
+                    buyPrice: parseFloat(this.portfolioForm.buyPrice)
                 };
 
                 this.portfolioPositions.push(position);
-                this.savePortfolio();
-                this.updatePortfolioTotals();
+                
+                // Сохраняем сразу после добавления
+                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
 
                 // Reset form
                 this.portfolioForm.searchQuery = '';
                 this.portfolioForm.selectedCoin = null;
                 this.portfolioForm.amount = '';
                 this.portfolioForm.buyPrice = '';
+
+                // Обновляем расчеты
+                this.updatePortfolioTotals();
             },
             removePosition(index) {
                 this.portfolioPositions.splice(index, 1);
+                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
                 this.updatePortfolioTotals();
-                this.savePortfolio();
             },
             updatePortfolioTotals() {
                 if (!this.portfolioPositions.length) return;
-
-                this.totalInvestment = 0;
-                this.currentValue = 0;
 
                 this.portfolioPositions.forEach((pos, index) => {
                     const ticker = this.tickers[pos.symbol];
                     if (ticker) {
                         const currentPrice = parseFloat(ticker.close);
                         const currentValue = pos.amount * currentPrice;
-                        const profit = currentValue - pos.investment;
-                        const profitPercent = pos.investment > 0 ? (profit / pos.investment) * 100 : 0;
+                        const investment = pos.amount * pos.buyPrice;
+                        const profit = currentValue - investment;
+                        const profitPercent = investment > 0 ? (profit / investment) * 100 : 0;
 
                         this.portfolioPositions[index] = {
                             ...pos,
                             currentPrice,
                             currentValue,
+                            investment,
                             profit,
                             profitPercent
                         };
-
-                        this.totalInvestment += pos.investment;
-                        this.currentValue += currentValue;
                     }
                 });
 
+                // Обновляем общие показатели
+                this.totalInvestment = this.portfolioPositions.reduce((sum, pos) => sum + (pos.investment || 0), 0);
+                this.currentValue = this.portfolioPositions.reduce((sum, pos) => sum + (pos.currentValue || 0), 0);
                 this.totalProfit = this.currentValue - this.totalInvestment;
                 this.totalProfitPercent = this.totalInvestment > 0 ? (this.totalProfit / this.totalInvestment) * 100 : 0;
-
-                this.savePortfolio();
             },
             savePortfolio() {
                 const portfolioData = {
@@ -1251,15 +1251,9 @@
             },
             loadPortfolio() {
                 try {
-                    const savedData = localStorage.getItem('portfolioData');
+                    const savedData = localStorage.getItem('portfolioPositions');
                     if (savedData) {
-                        const data = JSON.parse(savedData);
-                        this.portfolioPositions = data.positions || [];
-                        
-                        // Обновляем значения если есть тикеры
-                        if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
-                            this.updatePortfolioTotals();
-                        }
+                        this.portfolioPositions = JSON.parse(savedData);
                     }
                 } catch (error) {
                     console.error('Error loading portfolio:', error);
