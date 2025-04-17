@@ -15,7 +15,6 @@
           <header class="flex relative h-14 gap-4 items-center justify-between px-2 text-sm lg:text-xl">
             <div class="flex items-center">
               <div :class="[status === 0 ? 'red' : 'green']" class="status mx-3"> </div>
-              <div class="clock">{{ digitalClock }}</div>
             </div>
             
             <Transition>
@@ -66,21 +65,6 @@
               <div class="tickers w-full max-w-[500px] mx-auto"> 
                 <div class="mb-2">
                   <div class="flex items-center">
-                    <button @click="toggleChartScreen" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
-                        Chart
-                    </button>
-                    <button @click="toggleOrderBookModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
-                        Order Book
-                    </button>
-                    <button @click="openShareModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
-                        Share
-                    </button>
-                    <button @click="toggleCalculator" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
-                        Calculator
-                    </button>
-                    <button @click="togglePortfolio" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
-                        Portfolio
-                    </button>
                     <h2 class="text-glow font-bold text-xl ml-2"></h2>
                   </div>
                   <div class="delimiter2 my-4"></div>
@@ -168,7 +152,7 @@
               <div v-if="showChartScreen" class="chart-screen-overlay">
                 <div class="chart-screen-content">
                   <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-[--color-primary-silver]"> {{ currentTicker }}</h2>
+                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Advanced Chart - {{ currentTicker }}</h2>
                   </div>
                   
                   <!-- Chart Navigation -->
@@ -546,6 +530,30 @@
             </div>
           </div>
         </div>
+
+        <!-- Добавляем навигационную панель внизу экрана -->
+        <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
+          <div class="container mx-auto flex justify-around">
+            <button @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm font-rajdhani min-w-[100px] text-center">
+              Chart
+            </button>
+            <button @click="toggleOrderBookModal" class="nav-button bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm font-rajdhani min-w-[100px] text-center">
+              Order Book
+            </button>
+            <button @click="openShareModal" class="nav-button bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm font-rajdhani min-w-[100px] text-center">
+              Share
+            </button>
+            <button @click="toggleCalculator" class="nav-button bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm font-rajdhani min-w-[100px] text-center">
+              Calculator
+            </button>
+            <button @click="togglePortfolio" class="nav-button bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm font-rajdhani min-w-[100px] text-center">
+              Portfolio
+            </button>
+          </div>
+        </div>
+
+        <!-- Добавляем отступ, чтобы контент не перекрывался панелью навигации -->
+        <div class="pb-16"></div>
     </div>
 <script>
     const { createApp } = Vue
@@ -875,10 +883,6 @@
             },
             toggleLatestTrades() {
                 this.showLatestTrades = !this.showLatestTrades;
-            },
-            startClock() {
-                this.digitalClock = new Date().toLocaleTimeString();
-                setTimeout(() => { this.startClock() }, 1000);
             },
             sockInit() {
                 this.sock = new WebSocket('wss://stream.binance.com:9443/ws');
@@ -1627,7 +1631,6 @@
         },
         mounted() {
             this.sockInit();
-            this.startClock();
             this.appendScript(this.initWidget);
             this.prepareOrderBook();
             this.initWidget(); 
@@ -2103,6 +2106,50 @@
     .cb2.active {
         background-color: var(--color-primary-purple);
         color: white;
+    }
+    
+    /* Стили для нижней навигационной панели */
+    .fixed.bottom-0 {
+        background-color: var(--color-bg--300);
+        box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
+    }
+    
+    .nav-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-weight: 500;
+        border: 1px solid var(--color-primary-blue);
+        box-shadow: 0 0 5px var(--color-primary-blue);
+        clip-path: var(--ui-notch-path);
+    }
+    
+    .nav-button:hover {
+        background-color: var(--color-primary-purple);
+        box-shadow: 0 0 15px var(--color-primary-blue);
+        transform: translateY(-3px);
+        border-color: var(--color-primary-purple);
+    }
+    
+    .nav-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px var(--color-primary-purple);
+    }
+    
+    /* Дополнительные стили для панели навигации */
+    @media (max-width: 640px) {
+        .fixed.bottom-0 .container {
+            flex-wrap: wrap;
+        }
+        
+        .nav-button {
+            min-width: 80px;
+            margin: 0 2px;
+            font-size: 0.75rem;
+            padding: 0.5rem 0.5rem;
+        }
     }
 </style>
 </body>
