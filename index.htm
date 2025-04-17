@@ -133,16 +133,37 @@
                 </div>
               </div>
 
-              <div class="chart flex-grow mt-0" v-if="!showChartScreen">
-                <div class="flex items-center justify-between">
-                  <h2 class="text-glow font-bold text-xl">Trading Chart</h2>
-                </div>
-                <div class="delimiter2 my-4"></div>
-                <div class="cb relative" style="height: 650px; width: 100%;">
-                  <div :id="container_id" style="height: 100%; width: 100%;"></div>
+              <!-- Удаляем модальное окно Chart -->
+              <div v-if="showChartModal" 
+                   id="chartModal" 
+                   class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+                   @click="handleChartModalClick">
+                <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
+                  <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Chart for {{ currentTicker }}</h2>
+                    <button @click="toggleChartModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
+                  </div>
+                  
+                  <!-- Chart Display -->
+                  <div class="mt-4 mb-4">
+                    <div class="cb relative" style="height: 500px; width: 100%;">
+                      <div :id="'chart_container_modal'" style="height: 100%; width: 100%;"></div>
+                    </div>
+                  </div>
+
+                  <!-- Chart Controls -->
+                  <div class="mt-4 flex flex-wrap gap-2">
+                    <button @click="setTimeframe('1m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1m</button>
+                    <button @click="setTimeframe('5m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">5m</button>
+                    <button @click="setTimeframe('15m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">15m</button>
+                    <button @click="setTimeframe('1h')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1h</button>
+                    <button @click="setTimeframe('4h')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">4h</button>
+                    <button @click="setTimeframe('1d')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1d</button>
+                    <button @click="setTimeframe('1w')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1w</button>
+                  </div>
                 </div>
               </div>
-              
+
               <!-- Добавляем полноэкранный Chart screen -->
               <div v-if="showChartScreen" class="fixed inset-0 bg-[--color-bg-base] z-50 p-4 overflow-auto">
                 <div class="flex justify-between items-center mb-4">
@@ -259,37 +280,6 @@
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Удаляем модальное окно Chart -->
-              <div v-if="showChartModal" 
-                   id="chartModal" 
-                   class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-                   @click="handleChartModalClick">
-                <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
-                  <div class="flex justify-between items-center">
-                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Chart for {{ currentTicker }}</h2>
-                    <button @click="toggleChartModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
-                  </div>
-                  
-                  <!-- Chart Display -->
-                  <div class="mt-4 mb-4">
-                    <div class="cb relative" style="height: 500px; width: 100%;">
-                      <div :id="'chart_container_modal'" style="height: 100%; width: 100%;"></div>
-                    </div>
-                  </div>
-
-                  <!-- Chart Controls -->
-                  <div class="mt-4 flex flex-wrap gap-2">
-                    <button @click="setTimeframe('1m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1m</button>
-                    <button @click="setTimeframe('5m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">5m</button>
-                    <button @click="setTimeframe('15m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">15m</button>
-                    <button @click="setTimeframe('1h')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1h</button>
-                    <button @click="setTimeframe('4h')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">4h</button>
-                    <button @click="setTimeframe('1d')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1d</button>
-                    <button @click="setTimeframe('1w')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1w</button>
                   </div>
                 </div>
               </div>
