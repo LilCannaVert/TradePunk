@@ -332,7 +332,7 @@
                            ref="tickerSearchInput"
                            placeholder="Search tickers..." 
                            class="w-full p-2 mb-4 border rounded bg-[--color-bg--500] text-white">
-                    <div class="grid grid-cols-4 gap-2 max-h-[300px] overflow-y-auto overflow-x-hidden">
+                    <div class="grid grid-cols-4 gap-2 max-h-[250px] overflow-y-auto overflow-x-hidden">
                         <div v-for="ticker in filteredShareTickers" 
                              :key="ticker.symbol" 
                              @click="toggleSelectedTicker(ticker.symbol)"
@@ -2068,7 +2068,7 @@
     }
 
     #shareModal .grid {
-        max-height: 60vh;
+        max-height: 40vh; /* Уменьшаем максимальную высоту сетки тикеров с 60vh до 40vh */
         overflow-y: auto;
         overflow-x: hidden;
         scrollbar-width: thin;
@@ -2084,10 +2084,11 @@
         justify-content: center;
         z-index: 50;
         padding-top: 5vh; /* Добавляем отступ сверху для лучшего позиционирования */
+        padding-bottom: 120px; /* Добавляем отступ снизу для учета высоты нижней панели навигации */
     }
 
     #shareModal .bg-[--color-bg--300] {
-        max-height: 80vh; /* Уменьшаем с 90vh до 80vh для лучшего позиционирования */
+        max-height: 70vh; /* Уменьшаем с 80vh до 70vh для лучшего позиционирования */
         overflow: hidden;
         width: 90%;
         max-width: 900px;
