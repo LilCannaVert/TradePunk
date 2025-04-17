@@ -156,20 +156,20 @@
                   </div>
                   
                   <!-- Chart Navigation -->
-                  <div class="flex flex-wrap gap-2 mb-4">
-                    <button @click="toggleOrderBookModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                  <div class="flex flex-wrap justify-center gap-2 mb-4">
+                    <button @click="toggleOrderBookModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
                       Order Book
                     </button>
-                    <button @click="openShareModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                    <button @click="openShareModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
                       Share
                     </button>
-                    <button @click="toggleCalculator" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                    <button @click="toggleCalculator" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
                       Calculator
                     </button>
-                    <button @click="togglePortfolio" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                    <button @click="togglePortfolio" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
                       Portfolio
                     </button>
-                    <button @click="toggleChartScreen" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                    <button @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
                       Tickers
                     </button>
                   </div>
@@ -532,21 +532,21 @@
         </div>
 
         <!-- Добавляем навигационную панель внизу экрана -->
-        <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
-          <div class="container mx-auto flex justify-around">
-            <button @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm font-rajdhani min-w-[100px] text-center">
+        <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-2">
+          <div class="container mx-auto flex justify-center">
+            <button @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Chart
             </button>
-            <button @click="toggleOrderBookModal" class="nav-button bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm font-rajdhani min-w-[100px] text-center">
+            <button @click="toggleOrderBookModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Order Book
             </button>
-            <button @click="openShareModal" class="nav-button bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm font-rajdhani min-w-[100px] text-center">
+            <button @click="openShareModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Share
             </button>
-            <button @click="toggleCalculator" class="nav-button bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm font-rajdhani min-w-[100px] text-center">
+            <button @click="toggleCalculator" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Calculator
             </button>
-            <button @click="togglePortfolio" class="nav-button bg-[--color-primary-blue] text-white px-4 py-2 rounded text-sm font-rajdhani min-w-[100px] text-center">
+            <button @click="togglePortfolio" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Portfolio
             </button>
           </div>
@@ -2124,6 +2124,13 @@
         border: 1px solid var(--color-primary-blue);
         box-shadow: 0 0 5px var(--color-primary-blue);
         clip-path: var(--ui-notch-path);
+        min-width: 90px;
+        max-width: 90px;
+        padding: 0.25rem 0;
+        font-size: 0.8rem;
+        margin: 0 3px;
+        text-align: center;
+        line-height: 1.2;
     }
     
     .nav-button:hover {
@@ -2142,13 +2149,24 @@
     @media (max-width: 640px) {
         .fixed.bottom-0 .container {
             flex-wrap: wrap;
+            justify-content: center;
         }
         
         .nav-button {
-            min-width: 80px;
-            margin: 0 2px;
-            font-size: 0.75rem;
-            padding: 0.5rem 0.5rem;
+            min-width: 70px;
+            max-width: 70px;
+            margin: 2px;
+            font-size: 0.7rem;
+            padding: 0.25rem 0;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .nav-button {
+            min-width: 60px;
+            max-width: 60px;
+            font-size: 0.65rem;
+            padding: 0.2rem 0;
         }
     }
 </style>
