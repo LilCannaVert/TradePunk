@@ -532,7 +532,7 @@
         </div>
 
         <!-- Добавляем навигационную панель внизу экрана -->
-        <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-2">
+        <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
           <div class="container mx-auto flex justify-center">
             <button @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Chart
@@ -2126,7 +2126,8 @@
         clip-path: var(--ui-notch-path);
         min-width: 90px;
         max-width: 90px;
-        padding: 0.25rem 0;
+        min-height: 32px;
+        padding: 0.5rem 0;
         font-size: 0.8rem;
         margin: 0 3px;
         text-align: center;
@@ -2155,9 +2156,10 @@
         .nav-button {
             min-width: 70px;
             max-width: 70px;
+            min-height: 28px;
             margin: 2px;
             font-size: 0.7rem;
-            padding: 0.25rem 0;
+            padding: 0.4rem 0;
         }
     }
     
@@ -2165,8 +2167,9 @@
         .nav-button {
             min-width: 60px;
             max-width: 60px;
+            min-height: 26px;
             font-size: 0.65rem;
-            padding: 0.2rem 0;
+            padding: 0.35rem 0;
         }
     }
 </style>
