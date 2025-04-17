@@ -404,7 +404,7 @@
           </div>
 
           <!-- Calculator Modal -->
-          <div v-if="showCalculator" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div v-if="showCalculator" id="calculatorModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-sm mx-4" @click.stop>
                 <div class="flex justify-between items-center mb-2 sticky top-0 bg-[--color-bg--300] z-10">
                     <h2 class="text-base font-bold text-[--color-primary-silver]">Calculator</h2>
@@ -422,7 +422,7 @@
           </div>
 
           <!-- Portfolio Modal -->
-          <div v-if="showPortfolio" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div v-if="showPortfolio" id="portfolioModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div class="bg-[--color-bg--300] rounded-lg p-4 w-full max-w-2xl mx-4" @click.stop>
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-[--color-primary-silver]">Portfolio</h2>
@@ -1065,6 +1065,13 @@
                 this.showOrderBookModal = !this.showOrderBookModal;
                 if (this.showOrderBookModal) {
                     document.body.classList.add('no-scroll'); 
+                    // Если открыто поверх Chart
+                    if (this.showChartScreen) {
+                        setTimeout(() => {
+                            const orderBookModal = document.getElementById('orderBookModal');
+                            if (orderBookModal) orderBookModal.classList.add('modal-on-chart');
+                        }, 0);
+                    }
                 } else {
                     document.body.classList.remove('no-scroll'); 
                 }
@@ -1093,10 +1100,24 @@
             openShareModal() {
                 this.showShareModal = true;
                 this.toggleBodyScroll(true);
+                // Если открыто поверх Chart
+                if (this.showChartScreen) {
+                    setTimeout(() => {
+                        const shareModal = document.getElementById('shareModal');
+                        if (shareModal) shareModal.classList.add('modal-on-chart');
+                    }, 0);
+                }
             },
             toggleShareModal() {
                 this.showShareModal = !this.showShareModal;
                 this.toggleBodyScroll(this.showShareModal);
+                // Если открыто поверх Chart
+                if (this.showShareModal && this.showChartScreen) {
+                    setTimeout(() => {
+                        const shareModal = document.getElementById('shareModal');
+                        if (shareModal) shareModal.classList.add('modal-on-chart');
+                    }, 0);
+                }
             },
             toggleSelectedTicker(symbol) {
                 const index = this.selectedTickers.indexOf(symbol);
@@ -1188,6 +1209,13 @@
                 this.showCalculator = !this.showCalculator;
                 if (this.showCalculator) {
                     document.body.style.overflow = 'hidden';
+                    // Если открыто поверх Chart
+                    if (this.showChartScreen) {
+                        setTimeout(() => {
+                            const calculatorModal = document.getElementById('calculatorModal');
+                            if (calculatorModal) calculatorModal.classList.add('modal-on-chart');
+                        }, 0);
+                    }
                 } else {
                     document.body.style.overflow = 'auto';
                 }
@@ -1234,6 +1262,13 @@
                 this.showPortfolio = !this.showPortfolio;
                 if (this.showPortfolio) {
                     document.body.style.overflow = 'hidden';
+                    // Если открыто поверх Chart
+                    if (this.showChartScreen) {
+                        setTimeout(() => {
+                            const portfolioModal = document.getElementById('portfolioModal');
+                            if (portfolioModal) portfolioModal.classList.add('modal-on-chart');
+                        }, 0);
+                    }
                 } else {
                     document.body.style.overflow = 'auto';
                 }
@@ -1487,10 +1522,69 @@
                     this.$nextTick(() => {
                         this.initFullscreenChart();
                     });
+                    
+                    // Устанавливаем z-index модальных окон поверх Chart, если они открыты
+                    this.updateModalZIndexes(true);
                 } else {
                     // Разблокируем прокрутку и кликабельность основного экрана при закрытии графика
                     document.body.classList.remove('modal-open');
+                    
+                    // Возвращаем z-index модальных окон к исходному значению
+                    this.updateModalZIndexes(false);
                 }
+            },
+            
+            // Вспомогательный метод для обновления z-index всех модальных окон
+            updateModalZIndexes(isChartOpen) {
+                setTimeout(() => {
+                    // Order Book modal
+                    if (this.showOrderBookModal) {
+                        const orderBookModal = document.getElementById('orderBookModal');
+                        if (orderBookModal) {
+                            if (isChartOpen) {
+                                orderBookModal.classList.add('modal-on-chart');
+                            } else {
+                                orderBookModal.classList.remove('modal-on-chart');
+                            }
+                        }
+                    }
+                    
+                    // Share modal
+                    if (this.showShareModal) {
+                        const shareModal = document.getElementById('shareModal');
+                        if (shareModal) {
+                            if (isChartOpen) {
+                                shareModal.classList.add('modal-on-chart');
+                            } else {
+                                shareModal.classList.remove('modal-on-chart');
+                            }
+                        }
+                    }
+                    
+                    // Calculator modal
+                    if (this.showCalculator) {
+                        const calculatorModal = document.getElementById('calculatorModal');
+                        if (calculatorModal) {
+                            if (isChartOpen) {
+                                calculatorModal.classList.add('modal-on-chart');
+                            } else {
+                                calculatorModal.classList.remove('modal-on-chart');
+                            }
+                        }
+                    }
+                    
+                    // Portfolio modal
+                    if (this.showPortfolio) {
+                        const portfolioModal = document.getElementById('portfolioModal');
+                        if (portfolioModal) {
+                            if (isChartOpen) {
+                                portfolioModal.classList.add('modal-on-chart');
+                            } else {
+                                portfolioModal.classList.remove('modal-on-chart');
+                            }
+                        }
+                    }
+                }, 0);
             },
             
             // Инициализация TradingView графика в полноэкранном режиме
@@ -1908,6 +2002,21 @@
     
     body.modal-open .chart-screen-overlay {
         pointer-events: auto;
+    }
+    
+    .modal-on-chart {
+        z-index: 200 !important;
+    }
+    
+    /* Стили для модальных окон на Chart */
+    body.modal-open .modal-on-chart {
+        pointer-events: auto;
+    }
+    
+    /* Создаем небольшую тень для модальных окон на Chart */
+    .chart-screen-overlay + .modal-on-chart > div {
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        border: 2px solid var(--color-primary-purple);
     }
 
     .font-rajdhani {
