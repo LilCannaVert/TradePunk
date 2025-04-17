@@ -1053,9 +1053,18 @@
                 setTimeout(async () => { await this.prepareOrderBook() }, 500);
             },
             toggleOrderBookModal() {
-                this.showOrderBookModal = !this.showOrderBookModal;
                 if (this.showOrderBookModal) {
-                    document.body.classList.add('no-scroll'); 
+                    // Если окно уже открыто, просто закрываем его
+                    this.showOrderBookModal = false;
+                    document.body.classList.remove('no-scroll');
+                } else {
+                    // Закрываем все другие модальные окна перед открытием этого
+                    this.closeAllModals();
+                    
+                    // Открываем Order Book
+                    this.showOrderBookModal = true;
+                    document.body.classList.add('no-scroll');
+                    
                     // Если открыто поверх Chart
                     if (this.showChartScreen) {
                         setTimeout(() => {
@@ -1063,8 +1072,6 @@
                             if (orderBookModal) orderBookModal.classList.add('modal-on-chart');
                         }, 0);
                     }
-                } else {
-                    document.body.classList.remove('no-scroll'); 
                 }
             },
             closeKeyboard() {
@@ -1089,8 +1096,13 @@
                 }
             },
             openShareModal() {
+                // Закрываем все другие модальные окна перед открытием этого
+                this.closeAllModals();
+                
+                // Открываем Share Modal
                 this.showShareModal = true;
-                this.toggleBodyScroll(true);
+                document.body.style.overflow = 'hidden';
+                
                 // Если открыто поверх Chart
                 if (this.showChartScreen) {
                     setTimeout(() => {
@@ -1100,14 +1112,13 @@
                 }
             },
             toggleShareModal() {
-                this.showShareModal = !this.showShareModal;
-                this.toggleBodyScroll(this.showShareModal);
-                // Если открыто поверх Chart
-                if (this.showShareModal && this.showChartScreen) {
-                    setTimeout(() => {
-                        const shareModal = document.getElementById('shareModal');
-                        if (shareModal) shareModal.classList.add('modal-on-chart');
-                    }, 0);
+                if (this.showShareModal) {
+                    // Если окно уже открыто, просто закрываем его
+                    this.showShareModal = false;
+                    document.body.style.overflow = 'auto';
+                } else {
+                    // Используем существующий метод для открытия
+                    this.openShareModal();
                 }
             },
             toggleSelectedTicker(symbol) {
@@ -1197,9 +1208,18 @@
                 }
             },
             toggleCalculator() {
-                this.showCalculator = !this.showCalculator;
                 if (this.showCalculator) {
+                    // Если окно уже открыто, просто закрываем его
+                    this.showCalculator = false;
+                    document.body.style.overflow = 'auto';
+                } else {
+                    // Закрываем все другие модальные окна перед открытием этого
+                    this.closeAllModals();
+                    
+                    // Открываем Calculator
+                    this.showCalculator = true;
                     document.body.style.overflow = 'hidden';
+                    
                     // Если открыто поверх Chart
                     if (this.showChartScreen) {
                         setTimeout(() => {
@@ -1207,8 +1227,6 @@
                             if (calculatorModal) calculatorModal.classList.add('modal-on-chart');
                         }, 0);
                     }
-                } else {
-                    document.body.style.overflow = 'auto';
                 }
             },
             updateCalcSettings(settings) {
@@ -1250,9 +1268,18 @@
                 }
             },
             togglePortfolio() {
-                this.showPortfolio = !this.showPortfolio;
                 if (this.showPortfolio) {
+                    // Если окно уже открыто, просто закрываем его
+                    this.showPortfolio = false;
+                    document.body.style.overflow = 'auto';
+                } else {
+                    // Закрываем все другие модальные окна перед открытием этого
+                    this.closeAllModals();
+                    
+                    // Открываем Portfolio
+                    this.showPortfolio = true;
                     document.body.style.overflow = 'hidden';
+                    
                     // Если открыто поверх Chart
                     if (this.showChartScreen) {
                         setTimeout(() => {
@@ -1260,8 +1287,6 @@
                             if (portfolioModal) portfolioModal.classList.add('modal-on-chart');
                         }, 0);
                     }
-                } else {
-                    document.body.style.overflow = 'auto';
                 }
             },
             filterPortfolioCoins() {
@@ -1533,6 +1558,7 @@
             },
             // Метод для открытия/закрытия полноэкранного графика
             toggleChartScreen() {
+                // Chart Screen - это особый случай, который не требует закрытия
                 this.showChartScreen = !this.showChartScreen;
                 if (this.showChartScreen) {
                     // Блокируем прокрутку и кликабельность основного экрана
@@ -1642,7 +1668,19 @@
                 if (this.fullscreenChartInstance && this.fullscreenChartInstance.iframe && this.fullscreenChartInstance.iframe.contentWindow) {
                     this.fullscreenChartInstance.setInterval(timeframe);
                 }
-            }
+            },
+            // Метод для закрытия всех модальных окон
+            closeAllModals() {
+                // Закрываем все модальные окна, кроме Chart Screen
+                this.showShareModal = false;
+                this.showOrderBookModal = false;
+                this.showCalculator = false;
+                this.showPortfolio = false;
+                
+                // Восстанавливаем прокрутку страницы
+                document.body.style.overflow = 'auto';
+                document.body.classList.remove('no-scroll');
+            },
         },
         mounted() {
             this.sockInit();
