@@ -66,6 +66,9 @@
               <div class="tickers w-full max-w-[500px] mx-auto"> 
                 <div class="mb-2">
                   <div class="flex items-center">
+                    <button @click="toggleChartModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
+                        Chart
+                    </button>
                     <button @click="toggleOrderBookModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
                         Order Book
                     </button>
@@ -130,7 +133,7 @@
                 </div>
               </div>
 
-              <div class="chart flex-grow mt-0">
+              <div class="chart flex-grow mt-0" v-if="false">
                 <div class="flex items-center justify-between">
                   <h2 class="text-glow font-bold text-xl">Trading Chart</h2>
                 </div>
@@ -225,6 +228,37 @@
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chart Modal -->
+              <div v-if="showChartModal" 
+                   id="chartModal" 
+                   class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+                   @click="handleChartModalClick">
+                <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
+                  <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-[--color-primary-silver]">Chart for {{ currentTicker }}</h2>
+                    <button @click="toggleChartModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
+                  </div>
+                  
+                  <!-- Chart Display -->
+                  <div class="mt-4 mb-4">
+                    <div class="cb relative" style="height: 500px; width: 100%;">
+                      <div :id="'chart_container_modal'" style="height: 100%; width: 100%;"></div>
+                    </div>
+                  </div>
+
+                  <!-- Chart Controls -->
+                  <div class="mt-4 flex flex-wrap gap-2">
+                    <button @click="setTimeframe('1m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1m</button>
+                    <button @click="setTimeframe('5m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">5m</button>
+                    <button @click="setTimeframe('15m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">15m</button>
+                    <button @click="setTimeframe('1h')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1h</button>
+                    <button @click="setTimeframe('4h')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">4h</button>
+                    <button @click="setTimeframe('1d')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1d</button>
+                    <button @click="setTimeframe('1w')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1w</button>
                   </div>
                 </div>
               </div>
@@ -802,7 +836,12 @@
                 currentValue: 0,
                 totalProfit: 0,
                 totalProfitPercent: 0,
-                lastUpdate: Date.now()
+                lastUpdate: Date.now(),
+                
+                // Добавляем новые переменные для Chart Modal
+                showChartModal: false,
+                currentTimeframe: '15m',
+                chartModalInstance: null
             }
         },
         methods: {
@@ -1330,6 +1369,65 @@
                 }
 
                 this.status = 2;
+            },
+            
+            // Добавляем новые методы для Chart Modal
+            toggleChartModal() {
+                this.showChartModal = !this.showChartModal;
+                if (this.showChartModal) {
+                    // Инициализируем график в модальном окне после того, как DOM обновится
+                    this.$nextTick(() => {
+                        this.initChartModal();
+                    });
+                }
+            },
+            handleChartModalClick(event) {
+                // Закрываем модальное окно при клике на затемненную область
+                if (event.target.id === 'chartModal') {
+                    this.toggleChartModal();
+                }
+            },
+            initChartModal() {
+                // Инициализация TradingView графика в модальном окне
+                const chartContainerId = 'chart_container_modal';
+                const container = document.getElementById(chartContainerId);
+                
+                if (container && window.TradingView) {
+                    // Если уже есть экземпляр графика в модальном окне, удаляем его
+                    if (this.chartModalInstance) {
+                        this.chartModalInstance.remove();
+                        this.chartModalInstance = null;
+                    }
+                    
+                    // Создаем новый экземпляр графика с текущим ticker и timeframe
+                    this.chartModalInstance = new window.TradingView.widget({
+                        container_id: chartContainerId,
+                        autosize: true,
+                        symbol: this.ticker,
+                        interval: this.currentTimeframe,
+                        timezone: 'Etc/UTC',
+                        theme: 'dark',
+                        style: '1',
+                        locale: 'en',
+                        toolbar_bg: '#f1f3f6',
+                        enable_publishing: false,
+                        allow_symbol_change: true,
+                        save_image: false,
+                        studies: ['RSI@tv-basicstudies'],
+                        show_popup_button: true,
+                        popup_width: '1000',
+                        popup_height: '650'
+                    });
+                } else {
+                    console.error('TradingView widget not available or container not found');
+                }
+            },
+            setTimeframe(timeframe) {
+                this.currentTimeframe = timeframe;
+                if (this.chartModalInstance) {
+                    // Обновляем интервал графика
+                    this.chartModalInstance.setInterval(timeframe);
+                }
             }
         },
         mounted() {
