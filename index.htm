@@ -66,7 +66,7 @@
               <div class="tickers w-full max-w-[500px] mx-auto"> 
                 <div class="mb-2">
                   <div class="flex items-center">
-                    <button @click="toggleChartModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
+                    <button @click="toggleChartScreen" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
                         Chart
                     </button>
                     <button @click="toggleOrderBookModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm ml-2 font-rajdhani">
@@ -133,13 +133,55 @@
                 </div>
               </div>
 
-              <div class="chart flex-grow mt-0" v-if="false">
+              <div class="chart flex-grow mt-0" v-if="!showChartScreen">
                 <div class="flex items-center justify-between">
                   <h2 class="text-glow font-bold text-xl">Trading Chart</h2>
                 </div>
                 <div class="delimiter2 my-4"></div>
                 <div class="cb relative" style="height: 650px; width: 100%;">
                   <div :id="container_id" style="height: 100%; width: 100%;"></div>
+                </div>
+              </div>
+              
+              <!-- Добавляем полноэкранный Chart screen -->
+              <div v-if="showChartScreen" class="fixed inset-0 bg-[--color-bg-base] z-50 p-4 overflow-auto">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-lg font-bold text-[--color-primary-silver]">Advanced Chart - {{ currentTicker }}</h2>
+                  <button @click="toggleChartScreen" class="bg-red-500 text-white px-4 py-2 rounded">
+                    Back to Main Screen
+                  </button>
+                </div>
+                
+                <!-- Chart Navigation -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                  <button @click="toggleOrderBookModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                    Order Book
+                  </button>
+                  <button @click="openShareModal" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                    Share
+                  </button>
+                  <button @click="toggleCalculator" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                    Calculator
+                  </button>
+                  <button @click="togglePortfolio" class="bg-[--color-primary-blue] text-white px-2 py-1 rounded text-sm font-rajdhani">
+                    Portfolio
+                  </button>
+                </div>
+                
+                <!-- Chart Timeframe Controls -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                  <button @click="setChartTimeframe('1m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1m</button>
+                  <button @click="setChartTimeframe('5m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">5m</button>
+                  <button @click="setChartTimeframe('15m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">15m</button>
+                  <button @click="setChartTimeframe('1h')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1h</button>
+                  <button @click="setChartTimeframe('4h')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">4h</button>
+                  <button @click="setChartTimeframe('1d')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1d</button>
+                  <button @click="setChartTimeframe('1w')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1w</button>
+                </div>
+                
+                <!-- Advanced Chart Display -->
+                <div class="cb relative" style="height: calc(100vh - 200px); width: 100%;">
+                  <div id="chart_container_fullscreen" style="height: 100%; width: 100%;"></div>
                 </div>
               </div>
 
@@ -232,7 +274,7 @@
                 </div>
               </div>
 
-              <!-- Chart Modal -->
+              <!-- Удаляем модальное окно Chart -->
               <div v-if="showChartModal" 
                    id="chartModal" 
                    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
@@ -841,7 +883,9 @@
                 // Добавляем новые переменные для Chart Modal
                 showChartModal: false,
                 currentTimeframe: '15m',
-                chartModalInstance: null
+                chartModalInstance: null,
+                showChartScreen: false,
+                fullscreenChartInstance: null,
             }
         },
         methods: {
@@ -946,6 +990,22 @@
                 this.options.symbol = 'BINANCE:' + symbol;
                 if (window.tvWidget) {
                     window.tvWidget.setSymbol('BINANCE:' + symbol);
+                }
+                
+                // Если открыт полноэкранный график, обновляем его
+                if (this.showChartScreen && this.fullscreenChartInstance) {
+                    // Пытаемся обновить символ через API TradingView
+                    try {
+                        this.fullscreenChartInstance.setSymbol('BINANCE:' + symbol, () => {
+                            console.log('Chart symbol updated to', symbol);
+                        });
+                    } catch (e) {
+                        console.error('Error updating chart symbol:', e);
+                        // Если не получилось обновить, переинициализируем график
+                        this.$nextTick(() => {
+                            this.initFullscreenChart();
+                        });
+                    }
                 }
             },
             setFavorite(symbol) {
@@ -1403,7 +1463,7 @@
                     this.chartModalInstance = new window.TradingView.widget({
                         container_id: chartContainerId,
                         autosize: true,
-                        symbol: this.ticker,
+                        symbol: 'BINANCE:' + this.ticker,
                         interval: this.currentTimeframe,
                         timezone: 'Etc/UTC',
                         theme: 'dark',
@@ -1427,6 +1487,65 @@
                 if (this.chartModalInstance) {
                     // Обновляем интервал графика
                     this.chartModalInstance.setInterval(timeframe);
+                }
+            },
+            setChartTimeframe(timeframe) {
+                this.currentTimeframe = timeframe;
+                if (this.chartModalInstance) {
+                    // Обновляем интервал графика
+                    this.chartModalInstance.setInterval(timeframe);
+                }
+            },
+            // Метод для открытия/закрытия полноэкранного графика
+            toggleChartScreen() {
+                this.showChartScreen = !this.showChartScreen;
+                if (this.showChartScreen) {
+                    // Инициализируем график в полноэкранном режиме после того, как DOM обновится
+                    this.$nextTick(() => {
+                        this.initFullscreenChart();
+                    });
+                }
+            },
+            
+            // Инициализация TradingView графика в полноэкранном режиме
+            initFullscreenChart() {
+                const chartContainerId = 'chart_container_fullscreen';
+                const container = document.getElementById(chartContainerId);
+                
+                if (container && window.TradingView) {
+                    // Создаем новый экземпляр графика с текущим ticker и timeframe
+                    this.fullscreenChartInstance = new window.TradingView.widget({
+                        container_id: chartContainerId,
+                        autosize: true,
+                        symbol: 'BINANCE:' + this.ticker,
+                        interval: this.currentTimeframe,
+                        timezone: 'Etc/UTC',
+                        theme: 'dark',
+                        style: '1',
+                        locale: 'en',
+                        toolbar_bg: '#f1f3f6',
+                        enable_publishing: false,
+                        allow_symbol_change: true,
+                        save_image: false,
+                        studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies'],
+                        show_popup_button: true,
+                        popup_width: '1000',
+                        popup_height: '650',
+                        hide_side_toolbar: false,
+                        details: true,
+                        hotlist: true,
+                        calendar: true
+                    });
+                } else {
+                    console.error('TradingView widget not available or container not found');
+                }
+            },
+            
+            // Установка временного интервала для полноэкранного графика
+            setChartTimeframe(timeframe) {
+                this.currentTimeframe = timeframe;
+                if (this.fullscreenChartInstance && this.fullscreenChartInstance.iframe && this.fullscreenChartInstance.iframe.contentWindow) {
+                    this.fullscreenChartInstance.setInterval(timeframe);
                 }
             }
         },
