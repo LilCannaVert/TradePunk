@@ -879,6 +879,12 @@
                         }
                     });
 
+                    // Когда получены данные о тикерах, проверяем портфолио
+                    if (Object.keys(this.tickers).length > 100 && this.portfolioPositions.length === 0) {
+                        // Если тикеры загружены, но портфолио пусто, попробуем загрузить его снова
+                        this.loadState();
+                    }
+
                     // Обновляем портфолио при получении новых цен
                     if (this.portfolioPositions.length > 0) {
                         this.updatePortfolioTotals();
@@ -1177,6 +1183,7 @@
             },
             addPortfolioPosition() {
                 if (!this.portfolioForm.selectedCoin || !this.portfolioForm.amount || !this.portfolioForm.buyPrice) {
+                    console.log('Cannot add position: missing data', this.portfolioForm);
                     return;
                 }
 
@@ -1184,11 +1191,18 @@
                     symbol: this.portfolioForm.selectedCoin.symbol,
                     pair: this.portfolioForm.selectedCoin.pair,
                     amount: parseFloat(this.portfolioForm.amount),
-                    buyPrice: parseFloat(this.portfolioForm.buyPrice)
+                    buyPrice: parseFloat(this.portfolioForm.buyPrice),
+                    currentPrice: 0,
+                    currentValue: 0,
+                    profit: 0,
+                    profitPercent: 0
                 };
 
+                console.log('Adding position to portfolio:', position);
                 this.portfolioPositions.push(position);
-                this.saveState(); // Сохраняем состояние после добавления
+                
+                // Сохраняем состояние после добавления позиции
+                this.saveState();
 
                 // Сбрасываем форму
                 this.portfolioForm.searchQuery = '';
@@ -1213,6 +1227,7 @@
                         amount: pos.amount,
                         buyPrice: pos.buyPrice
                     }));
+                    
                     localStorage.setItem('portfolioState', JSON.stringify(portfolioState));
                     console.log('Portfolio state saved:', portfolioState); // Debug log
                 } catch (error) {
@@ -1234,11 +1249,12 @@
                         console.log('Portfolio state loaded:', this.portfolioPositions); // Debug log
                         
                         // Сразу обновляем расчеты после загрузки
-                        if (this.portfolioPositions.length > 0) {
+                        if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
                             this.updatePortfolioTotals();
                         }
                     } else {
                         console.log('No saved portfolio state found.'); // Debug log
+                        this.portfolioPositions = [];
                     }
                 } catch (error) {
                     console.error('Error loading portfolio state:', error);
@@ -1325,7 +1341,11 @@
             this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
             
             // Загружаем сохраненное состояние портфеля
-            this.loadState();
+            // Важно загрузить после инициализации сокета, чтобы данные тикеров были доступны
+            setTimeout(() => {
+                this.loadState();
+                console.log('Delayed portfolio loading executed');
+            }, 2000);
 
             // Обновляем данные портфолио при получении новых цен
             setInterval(() => {
