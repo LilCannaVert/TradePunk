@@ -480,30 +480,32 @@
 
                 <!-- Portfolio Positions с возможностью скролла -->
                 <div class="bg-[--color-bg--500] rounded-lg p-4">
-                    <div class="grid grid-cols-1 gap-3 max-h-[300px] overflow-y-auto pr-2">
-                        <div v-for="(position, index) in portfolioPositions" 
-                             :key="index"
-                             class="bg-[--color-bg--300] p-3 rounded-lg">
-                            <div class="flex justify-between items-center">
-                                <div class="flex-1">
-                                    <div class="font-bold">{{ position.pair }}</div>
-                                    <div class="text-sm">
-                                        Amount: {{ position.amount }} coins
-                                        <span class="mx-2">|</span>
-                                        Buy Price: ${{ position.buyPrice }}
+                    <div style="max-height: 300px; overflow-y: auto; padding-right: 8px;" class="portfolio-positions-container">
+                        <div class="grid grid-cols-1 gap-3">
+                            <div v-for="(position, index) in portfolioPositions" 
+                                 :key="index"
+                                 class="bg-[--color-bg--300] p-3 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <div class="flex-1">
+                                        <div class="font-bold">{{ position.pair }}</div>
+                                        <div class="text-sm">
+                                            Amount: {{ position.amount }} coins
+                                            <span class="mx-2">|</span>
+                                            Buy Price: ${{ position.buyPrice }}
+                                        </div>
                                     </div>
+                                    <div class="text-right">
+                                        <div :class="position.profit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="font-bold">
+                                            {{ position.profit >= 0 ? '+' : '' }}${{ position.profit.toFixed(2) }}
+                                        </div>
+                                        <div :class="position.profitPercent >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="text-sm">
+                                            {{ position.profitPercent >= 0 ? '+' : '' }}{{ position.profitPercent.toFixed(2) }}%
+                                        </div>
+                                    </div>
+                                    <button @click="removePosition(index)" class="ml-4 text-red-500 hover:text-red-700">
+                                        ✕
+                                    </button>
                                 </div>
-                                <div class="text-right">
-                                    <div :class="position.profit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="font-bold">
-                                        {{ position.profit >= 0 ? '+' : '' }}${{ position.profit.toFixed(2) }}
-                                    </div>
-                                    <div :class="position.profitPercent >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="text-sm">
-                                        {{ position.profitPercent >= 0 ? '+' : '' }}{{ position.profitPercent.toFixed(2) }}%
-                                    </div>
-                                </div>
-                                <button @click="removePosition(index)" class="ml-4 text-red-500 hover:text-red-700">
-                                    ✕
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -2230,6 +2232,26 @@
     }
     
     /* Стили для области с позициями портфолио */
+    .portfolio-positions-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 3px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+    
+    /* Убираем старые неиспользуемые стили */
     #portfolioModal .grid.max-h-\[300px\] {
         scrollbar-width: thin;
         scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
