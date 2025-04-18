@@ -33,20 +33,31 @@
     
     /* Стили для кнопок в верхнем углу экрана */
     .top-corner-button {
-        padding: 6px 12px;
-        border-radius: 4px;
+        padding: 8px 15px;
+        border-radius: 6px;
         font-weight: bold;
         cursor: pointer;
         transition: all 0.2s ease-in-out;
+        display: inline-block;
+        text-align: center;
+        border: 2px solid;
+        z-index: 100;
+        position: relative;
+        font-size: 14px;
+        margin-top: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     .left-button {
         background-color: var(--color-primary-purple);
         color: white;
-        margin-left: 5px;
+        margin-left: 10px;
+        border-color: rgba(255, 255, 255, 0.5);
     }
     .right-button {
         background-color: var(--color-primary-blue);
         color: white;
+        margin-right: 10px;
+        border-color: rgba(255, 255, 255, 0.5);
     }
     .top-corner-button:hover {
         transform: translateY(-2px);
@@ -63,13 +74,13 @@
     <div id="app">
         <div class="relative p-2">
           <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
-            <div class="flex items-center absolute left-0 top-0">
+            <div class="flex items-center absolute left-0 top-0 z-50">
               <button @click="toggleMempoolModal" class="top-corner-button left-button">
                 Mempool
               </button>
             </div>
             
-            <div class="absolute top-0 right-0">
+            <div class="absolute top-0 right-0 z-50">
               <button @click="toggleNewsScreen" class="top-corner-button right-button">
                 News
               </button>
