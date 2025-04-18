@@ -920,7 +920,18 @@
             sockMessage(e) {
                 let data = JSON.parse(e.data);
                 if (Array.isArray(data)) {
+                    // Log the number of ticker updates received
+                    console.log(`Received ${data.length} ticker updates`);
+                    
+                    // Track how many tickers were updated
+                    let updatedCount = 0;
+                    
                     data.forEach(ticker => {
+                        // Log a sample of the ticker data
+                        if (ticker.s === 'BTCUSDT' || ticker.s === 'ETHUSDT') {
+                            console.log(`${ticker.s} price: ${ticker.c}`);
+                        }
+                        
                         if (ticker.s.endsWith('BTC')) {
                             this.tickers[ticker.s] = {
                                 symbol: ticker.s,
@@ -938,7 +949,8 @@
                                 percent: parseFloat(ticker.P),
                                 arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
                                 style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
-                            }
+                            };
+                            updatedCount++;
                         }
                         if (ticker.s.endsWith('USDT')) {
                             this.tickers[ticker.s] = {
@@ -957,12 +969,15 @@
                                 percent: parseFloat(ticker.P),
                                 arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
                                 style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
-                            }
+                            };
+                            updatedCount++;
                         }
                     });
+                    
+                    // Log total number of tickers updated
+                    console.log(`Updated ${updatedCount} tickers`);
 
                     if (Object.keys(this.tickers).length > 0) {
-
                         if (this.portfolioPositions.length === 0) {
                             console.log('Tickers received, trying to load portfolio');
                             this.loadState();
@@ -1162,16 +1177,21 @@
                 }
             },
             formatTickerPrice(ticker) {
-                if (ticker.symbol === 'BTCUSDT' || ticker.symbol === 'ETHUSDT' || ticker.symbol === 'BNBUSDT') {
-                    return parseFloat(ticker.close).toFixed(2);
-                }
-                if (ticker.symbol.endsWith('BTC')) {
-                    return ticker.close; 
-                }
+                let price;
                 if (ticker.symbol.endsWith('USDT')) {
-                    return parseFloat(ticker.close).toFixed(4);
+                    // For USDT pairs, display 4 decimal places
+                    price = parseFloat(ticker.close).toFixed(4);
+                } else {
+                    // For other pairs (like BTC), display as is
+                    price = ticker.close;
                 }
-                return ticker.close;
+                
+                // Periodically log sample prices to verify they're correctly formatted
+                if (ticker.symbol === 'BTCUSDT' || ticker.symbol === 'ETHUSDT') {
+                    console.log(`Formatted price for ${ticker.symbol}: ${price} (original: ${ticker.close})`);
+                }
+                
+                return price;
             },
             shareMultipleTickers() {
                 if (!this.selectedTickers.length) return;
@@ -1690,10 +1710,21 @@
                 document.body.style.overflow = 'auto';
             },
             formatDisplayPrice(ticker) {
+                let price;
                 if (ticker.symbol.endsWith('USDT')) {
-                    return parseFloat(ticker.close).toFixed(4);
+                    // For USDT pairs, display 4 decimal places
+                    price = parseFloat(ticker.close).toFixed(4);
+                } else {
+                    // For other pairs (like BTC), display as is
+                    price = ticker.close;
                 }
-                return ticker.close;
+                
+                // Periodically log sample prices to verify they're correctly formatted
+                if (ticker.symbol === 'BTCUSDT' || ticker.symbol === 'ETHUSDT') {
+                    console.log(`Formatted display price for ${ticker.symbol}: ${price} (original: ${ticker.close})`);
+                }
+                
+                return price;
             },
             toggleNewsScreen() {
                 this.showNewsScreen = !this.showNewsScreen;
@@ -1712,18 +1743,24 @@
                     this.newsLoading = true;
                     
                     console.log(`Loading news for page ${this.newsPage}`);
-
-
+                    
+                    // Each request gets more news data by date
+                    // For page 1, we get latest news
+                    // For subsequent pages, we use the oldest timestamp as reference
+                    
+                    // Base URL for CryptoCompare news API
                     let apiUrl = 'https://min-api.cryptocompare.com/data/v2/news/?lang=EN';
                     
+                    // For page 1, get the latest news (no timestamp filtering)
                     if (this.newsPage === 1) {
                         apiUrl += '&sortOrder=latest';
                     } 
-
+                    // For subsequent pages, get news older than the oldest news we already have
                     else if (this.newsItems.length > 0) {
-
+                        // Find the oldest news item by published_on timestamp
                         const oldestItem = [...this.newsItems].sort((a, b) => a.published_on - b.published_on)[0];
-
+                        
+                        // Use timestamp parameter to get news older than our oldest item
                         apiUrl += `&sortOrder=latest&toTs=${oldestItem.published_on - 1}`;
                         console.log(`Getting news older than ${new Date(oldestItem.published_on * 1000).toLocaleString()}`);
                     }
@@ -1736,23 +1773,27 @@
                     if (data.Data && Array.isArray(data.Data) && data.Data.length > 0) {
                         console.log(`Received ${data.Data.length} news items`);
                         
+                        // Log the date range of returned news
                         if (data.Data.length > 0) {
                             const firstDate = new Date(data.Data[0].published_on * 1000);
                             const lastDate = new Date(data.Data[data.Data.length-1].published_on * 1000);
                             console.log(`News date range: ${firstDate.toLocaleString()} - ${lastDate.toLocaleString()}`);
                         }
                         
+                        // For the first page, replace the existing news
                         if (this.newsPage === 1) {
                             this.newsItems = data.Data;
                         } 
-
+                        // For subsequent pages, append the new news if they're not already in our list
                         else {
-
+                            // Create a set of existing IDs to quickly check for duplicates
                             const existingIds = new Set(this.newsItems.map(item => item.id));
                             
+                            // Filter out duplicates
                             const newItems = data.Data.filter(item => !existingIds.has(item.id));
                             console.log(`Found ${newItems.length} new unique articles`);
                             
+                            // Add new items to our list
                             if (newItems.length > 0) {
                                 this.newsItems = [...this.newsItems, ...newItems];
                             } else {
