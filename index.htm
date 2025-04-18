@@ -14,7 +14,6 @@
         <div class="relative p-2">
           <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
             <div class="flex items-center">
-
             </div>
             
             <Transition>
@@ -64,8 +63,43 @@
             <div class="flex gap-2 flex-col lg:flex-row">
               <div class="tickers w-full max-w-[500px] mx-auto"> 
                 <div class="mb-1">
-                  <div class="flex items-center">
+                  <div class="flex items-center justify-between">
                     <h2 class="text-glow font-bold text-xl ml-2"></h2>
+                    <div class="relative burger-menu-container">
+                      <button @click="toggleBurgerMenu" class="text-white p-2 rounded-full hover:bg-[--color-bg--500]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                      </button>
+                      <!-- Выпадающее меню бургера -->
+                      <div v-if="showBurgerMenu" class="absolute right-0 mt-1 w-48 bg-[--color-bg--300] rounded-md shadow-lg z-50 overflow-hidden cb">
+                        <div class="py-1">
+                          <button @click="toggleDemoTrading" class="flex w-full items-center px-4 py-2 text-sm text-white hover:bg-[--color-bg--500]">
+                            <span v-if="isDemoMode" class="inline-block h-2 w-2 rounded-full bg-green-500 mr-2"></span>
+                            <span v-else class="inline-block h-2 w-2 rounded-full bg-gray-500 mr-2"></span>
+                            Демо-трейдинг
+                          </button>
+                          <button @click="toggleNotesModal" class="flex w-full items-center px-4 py-2 text-sm text-white hover:bg-[--color-bg--500]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Заметки
+                          </button>
+                          <button @click="toggleNewsModal" class="flex w-full items-center px-4 py-2 text-sm text-white hover:bg-[--color-bg--500]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                            </svg>
+                            Новости
+                          </button>
+                          <button @click="toggleTheme" class="flex w-full items-center px-4 py-2 text-sm text-white hover:bg-[--color-bg--500]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                            </svg>
+                            Сменить тему
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div class="delimiter2 my-2"></div>
                   <div class="cb flex items-center" style="max-height: 80px;">
@@ -77,9 +111,9 @@
                 </div>
                 <div class="mb-1">
                     <ul class="flex gap-2 justify-between h-8 flex-wrap"> 
-                        <li @click="filterAsset('USDT')" :class="[asset === 'USDT' ? 'active filter-button' : 'filter-button']" class="cb2 relative overflow-hidden flex flex-grow items-center justify-center cursor-pointer">USDT</li>
-                        <li @click="filterAsset('BTC')" :class="[asset === 'BTC' ? 'active filter-button' : 'filter-button']" class="cb2 relative overflow-hidden flex flex-grow items-center justify-center cursor-pointer">BTC</li>
-                        <li @click="filterAsset('FAV')" :class="[asset === 'FAV' ? 'active filter-button' : 'filter-button']" class="cb2 relative overflow-hidden flex flex-grow items-center justify-center cursor-pointer">
+                        <li @click="filterAsset('USDT')" :class="[asset === 'USDT' ? 'active' : '']" class="cb2 flex flex-grow items-center justify-center cursor-pointer">USDT</li>
+                        <li @click="filterAsset('BTC')" :class="[asset === 'BTC' ? 'active' : '']" class="cb2 flex flex-grow items-center justify-center cursor-pointer">BTC</li>
+                        <li @click="filterAsset('FAV')" :class="[asset === 'FAV' ? 'active' : '']" class="cb2 flex flex-grow items-center justify-center cursor-pointer">
                             FAV
                             <span v-if="favorites.length > 0" class="text-[--color-primary-yellow]">★</span> 
                         </li>
@@ -245,6 +279,156 @@
               </div>
             </div>
           </section>
+
+          <!-- Модальное окно демо-торговли -->
+          <div v-if="showDemoTradingModal" 
+               id="demoTradingModal" 
+               class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+               @click="handleDemoTradingModalClick">
+            <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-[--color-primary-silver]">Демо-трейдинг: {{ currentTicker }}</h2>
+                <button @click="toggleDemoTradingModal" class="bg-red-500 text-white px-4 py-2 rounded">Закрыть</button>
+              </div>
+              
+              <!-- Баланс и информация -->
+              <div class="flex flex-wrap mb-4 gap-2">
+                <div class="cb p-3 text-center flex-1">
+                  <div class="text-[--color-primary-silver]">Демо-баланс</div>
+                  <div class="text-xl font-bold">{{ formatPrice(demoBalance) }}</div>
+                </div>
+                <div class="cb p-3 text-center flex-1">
+                  <div class="text-[--color-primary-silver]">Текущая цена</div>
+                  <div class="text-xl font-bold" :class="tickers[currentTicker] ? tickers[currentTicker].style : ''">
+                    {{ tickers[currentTicker] ? formatPrice(parseFloat(tickers[currentTicker].close)) : '---' }}
+                  </div>
+                </div>
+                <div class="cb p-3 text-center flex-1">
+                  <div class="text-[--color-primary-silver]">P&L</div>
+                  <div class="text-xl font-bold" :class="demoProfitLoss >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                    {{ formatPrice(demoProfitLoss) }}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Формы для покупки/продажи -->
+              <div class="flex flex-col md:flex-row gap-4 mb-4">
+                <div class="cb p-3 flex-1">
+                  <h3 class="text-[--color-primary-blue] font-bold mb-2">КУПИТЬ</h3>
+                  <div class="form-group mb-2">
+                    <label class="block text-xs text-[--color-primary-silver] mb-1">Количество (в {{ tickers[currentTicker] ? tickers[currentTicker].token : '---' }})</label>
+                    <input v-model="demoForm.buyAmount" type="number" min="0" step="0.0001" 
+                           class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
+                  </div>
+                  <div class="form-group mb-2">
+                    <label class="block text-xs text-[--color-primary-silver] mb-1">На сумму (в USDT)</label>
+                    <input v-model="demoForm.buyTotal" type="number" min="0" step="0.01" 
+                           class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
+                  </div>
+                  <div class="flex justify-between gap-2 mb-2">
+                    <button @click="setDemoBuyPercent(0.25)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">25%</button>
+                    <button @click="setDemoBuyPercent(0.5)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">50%</button>
+                    <button @click="setDemoBuyPercent(0.75)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">75%</button>
+                    <button @click="setDemoBuyPercent(1)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">100%</button>
+                  </div>
+                  <button @click="executeDemoBuy" 
+                          class="bg-[--color-primary-green] hover:bg-green-600 text-white py-2 px-4 rounded w-full">КУПИТЬ</button>
+                </div>
+                
+                <div class="cb p-3 flex-1">
+                  <h3 class="text-[--color-primary--500] font-bold mb-2">ПРОДАТЬ</h3>
+                  <div class="form-group mb-2">
+                    <label class="block text-xs text-[--color-primary-silver] mb-1">Количество (в {{ tickers[currentTicker] ? tickers[currentTicker].token : '---' }})</label>
+                    <input v-model="demoForm.sellAmount" type="number" min="0" step="0.0001" 
+                           class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
+                  </div>
+                  <div class="form-group mb-2">
+                    <label class="block text-xs text-[--color-primary-silver] mb-1">На сумму (в USDT)</label>
+                    <input v-model="demoForm.sellTotal" type="number" min="0" step="0.01" 
+                           class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
+                  </div>
+                  <div class="flex justify-between gap-2 mb-2">
+                    <button @click="setDemoSellPercent(0.25)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">25%</button>
+                    <button @click="setDemoSellPercent(0.5)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">50%</button>
+                    <button @click="setDemoSellPercent(0.75)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">75%</button>
+                    <button @click="setDemoSellPercent(1)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">100%</button>
+                  </div>
+                  <button @click="executeDemoSell" 
+                          class="bg-[--color-primary--500] hover:bg-red-700 text-white py-2 px-4 rounded w-full">ПРОДАТЬ</button>
+                </div>
+              </div>
+              
+              <!-- История сделок -->
+              <div>
+                <h3 class="text-[--color-primary-silver] font-bold mb-2">История сделок</h3>
+                <div class="cb mb-2 max-h-60 overflow-y-auto">
+                  <table class="w-full border-collapse">
+                    <thead>
+                      <tr class="text-[--color-primary-blue]">
+                        <th class="p-2 text-left">Время</th>
+                        <th class="p-2 text-left">Пара</th>
+                        <th class="p-2 text-left">Тип</th>
+                        <th class="p-2 text-right">Цена</th>
+                        <th class="p-2 text-right">Количество</th>
+                        <th class="p-2 text-right">Сумма</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(order, index) in demoOrders" :key="index" 
+                          :class="order.type === 'buy' ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                        <td class="p-2">{{ formatTime(order.timestamp) }}</td>
+                        <td class="p-2">{{ order.pair }}</td>
+                        <td class="p-2 font-bold">{{ order.type === 'buy' ? 'КУПИТЬ' : 'ПРОДАТЬ' }}</td>
+                        <td class="p-2 text-right">{{ formatPrice(order.price) }}</td>
+                        <td class="p-2 text-right">{{ formatAmount(order.amount) }}</td>
+                        <td class="p-2 text-right">{{ formatPrice(order.total) }}</td>
+                      </tr>
+                      <tr v-if="demoOrders.length === 0">
+                        <td colspan="6" class="p-4 text-center text-[--color-primary-silver]">Сделок пока нет</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              <!-- Ваши позиции -->
+              <div>
+                <h3 class="text-[--color-primary-silver] font-bold mb-2">Ваши позиции</h3>
+                <div class="cb mb-2 max-h-60 overflow-y-auto">
+                  <table class="w-full border-collapse">
+                    <thead>
+                      <tr class="text-[--color-primary-blue]">
+                        <th class="p-2 text-left">Монета</th>
+                        <th class="p-2 text-right">Количество</th>
+                        <th class="p-2 text-right">Средняя цена</th>
+                        <th class="p-2 text-right">Текущая цена</th>
+                        <th class="p-2 text-right">P&L</th>
+                        <th class="p-2 text-right">P&L %</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(position, symbol) in demoPositions" :key="symbol" 
+                          v-if="position.amount > 0">
+                        <td class="p-2">{{ position.pair }}</td>
+                        <td class="p-2 text-right">{{ formatAmount(position.amount) }}</td>
+                        <td class="p-2 text-right">{{ formatPrice(position.avgPrice) }}</td>
+                        <td class="p-2 text-right">{{ position.currentPrice ? formatPrice(position.currentPrice) : '---' }}</td>
+                        <td class="p-2 text-right" :class="position.pnl >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                          {{ formatPrice(position.pnl) }}
+                        </td>
+                        <td class="p-2 text-right" :class="position.pnlPercent >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                          {{ position.pnlPercent >= 0 ? '+' : '' }}{{ position.pnlPercent.toFixed(2) }}%
+                        </td>
+                      </tr>
+                      <tr v-if="Object.keys(demoPositions).filter(k => demoPositions[k].amount > 0).length === 0">
+                        <td colspan="6" class="p-4 text-center text-[--color-primary-silver]">Нет открытых позиций</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div v-if="showSettings" id="staticModal" class="bg-[#00000080] fixed flex items-center justify-center top-0 left-0 right-0 z-50 w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
 
@@ -837,6 +1021,32 @@
                 chartModalInstance: null,
                 showChartScreen: false,
                 fullscreenChartInstance: null,
+                showDemoTradingModal: false,
+                isDemoMode: false,
+                demoBalance: 1000,
+                demoProfitLoss: 0,
+                demoOrders: [],
+                demoPositions: {},
+                demoForm: {
+                    buyAmount: 0,
+                    buyTotal: 0,
+                    sellAmount: 0,
+                    sellTotal: 0
+                },
+                showBurgerMenu: false,
+                showNotesModal: false,
+                showNewsModal: false,
+                isDarkTheme: true,
+                notes: [],
+                currentNote: {
+                    id: null,
+                    title: '',
+                    content: '',
+                    symbol: '',
+                    tags: [],
+                    date: null
+                },
+                newsItems: []
             }
         },
         methods: {
@@ -941,18 +1151,21 @@
                 }
                 
                 if (this.showChartScreen && this.fullscreenChartInstance) {
-
                     try {
                         this.fullscreenChartInstance.setSymbol('BINANCE:' + symbol, () => {
                             console.log('Chart symbol updated to', symbol);
                         });
                     } catch (e) {
                         console.error('Error updating chart symbol:', e);
-
                         this.$nextTick(() => {
                             this.initFullscreenChart();
                         });
                     }
+                }
+                
+                // Открываем модальное окно демо-торговли если включен режим демо
+                if (this.isDemoMode) {
+                    this.toggleDemoTradingModal();
                 }
             },
             setFavorite(symbol) {
@@ -965,13 +1178,8 @@
             },
             filterAsset(asset) {
                 this.asset = asset; 
-                this.status = 1;
+                this.status = 1; 
                 
-                setTimeout(() => {
-                    if (window.updateFilterButtonBubbles) {
-                        window.updateFilterButtonBubbles();
-                    }
-                }, 50);
             },
             sortBy(field, order) {
                 this.sort = field;
@@ -1524,7 +1732,6 @@
             },
 
             toggleChartScreen() {
-
                 this.closeAllModals();
                 
                 this.showChartScreen = !this.showChartScreen;
@@ -1538,9 +1745,8 @@
                     
                     this.updateModalZIndexes(true);
                 } else {
-
                     document.body.classList.remove('modal-open');
-
+                    
                     this.updateModalZIndexes(false);
                 }
             },
@@ -1631,12 +1837,16 @@
             },
 
             closeAllModals() {
-
-                this.showShareModal = false;
+                // Закрываем все модальные окна
+                this.showChartModal = false;
                 this.showOrderBookModal = false;
+                this.showDemoTradingModal = false;
                 this.showCalculator = false;
+                this.showShareModal = false;
+                this.showSettings = false;
                 this.showPortfolio = false;
                 
+                // Восстанавливаем прокрутку
                 document.body.style.overflow = 'auto';
                 document.body.classList.remove('no-scroll');
             },
@@ -1647,6 +1857,391 @@
                 }
                 // Для остальных пар показываем полное значение
                 return ticker.close;
+            },
+            setDemoBuyPercent(percent) {
+                this.demoForm.buyTotal = this.demoBalance * percent;
+                this.demoForm.buyAmount = this.demoForm.buyTotal / this.tickers[this.ticker].close;
+            },
+            setDemoSellPercent(percent) {
+                this.demoForm.sellTotal = this.demoBalance * percent;
+                this.demoForm.sellAmount = this.demoForm.sellTotal / this.tickers[this.ticker].close;
+            },
+            executeDemoBuy() {
+                // Implement demo buy logic
+                console.log('Demo buy:', this.demoForm);
+            },
+            executeDemoSell() {
+                // Implement demo sell logic
+                console.log('Demo sell:', this.demoForm);
+            },
+            formatTime(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit'
+                });
+            },
+            updateBubbleElements() {
+                // Метод-заглушка для будущей реализации анимации пузырьков
+                console.log("updateBubbleElements called");
+            },
+            // Методы для демо-торговли
+            toggleDemoTrading() {
+                this.isDemoMode = !this.isDemoMode;
+                if (this.isDemoMode) {
+                    this.loadDemoTradingState();
+                    if (this.demoPositions && Object.keys(this.demoPositions).length > 0) {
+                        this.updateDemoPositions();
+                    }
+                    
+                    // Открываем модальное окно демо-торговли
+                    this.toggleDemoTradingModal();
+                }
+                // Закрываем бургер-меню
+                this.showBurgerMenu = false;
+                
+                localStorage.setItem('isDemoMode', this.isDemoMode);
+            },
+            toggleDemoTradingModal() {
+                this.showDemoTradingModal = !this.showDemoTradingModal;
+                
+                if (this.showDemoTradingModal) {
+                    this.closeAllModals();
+                    this.showDemoTradingModal = true;
+                    document.body.style.overflow = 'hidden';
+                    
+                    // Рассчитаем актуальные значения формы
+                    if (this.tickers[this.currentTicker]) {
+                        const currentPrice = parseFloat(this.tickers[this.currentTicker].close);
+                        // Для покупки
+                        this.demoForm.buyAmount = 0;
+                        this.demoForm.buyTotal = 0;
+                        
+                        // Для продажи
+                        const position = this.demoPositions[this.currentTicker];
+                        if (position && position.amount > 0) {
+                            this.demoForm.sellAmount = position.amount;
+                            this.demoForm.sellTotal = position.amount * currentPrice;
+                        } else {
+                            this.demoForm.sellAmount = 0;
+                            this.demoForm.sellTotal = 0;
+                        }
+                    }
+                    
+                    if (this.showChartScreen) {
+                        setTimeout(() => {
+                            const demoTradingModal = document.getElementById('demoTradingModal');
+                            if (demoTradingModal) demoTradingModal.classList.add('modal-on-chart');
+                        }, 0);
+                    }
+                } else {
+                    this.showDemoTradingModal = false;
+                    document.body.style.overflow = 'auto';
+                }
+            },
+            handleDemoTradingModalClick(event) {
+                if (event.target.id === 'demoTradingModal') {
+                    this.toggleDemoTradingModal();
+                }
+            },
+            loadDemoTradingState() {
+                try {
+                    // Загрузка баланса
+                    const savedBalance = localStorage.getItem('demoBalance');
+                    if (savedBalance) {
+                        this.demoBalance = parseFloat(savedBalance);
+                    }
+                    
+                    // Загрузка позиций
+                    const savedPositions = localStorage.getItem('demoPositions');
+                    if (savedPositions) {
+                        this.demoPositions = JSON.parse(savedPositions);
+                    }
+                    
+                    // Загрузка истории ордеров
+                    const savedOrders = localStorage.getItem('demoOrders');
+                    if (savedOrders) {
+                        this.demoOrders = JSON.parse(savedOrders);
+                    }
+                    
+                    console.log('Демо-торговля: данные загружены', {
+                        баланс: this.demoBalance,
+                        позиции: this.demoPositions,
+                        ордера: this.demoOrders
+                    });
+                    
+                    // Обновление текущих цен и PnL
+                    this.updateDemoPositions();
+                } catch (error) {
+                    console.error('Ошибка при загрузке данных демо-торговли:', error);
+                }
+            },
+            saveDemoTradingState() {
+                try {
+                    localStorage.setItem('demoBalance', this.demoBalance);
+                    localStorage.setItem('demoPositions', JSON.stringify(this.demoPositions));
+                    localStorage.setItem('demoOrders', JSON.stringify(this.demoOrders));
+                    console.log('Демо-торговля: данные сохранены');
+                } catch (error) {
+                    console.error('Ошибка при сохранении данных демо-торговли:', error);
+                }
+            },
+            updateDemoPositions() {
+                // Обновление текущих цен и расчет P&L
+                let totalPnl = 0;
+                
+                for (const symbol in this.demoPositions) {
+                    const position = this.demoPositions[symbol];
+                    const ticker = this.tickers[symbol];
+                    
+                    if (ticker && position.amount > 0) {
+                        position.currentPrice = parseFloat(ticker.close);
+                        const currentValue = position.amount * position.currentPrice;
+                        const cost = position.amount * position.avgPrice;
+                        position.pnl = currentValue - cost;
+                        position.pnlPercent = (position.pnl / cost) * 100;
+                        totalPnl += position.pnl;
+                    }
+                }
+                
+                this.demoProfitLoss = totalPnl;
+            },
+            // Метод для форматирования суммы с 8 знаками после запятой
+            formatAmount(amount) {
+                return parseFloat(amount).toFixed(8);
+            },
+            // Методы для покупки и продажи
+            setDemoBuyPercent(percent) {
+                if (!this.tickers[this.currentTicker]) return;
+                
+                const currentPrice = parseFloat(this.tickers[this.currentTicker].close);
+                this.demoForm.buyTotal = this.demoBalance * percent;
+                this.demoForm.buyAmount = this.demoForm.buyTotal / currentPrice;
+            },
+            setDemoSellPercent(percent) {
+                if (!this.tickers[this.currentTicker]) return;
+                
+                const position = this.demoPositions[this.currentTicker];
+                if (position && position.amount > 0) {
+                    const currentPrice = parseFloat(this.tickers[this.currentTicker].close);
+                    this.demoForm.sellAmount = position.amount * percent;
+                    this.demoForm.sellTotal = this.demoForm.sellAmount * currentPrice;
+                }
+            },
+            executeDemoBuy() {
+                if (!this.tickers[this.currentTicker]) return;
+                
+                const ticker = this.tickers[this.currentTicker];
+                const amount = parseFloat(this.demoForm.buyAmount);
+                const total = parseFloat(this.demoForm.buyTotal);
+                const price = parseFloat(ticker.close);
+                
+                // Проверки
+                if (amount <= 0 || total <= 0) {
+                    alert('Введите корректное количество или сумму для покупки');
+                    return;
+                }
+                
+                if (total > this.demoBalance) {
+                    alert('Недостаточно средств для покупки');
+                    return;
+                }
+                
+                // Расчёт комиссии (0.1%)
+                const fee = total * 0.001;
+                const totalWithFee = total + fee;
+                
+                // Обновляем баланс
+                this.demoBalance -= totalWithFee;
+                
+                // Создаём новый ордер
+                const order = {
+                    timestamp: Date.now(),
+                    symbol: ticker.symbol,
+                    pair: ticker.pair,
+                    type: 'buy',
+                    price: price,
+                    amount: amount,
+                    total: total,
+                    fee: fee
+                };
+                
+                // Добавляем ордер в историю
+                this.demoOrders.unshift(order);
+                
+                // Обновляем позицию
+                if (!this.demoPositions[ticker.symbol]) {
+                    this.demoPositions[ticker.symbol] = {
+                        symbol: ticker.symbol,
+                        pair: ticker.pair,
+                        amount: 0,
+                        avgPrice: 0,
+                        currentPrice: price,
+                        pnl: 0,
+                        pnlPercent: 0
+                    };
+                }
+                
+                const position = this.demoPositions[ticker.symbol];
+                const totalCost = position.amount * position.avgPrice + total;
+                const newAmount = position.amount + amount;
+                
+                // Вычисляем новую среднюю цену
+                position.avgPrice = totalCost / newAmount;
+                position.amount = newAmount;
+                position.currentPrice = price;
+                
+                // Обновляем P&L
+                this.updateDemoPositions();
+                
+                // Сохраняем состояние
+                this.saveDemoTradingState();
+                
+                // Очищаем форму
+                this.demoForm.buyAmount = 0;
+                this.demoForm.buyTotal = 0;
+                
+                console.log('Покупка выполнена:', order);
+            },
+            executeDemoSell() {
+                if (!this.tickers[this.currentTicker]) return;
+                
+                const ticker = this.tickers[this.currentTicker];
+                const amount = parseFloat(this.demoForm.sellAmount);
+                const price = parseFloat(ticker.close);
+                const total = amount * price;
+                
+                // Проверяем наличие позиции
+                const position = this.demoPositions[ticker.symbol];
+                if (!position || position.amount <= 0 || amount <= 0) {
+                    alert('Нет доступной позиции для продажи или введено некорректное количество');
+                    return;
+                }
+                
+                if (amount > position.amount) {
+                    alert('Количество для продажи превышает имеющееся');
+                    return;
+                }
+                
+                // Расчёт комиссии (0.1%)
+                const fee = total * 0.001;
+                const totalAfterFee = total - fee;
+                
+                // Создаём новый ордер
+                const order = {
+                    timestamp: Date.now(),
+                    symbol: ticker.symbol,
+                    pair: ticker.pair,
+                    type: 'sell',
+                    price: price,
+                    amount: amount,
+                    total: total,
+                    fee: fee
+                };
+                
+                // Добавляем ордер в историю
+                this.demoOrders.unshift(order);
+                
+                // Обновляем позицию
+                position.amount -= amount;
+                
+                // Обновляем баланс
+                this.demoBalance += totalAfterFee;
+                
+                // Обновляем P&L
+                this.updateDemoPositions();
+                
+                // Сохраняем состояние
+                this.saveDemoTradingState();
+                
+                // Очищаем форму
+                this.demoForm.sellAmount = 0;
+                this.demoForm.sellTotal = 0;
+                
+                console.log('Продажа выполнена:', order);
+            },
+            // Метод для форматирования цены
+            formatPrice(price) {
+                return new Intl.NumberFormat('ru-RU', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(price);
+            },
+            formatTime(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit'
+                });
+            },
+            toggleBurgerMenu() {
+                this.showBurgerMenu = !this.showBurgerMenu;
+                // Добавляем обработчик для закрытия меню при клике вне его
+                if (this.showBurgerMenu) {
+                    this.$nextTick(() => {
+                        const closeMenu = (e) => {
+                            if (!e.target.closest('.burger-menu-container')) {
+                                this.showBurgerMenu = false;
+                                document.removeEventListener('click', closeMenu);
+                            }
+                        };
+                        // Небольшая задержка, чтобы не сработало сразу
+                        setTimeout(() => {
+                            document.addEventListener('click', closeMenu);
+                        }, 100);
+                    });
+                }
+            },
+            toggleNotesModal() {
+                // Закрываем бургер-меню
+                this.showBurgerMenu = false;
+                
+                // Заглушка для будущей функциональности заметок
+                alert('Функция заметок будет доступна в следующем обновлении!');
+                
+                // Действие при будущей реализации:
+                // this.showNotesModal = !this.showNotesModal;
+                // if (this.showNotesModal) {
+                //     this.closeAllModals();
+                //     this.showNotesModal = true;
+                //     document.body.style.overflow = 'hidden';
+                // }
+            },
+            toggleNewsModal() {
+                // Закрываем бургер-меню
+                this.showBurgerMenu = false;
+                
+                // Заглушка для будущей функциональности новостей
+                alert('Функция новостей будет доступна в следующем обновлении!');
+                
+                // Действие при будущей реализации:
+                // this.showNewsModal = !this.showNewsModal;
+                // if (this.showNewsModal) {
+                //     this.closeAllModals();
+                //     this.showNewsModal = true;
+                //     document.body.style.overflow = 'hidden';
+                //     this.loadNews();
+                // }
+            },
+            toggleTheme() {
+                // Закрываем бургер-меню
+                this.showBurgerMenu = false;
+                
+                // Заглушка для будущей функциональности смены темы
+                alert('Функция смены темы будет доступна в следующем обновлении!');
+                
+                // Действие при будущей реализации:
+                // this.isDarkTheme = !this.isDarkTheme;
+                // document.documentElement.classList.toggle('light-theme', !this.isDarkTheme);
+                // localStorage.setItem('isDarkTheme', this.isDarkTheme);
             },
         },
         mounted() {
@@ -1680,6 +2275,26 @@
             
             axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
                 this.coins = response.data.data.coins;
+            });
+            
+            this.updateBubbleElements();
+            
+            // Загрузка состояния демо-режима
+            const savedDemoMode = localStorage.getItem('isDemoMode');
+            if (savedDemoMode === 'true') {
+                this.isDemoMode = true;
+                this.loadDemoTradingState();
+            }
+            
+            // Обновление позиций демо-торговли каждую секунду если есть активные позиции
+            setInterval(() => {
+                if (this.isDemoMode && this.demoPositions && Object.keys(this.demoPositions).length > 0) {
+                    this.updateDemoPositions();
+                }
+            }, 1000);
+            
+            this.appendScript(() => {
+                // ... existing code ...
             });
         },
         beforeUnmount() {
@@ -2273,31 +2888,13 @@
     body.modal-open .fixed.bottom-0 {
         pointer-events: auto;
     }
-
-    .filter-button {
-        transition: all 0.3s ease;
-        position: relative;
-        border: 2px solid var(--color-primary-purple);
-        box-shadow: 0 0 5px rgba(128, 0, 128, 0.6);
-        overflow: hidden;
-    }
-    
-    .filter-button.active {
-        background-color: var(--color-primary-purple);
-        color: white;
-        box-shadow: 0 0 10px rgba(128, 0, 128, 0.8);
-    }
 </style>
 </body>
 <script>
-
     document.addEventListener('DOMContentLoaded', function() {
-
         const navButtons = document.querySelectorAll('.nav-button');
         const modalButtons = document.querySelectorAll('.modal-button');
         const bubbleIntervals = {};
-        
-        window.bubbleIntervals = bubbleIntervals;
         
         function createBubble(button) {
             const bubble = document.createElement('div');
@@ -2314,10 +2911,6 @@
         }
         
         function startBubbleGeneration(button) {
-            if (button.classList.contains('filter-button') && !button.classList.contains('active')) {
-                return;
-            }
-            
             const buttonId = button.textContent.trim() + (Math.random() * 1000).toFixed(0);
             if (!bubbleIntervals[buttonId]) {
                 button.setAttribute('data-bubble-id', buttonId);
@@ -2336,26 +2929,6 @@
             }
         }
         
-        function updateFilterButtonBubbles() {
-            const filterButtons = document.querySelectorAll('.filter-button');
-            
-            filterButtons.forEach(button => {
-                stopBubbleGeneration(button);
-                const bubbles = button.querySelectorAll('.bubble');
-                bubbles.forEach(bubble => bubble.remove());
-            });
-            
-            const activeButton = document.querySelector('.filter-button.active');
-            if (activeButton) {
-                startBubbleGeneration(activeButton);
-            }
-        }
-        
-        window.createBubble = createBubble;
-        window.startBubbleGeneration = startBubbleGeneration;
-        window.stopBubbleGeneration = stopBubbleGeneration;
-        window.updateFilterButtonBubbles = updateFilterButtonBubbles;
-        
         navButtons.forEach(button => {
             startBubbleGeneration(button);
             
@@ -2365,29 +2938,6 @@
             
             button.addEventListener('mouseleave', () => {
                 startBubbleGeneration(button);
-            });
-        });
-        
-        updateFilterButtonBubbles();
-        
-        const filterButtons = document.querySelectorAll('.filter-button');
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-
-                setTimeout(() => {
-                    updateFilterButtonBubbles();
-                }, 100);
-            });
-            
-            button.addEventListener('mouseenter', () => {
-                stopBubbleGeneration(button);
-            });
-            
-            button.addEventListener('mouseleave', () => {
-
-                if (button.classList.contains('active')) {
-                    startBubbleGeneration(button);
-                }
             });
         });
         
@@ -2425,91 +2975,6 @@
                 startBubbleGeneration(button);
             });
         });
-    });
-
-    window.updateFilterButtonBubbles = function() {
-        const filterButtons = document.querySelectorAll('.filter-button');
-        
-        filterButtons.forEach(btn => {
-            const oldId = btn.getAttribute('data-bubble-id');
-            if (oldId && window.bubbleIntervals && window.bubbleIntervals[oldId]) {
-                clearInterval(window.bubbleIntervals[oldId]);
-                delete window.bubbleIntervals[oldId];
-            }
-            
-            const bubbles = btn.querySelectorAll('.bubble');
-            bubbles.forEach(bubble => bubble.remove());
-        });
-        
-        filterButtons.forEach(btn => {
-            if (btn.classList.contains('active')) {
-                if (typeof window.startBubbleGeneration === 'function') {
-                    window.startBubbleGeneration(btn);
-                }
-            }
-        });
-    };
-
-    window.startBubbleGeneration = function(button) {
-
-        const bubbleId = Date.now().toString();
-        button.setAttribute('data-bubble-id', bubbleId);
-        
-        if (!window.bubbleIntervals) {
-            window.bubbleIntervals = {};
-        }
-        
-        window.bubbleIntervals[bubbleId] = setInterval(() => {
-
-            const bubble = document.createElement('div');
-            bubble.classList.add('bubble');
-            
-            const size = Math.random() * 15 + 5;
-            bubble.style.width = `${size}px`;
-            bubble.style.height = `${size}px`;
-            
-            const posX = Math.random() * 100;
-            bubble.style.left = `${posX}%`;
-            bubble.style.bottom = '0';
-            
-            button.appendChild(bubble);
-            
-            setTimeout(() => {
-                bubble.remove();
-            }, 2000);
-        }, 300);
-    };
-
-    const style = document.createElement('style');
-    style.textContent = `
-    .filter-button {
-        position: relative;
-        overflow: hidden;
-    }
-    .bubble {
-        position: absolute;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
-        animation: bubble-rise 2s ease-in-out;
-        pointer-events: none;
-    }
-    @keyframes bubble-rise {
-        0% {
-            transform: translateY(0) scale(0.5);
-            opacity: 0.1;
-        }
-        50% {
-            opacity: 0.5;
-        }
-        100% {
-            transform: translateY(-100px) scale(1.2);
-            opacity: 0;
-        }
-    }`;
-    document.head.appendChild(style);
-
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(window.updateFilterButtonBubbles, 500);
     });
 </script>
 </html>
