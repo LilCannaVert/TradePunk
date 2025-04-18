@@ -1080,7 +1080,6 @@
                 setTimeout(async () => { await this.prepareOrderBook() }, 500);
             },
             toggleOrderBookModal() {
-
                 if (this.showNewsScreen) {
                     this.showNewsScreen = false;
                 }
@@ -1124,7 +1123,6 @@
                 }
             },
             openShareModal() {
-
                 if (this.showNewsScreen) {
                     this.showNewsScreen = false;
                 }
@@ -1238,7 +1236,6 @@
                 }
             },
             toggleCalculator() {
-
                 if (this.showNewsScreen) {
                     this.showNewsScreen = false;
                 }
@@ -1299,7 +1296,6 @@
                 }
             },
             togglePortfolio() {
-
                 if (this.showNewsScreen) {
                     this.showNewsScreen = false;
                 }
@@ -1584,7 +1580,6 @@
             },
 
             toggleChartScreen() {
-
                 if (this.showNewsScreen) {
                     this.showNewsScreen = false;
                 }
@@ -1691,15 +1686,13 @@
                 this.showShareModal = false;
                 this.showCalculator = false;
                 this.showPortfolio = false;
-                this.showNewsScreen = false; 
+                this.showNewsScreen = false;
                 document.body.style.overflow = 'auto';
             },
             formatDisplayPrice(ticker) {
-
                 if (ticker.symbol.endsWith('USDT')) {
                     return parseFloat(ticker.close).toFixed(4);
                 }
-
                 return ticker.close;
             },
             toggleNewsScreen() {
@@ -1707,7 +1700,6 @@
                 
                 if (this.showNewsScreen) {
                     if (this.newsItems.length === 0) {
-
                         this.newsPage = 1;
                         this.loadNews();
                     }
@@ -1716,16 +1708,20 @@
             
             async loadNews() {
                 try {
-                    console.log(`Loading ${this.newsPage}`);
+                    if (this.newsLoading) return;
+                    this.newsLoading = true;
                     
-                    let apiUrl = `https://min-api.cryptocompare.com/data/v2/news/?lang=EN&sortOrder=latest`;
+                    console.log(`Loading news for page ${this.newsPage}`);
                     
-                    apiUrl += "&limit=20";
+                    let apiUrl = `https://min-api.cryptocompare.com/data/v2/news/?lang=EN&extraParams=BTCPunkTrade&sortOrder=latest`;
                     
                     if (this.newsPage > 1 && this.newsItems.length > 0) {
-
-                        const lastNewsTimestamp = this.newsItems[this.newsItems.length - 1].published_on;
-                        apiUrl += `&lTs=${lastNewsTimestamp}`;
+                        const oldestNews = [...this.newsItems].sort((a, b) => a.published_on - b.published_on)[0];
+                        
+                        if (oldestNews && oldestNews.published_on) {
+                            apiUrl += `&ts=${oldestNews.published_on - 1}`;
+                            console.log(`Loading news older than: ${new Date(oldestNews.published_on * 1000).toLocaleString()}`);
+                        }
                     }
                     
                     console.log(`API URL: ${apiUrl}`);
@@ -1733,62 +1729,69 @@
                     const response = await fetch(apiUrl);
                     const data = await response.json();
                     
-                    if (data.Data && Array.isArray(data.Data)) {
-                        console.log(`Получено новостей: ${data.Data.length}`);
+                    if (data.Data && Array.isArray(data.Data) && data.Data.length > 0) {
+                        console.log(`Received news items: ${data.Data.length}`);
                         
-                        if (data.Data.length > 0) {
-
-                            const firstDate = new Date(data.Data[0].published_on * 1000);
-                            const lastDate = new Date(data.Data[data.Data.length-1].published_on * 1000);
-                            console.log(`Диапазон дат: ${firstDate.toLocaleDateString()} - ${lastDate.toLocaleDateString()}`);
-                            
-                            this.newsItems = [...this.newsItems, ...data.Data];
+                        const firstDate = new Date(data.Data[0].published_on * 1000);
+                        const lastDate = new Date(data.Data[data.Data.length-1].published_on * 1000);
+                        console.log(`Date range: ${firstDate.toLocaleString()} - ${lastDate.toLocaleString()}`);
+                        
+                        if (this.newsPage === 1) {
+                            this.newsItems = data.Data;
                         } else {
-                            console.log("No more News");
+                            const existingIds = new Set(this.newsItems.map(item => item.id));
+                            const newItems = data.Data.filter(item => !existingIds.has(item.id));
+                            
+                            console.log(`New unique news items: ${newItems.length}`);
+                            
+                            if (newItems.length > 0) {
+                                this.newsItems = [...this.newsItems, ...newItems];
+                            } else {
+                                console.log("All received news already loaded, continuing search for older news");
+                                this.newsPage++;
+                                setTimeout(() => {
+                                    this.newsLoading = false;
+                                    this.loadNews();
+                                }, 500);
+                                return;
+                            }
                         }
                     } else {
-                        console.log("-");
+                        console.log("No news found or end of news reached");
                     }
                 } catch (error) {
-                    console.error('Error:', error);
+                    console.error('Error loading news:', error);
+                } finally {
+                    this.newsLoading = false;
                 }
             },
             
             loadMoreNews() {
-
-                if (this.newsLoading) return;
-                
-                this.newsLoading = true;
                 this.newsPage++;
-                
-                this.loadNews().finally(() => {
-                    this.newsLoading = false;
-                });
+                this.loadNews();
             },
             
             formatNewsDate(timestamp) {
-                if (!timestamp) return "Дата не указана";
+                if (!timestamp) return "No date";
                 
                 try {
                     let date;
                     
                     if (!isNaN(timestamp) && !isNaN(parseFloat(timestamp))) {
-
                         const ts = Number(timestamp);
                         date = new Date(ts < 10000000000 ? ts * 1000 : ts);
                     } else {
-
                         date = new Date(timestamp);
                     }
                     
                     if (isNaN(date.getTime())) {
-                        return "-";
+                        return "No date";
                     }
                     
                     return date.getDate() + '/' + (date.getMonth() + 1);
                     
                 } catch (error) {
-                    return "Дата не указана";
+                    return "No date";
                 }
             },
         },
@@ -2510,6 +2513,7 @@
         transform: translateY(1px);
     }
 
+    /* Style for disabled state */
     .load-more-news-button:disabled {
         opacity: 0.7;
         cursor: not-allowed;
