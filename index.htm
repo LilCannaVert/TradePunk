@@ -1750,7 +1750,7 @@
         --color-primary-blue: #3c82f6;
         --color-primary-purple: #800080;
         --color-primary-yellow: #eab308;
-        --ui-notch-path: polygon(0 0, 100% 0, 100% 80%, 90% 100%, 10% 100%, 0 80%);
+        --ui-glow-text: 0 0 0.125em currentColor;
     }
 
     body {
@@ -1813,52 +1813,17 @@
     .cb, .cb2 {
         position: relative;
         background-color: var(--color-bg--300);
-        -webkit-clip-path: var(--ui-notch-path);
-        clip-path: var(--ui-notch-path);
         padding-right: 0.5rem;
         border: 2px solid var(--color-primary-purple); 
         box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9); 
     }
 
-    .cb:hover, .cb2:hover {
-       
-    }
-
-    .cb::before {
-        background-color: var(--color-primary--600);
-        bottom: 5px;
-        content: "";
-        display: block;
-        height: 3px;
-        position: absolute;
-        right: -6px;
-        top: auto;
-        transform: rotate(-45deg);
-        width: var(--ui-notch-hypotenuse);
-        z-index: 100;
+    .cb::before, .cb2::before {
+        display: none;
     }
 
     .cb-reverse {
-        clip-path: var(--ui-notch-path-r);
-    }
 
-    .cb-reverse::before {
-        transform: rotate(45deg);
-        left: -6px;
-    }
-
-    .cb2::before {
-        background-color: var(--color-primary--600);
-        bottom: 5px;
-        content: "";
-        display: block;
-        height: 3px;
-        position: absolute;
-        right: -6px;
-        top: auto;
-        transform: rotate(-45deg);
-        width: var(--ui-notch-hypotenuse);
-        z-index: 100;
     }
 
     .cb_tab {
@@ -1877,20 +1842,6 @@
         cursor: pointer;
         border: 0;
         outline: none;
-        clip-path: polygon(
-            4rem 0, 
-            4.5rem 0.25rem, 
-            100% 0.25rem, 
-            100% calc(100% - var(--ui-notch-amount) + 2px),
-            calc(100% - var(--ui-notch-amount) + 2px) 100%, 
-            0 100%, 
-            0 0
-        );
-    }
-
-    .cb_tab:hover,
-    .cb_tab.active {
-        color: var(--color-primary-blue);
     }
 
     .cb_tab div {
@@ -1904,17 +1855,13 @@
         align-items: center;
         justify-content: center;
         background-color: var(--color-bg--300);
-        clip-path: polygon(
-            4rem 0, 
-            4.5rem 0.25rem, 
-            100% 0.25rem, 
-            100% calc(100% - var(--ui-notch-amount) + 2px),
-            calc(100% - var(--ui-notch-amount) + 2px) 100%, 
-            0 100%, 
-            0 0
-        );
     }
-    
+
+    .cb_tab:hover,
+    .cb_tab.active {
+        color: var(--color-primary-blue);
+    }
+
     .cb {
         height: 100%; 
         width: 100%;  
