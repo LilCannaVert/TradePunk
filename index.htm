@@ -90,7 +90,7 @@
                     <div @click="sortBy('token', 'desc')" :class="[sort === 'token' ? 'font-bold' : '']" class="w-1/4">Pair</div>
                     <div @click="sortBy('close', 'desc')" :class="[sort === 'close' ? 'font-bold' : '']" class="w-1/4 text-center">Price</div>
                     <div @click="sortBy('percent', 'desc')" :class="[sort === 'percent' ? 'font-bold' : '']" class="w-1/4 text-end pr-2">Change%</div>
-                    <div @click="sortBy('assetVolume', 'desc')" :class="[sort === 'assetVolume' ? 'font-bold' : '']" class="w-1/4 text-end pl-2 pr-8">Volume</div>
+                    <div @click="sortBy('assetVolume', 'desc')" :class="[sort === 'assetVolume' ? 'font-bold' : 'font-normal']" class="w-1/4 text-end pl-2 pr-8">Volume</div>
                   </div>
       
                   <div class="body h-[490px] relative overflow-y-scroll px-2">
@@ -764,7 +764,7 @@
                 showLatestTrades: true,
                 inputSearch: '',
                 asset: 'USDT', 
-                sort: 'assetVolume',
+                sort: 'token',
                 order: 'desc',
                 ticker: 'BTCUSDT',
                 container_id: 'vue-trading-view',
@@ -2217,7 +2217,6 @@
 </style>
 </body>
 <script>
-
     document.addEventListener('DOMContentLoaded', function() {
         const navButtons = document.querySelectorAll('.nav-button');
         const bubbleIntervals = {};
