@@ -42,15 +42,15 @@
         <div class="relative p-2">
           <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
             <div class="flex items-center">
+              <button @click="toggleNewsScreen" class="news-button mr-2">
+                News
+              </button>
+              <button @click="toggleMempoolModal" class="news-button">
+                Mempool
+              </button>
             </div>
             
             <div class="absolute top-0 right-0">
-              <button @click="toggleNewsScreen" class="news-button">
-                News
-              </button>
-              <button @click="toggleMempoolModal" class="news-button ml-2">
-                Mempool
-              </button>
             </div>
 
             <Transition>
@@ -576,22 +576,22 @@
 
         <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
           <div class="container mx-auto flex justify-center">
-            <button v-if="!showChartScreen" @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button v-if="!showChartScreen" @click="closeAllModals(); toggleChartScreen()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Chart
             </button>
-            <button v-else @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button v-else @click="closeAllModals(); toggleChartScreen()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Tickers
             </button>
-            <button @click="toggleOrderBookModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button @click="closeAllModals(); toggleOrderBookModal()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Order Book
             </button>
-            <button @click="openShareModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button @click="closeAllModals(); openShareModal()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Share
             </button>
-            <button @click="toggleCalculator" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button @click="closeAllModals(); toggleCalculator()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Calculator
             </button>
-            <button @click="togglePortfolio" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button @click="closeAllModals(); togglePortfolio()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Portfolio
             </button>
           </div>
@@ -600,7 +600,7 @@
         <div v-if="showMempoolModal" 
              id="mempoolModal" 
              class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
+          <div class="bg-[--color-bg--300] rounded-lg p-4 max-h-[80vh] overflow-y-auto" style="width: 90%; max-width: 600px;" @click.stop>
             <div class="flex justify-between items-center">
               <h2 class="text-lg font-bold text-[--color-primary-silver]">Bitcoin Mempool</h2>
               <button @click="toggleMempoolModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
@@ -654,6 +654,69 @@
                   
                   <div class="text-sm text-[--color-primary-silver]">CAD:</div>
                   <div class="text-sm font-mono text-white">C${{ mempoolData.prices?.CAD?.toLocaleString() || 'N/A' }}</div>
+                </div>
+              </div>
+              
+              <!-- Mining Pools -->
+              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                <div class="flex justify-between items-center mb-2">
+                  <h3 class="text-md font-bold text-[--color-primary-yellow]">Mining Pools (Last 7 Days)</h3>
+                  <div class="flex items-center gap-2">
+                    <button 
+                      v-for="period in ['24h', '1w', '1m', '3m']" 
+                      :key="period" 
+                      @click="changeMiningPoolsPeriod(period)"
+                      :class="[miningPoolsPeriod === period ? 'bg-[--color-primary-purple]' : 'bg-[--color-bg--300]']"
+                      class="text-xs px-2 py-1 rounded text-white"
+                    >
+                      {{ period }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                  <table class="w-full">
+                    <thead>
+                      <tr class="text-[--color-primary-silver] text-left">
+                        <th class="px-2 py-1">Pool</th>
+                        <th class="px-2 py-1 text-right">Blocks</th>
+                        <th class="px-2 py-1 text-right">Share %</th>
+                        <th class="px-2 py-1 text-right">Estimated Hashrate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-if="mempoolData.miningPools.length === 0" class="text-white">
+                        <td colspan="4" class="px-2 py-3 text-center">
+                          <div class="flex justify-center items-center">
+                            <svg class="animate-spin h-5 w-5 mr-2 text-[--color-primary-yellow]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Loading mining pools data...
+                          </div>
+                        </td>
+                      </tr>
+                      <tr 
+                        v-for="(pool, index) in mempoolData.miningPools.slice(0, 10)" 
+                        :key="pool.poolId" 
+                        class="text-white hover:bg-[--color-bg--300]"
+                        :class="{'bg-[--color-bg--300] bg-opacity-50': index % 2 === 0}"
+                      >
+                        <td class="px-2 py-1">
+                          <div class="flex items-center">
+                            <div class="w-3 h-3 rounded-full mr-2" :style="{ backgroundColor: getPoolColor(index) }"></div>
+                            {{ pool.name }}
+                          </div>
+                        </td>
+                        <td class="px-2 py-1 text-right font-mono">{{ pool.blockCount }}</td>
+                        <td class="px-2 py-1 text-right font-mono">{{ (pool.share * 100).toFixed(2) }}%</td>
+                        <td class="px-2 py-1 text-right font-mono">{{ formatHashrate(pool.estimatedHashrate) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div v-if="mempoolData.miningPools.length > 10" class="text-center text-xs text-[--color-primary-silver] mt-2">
+                    Showing top 10 of {{ mempoolData.miningPools.length }} mining pools
+                  </div>
                 </div>
               </div>
               
@@ -1243,8 +1306,10 @@
                 mempoolData: {
                     difficultyAdjustment: null,
                     prices: null,
-                    blocks: []
+                    blocks: [],
+                    miningPools: []
                 },
+                miningPoolsPeriod: '1w',
                 btcAddressInput: '',
                 addressData: null,
                 addressLoading: false,
@@ -2057,6 +2122,11 @@
             },
 
             closeAllModals() {
+                // Check if Mempool modal is open, and if so, use its special closing method
+                if (this.showMempoolModal) {
+                    this.closeMempoolModal();
+                }
+                
                 this.showChartModal = false;
                 this.showOrderBookModal = false;
                 this.showShareModal = false;
@@ -2222,10 +2292,32 @@
                             if (mempoolModal) mempoolModal.classList.add('modal-on-chart');
                         }, 0);
                     }
+                    
+                    // Add event listener to the navigation buttons to close this modal
+                    const navButtons = document.querySelectorAll('.nav-button');
+                    navButtons.forEach(button => {
+                        button.addEventListener('click', this.closeMempoolOnNavClick);
+                    });
                 } else {
                     // Just close this modal
-                    this.showMempoolModal = false;
-                    document.body.style.overflow = 'auto';
+                    this.closeMempoolModal();
+                }
+            },
+            
+            closeMempoolModal() {
+                this.showMempoolModal = false;
+                document.body.style.overflow = 'auto';
+                
+                // Remove event listeners
+                const navButtons = document.querySelectorAll('.nav-button');
+                navButtons.forEach(button => {
+                    button.removeEventListener('click', this.closeMempoolOnNavClick);
+                });
+            },
+            
+            closeMempoolOnNavClick() {
+                if (this.showMempoolModal) {
+                    this.closeMempoolModal();
                 }
             },
             
@@ -2247,11 +2339,58 @@
                     const blocksResponse = await fetch('https://mempool.space/api/v1/blocks');
                     const blocksData = await blocksResponse.json();
                     this.mempoolData.blocks = blocksData.slice(0, 5); // Get only the 5 latest blocks
+                    
+                    // Fetch mining pools
+                    await this.fetchMiningPools();
                 } catch (error) {
                     console.error('Error fetching mempool data:', error);
                 } finally {
                     this.mempoolLoading = false;
                 }
+            },
+            
+            async fetchMiningPools() {
+                try {
+                    const poolsResponse = await fetch(`https://mempool.space/api/v1/mining/pools/${this.miningPoolsPeriod}`);
+                    const poolsData = await poolsResponse.json();
+                    this.mempoolData.miningPools = poolsData
+                        .sort((a, b) => b.blockCount - a.blockCount) // Sort by block count descending
+                        .map(pool => ({
+                            ...pool,
+                            share: pool.blockCount / poolsData.reduce((sum, p) => sum + p.blockCount, 0)
+                        }));
+                } catch (error) {
+                    console.error('Error fetching mining pools:', error);
+                    this.mempoolData.miningPools = [];
+                }
+            },
+
+            changeMiningPoolsPeriod(period) {
+                this.miningPoolsPeriod = period;
+                this.fetchMiningPools();
+            },
+
+            formatHashrate(hashrate) {
+                if (!hashrate) return 'N/A';
+                
+                const units = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s', 'PH/s', 'EH/s'];
+                let unitIndex = 0;
+                
+                while (hashrate >= 1000 && unitIndex < units.length - 1) {
+                    hashrate /= 1000;
+                    unitIndex++;
+                }
+                
+                return `${hashrate.toFixed(2)} ${units[unitIndex]}`;
+            },
+
+            getPoolColor(index) {
+                // Generate colors for mining pools
+                const colors = [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                    '#FF9F40', '#8AC054', '#4D5360', '#E7E9ED', '#F7464A'
+                ];
+                return colors[index % colors.length];
             },
             
             async lookupBtcAddress() {
