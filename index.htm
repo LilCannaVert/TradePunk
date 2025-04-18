@@ -1733,25 +1733,30 @@
             },
             
             formatNewsDate(timestamp) {
+                if (!timestamp) return "Дата не указана";
+                
                 try {
-                    // Если timestamp это число или строка, содержащая только цифры
-                    if (typeof timestamp === 'number' || /^\d+$/.test(timestamp)) {
-                        const date = new Date(parseInt(timestamp) * 1000);
-                        if (!isNaN(date.getTime())) {
-                            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-                        }
+                    let date;
+                    
+                    // Если это число или строка с числом (timestamp)
+                    if (!isNaN(timestamp) && !isNaN(parseFloat(timestamp))) {
+                        // Преобразуем в число и умножаем на 1000, если это секунды
+                        const ts = Number(timestamp);
+                        date = new Date(ts < 10000000000 ? ts * 1000 : ts);
+                    } else {
+                        // Иначе пробуем разобрать как строку с датой
+                        date = new Date(timestamp);
                     }
                     
-                    // Если timestamp это ISO строка даты или другой формат
-                    const date = new Date(timestamp);
-                    if (!isNaN(date.getTime())) {
-                        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                    // Проверяем валидность даты
+                    if (isNaN(date.getTime())) {
+                        return "Дата не указана";
                     }
                     
-                    // Если не удалось распарсить дату
-                    return "Дата не указана";
+                    // Форматируем только день и месяц
+                    return date.getDate() + '/' + (date.getMonth() + 1);
+                    
                 } catch (error) {
-                    console.error('Error formatting date:', error);
                     return "Дата не указана";
                 }
             },
