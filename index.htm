@@ -1033,10 +1033,15 @@
                     sellAmount: 0,
                     sellTotal: 0
                 },
+                demoSearchQuery: '',
+                currentDemoTicker: 'BTCUSDT',
+                demoTimeframe: '1h',
+                demoChartInstance: null,
                 showBurgerMenu: false,
                 showNotesModal: false,
                 showNewsModal: false,
                 isDarkTheme: true,
+                showDemoTradingScreen: false,
                 notes: [],
                 currentNote: {
                     id: null,
@@ -1891,17 +1896,36 @@
             // Методы для демо-торговли
             toggleDemoTrading() {
                 this.isDemoMode = !this.isDemoMode;
+                
+                // Закрываем бургер-меню
+                this.showBurgerMenu = false;
+                
                 if (this.isDemoMode) {
+                    // Загружаем сохраненные данные
                     this.loadDemoTradingState();
                     if (this.demoPositions && Object.keys(this.demoPositions).length > 0) {
                         this.updateDemoPositions();
                     }
                     
-                    // Открываем модальное окно демо-торговли
-                    this.toggleDemoTradingModal();
+                    // Открываем полноэкранный режим демо-торговли
+                    this.showDemoTradingScreen = true;
+                    document.body.style.overflow = 'hidden';
+                    
+                    // Инициализируем график после открытия окна
+                    this.$nextTick(() => {
+                        this.initDemoTrading();
+                    });
+                } else {
+                    // Закрываем полноэкранный режим при отключении
+                    this.showDemoTradingScreen = false;
+                    document.body.style.overflow = 'auto';
+                    
+                    // Очищаем график при закрытии
+                    if (this.demoChartInstance) {
+                        this.demoChartInstance.remove();
+                        this.demoChartInstance = null;
+                    }
                 }
-                // Закрываем бургер-меню
-                this.showBurgerMenu = false;
                 
                 localStorage.setItem('isDemoMode', this.isDemoMode);
             },
@@ -2243,6 +2267,136 @@
                 // document.documentElement.classList.toggle('light-theme', !this.isDarkTheme);
                 // localStorage.setItem('isDarkTheme', this.isDarkTheme);
             },
+            formatShortTime(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            },
+            getTicker(symbol) {
+                return this.tickers[symbol] || null;
+            },
+            selectDemoTicker(symbol) {
+                this.currentDemoTicker = symbol;
+                
+                // Обновляем формы торговли
+                this.demoForm.buyAmount = 0;
+                this.demoForm.buyTotal = 0;
+                
+                // Для продажи проверяем, есть ли имеющаяся позиция
+                const position = this.demoPositions[symbol];
+                if (position && position.amount > 0) {
+                    const currentPrice = parseFloat(this.tickers[symbol].close);
+                    this.demoForm.sellAmount = position.amount;
+                    this.demoForm.sellTotal = position.amount * currentPrice;
+                } else {
+                    this.demoForm.sellAmount = 0;
+                    this.demoForm.sellTotal = 0;
+                }
+                
+                // Обновляем график
+                this.updateDemoChart();
+            },
+            setDemoTimeframe(timeframe) {
+                this.demoTimeframe = timeframe;
+                // Обновляем график с новым таймфреймом
+                this.updateDemoChart();
+            },
+            updateDemoChart() {
+                // Если у нас уже есть график TradingView и выбран тикер
+                if (window.TradingView && this.currentDemoTicker) {
+                    const container = document.getElementById('demo_chart_container');
+                    if (container) {
+                        // Если экземпляр уже существует, удаляем его
+                        if (this.demoChartInstance) {
+                            this.demoChartInstance.remove();
+                            this.demoChartInstance = null;
+                        }
+                        
+                        // Создаем новый экземпляр графика
+                        this.demoChartInstance = new window.TradingView.widget({
+                            container_id: 'demo_chart_container',
+                            autosize: true,
+                            symbol: 'BINANCE:' + this.currentDemoTicker,
+                            interval: this.demoTimeframe,
+                            timezone: 'Etc/UTC',
+                            theme: 'dark',
+                            style: '1',
+                            locale: 'en',
+                            toolbar_bg: '#f1f3f6',
+                            enable_publishing: false,
+                            allow_symbol_change: false,
+                            save_image: false,
+                            studies: ['RSI@tv-basicstudies'],
+                            hide_side_toolbar: true,
+                            hidevolume: false
+                        });
+                    }
+                }
+            },
+            initDemoTrading() {
+                // Загружаем TradingView виджет, если он еще не загружен
+                if (!window.TradingView) {
+                    const script = document.createElement('script');
+                    script.src = 'https://s3.tradingview.com/tv.js';
+                    script.async = true;
+                    script.onload = () => {
+                        this.$nextTick(() => {
+                            this.updateDemoChart();
+                        });
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    this.$nextTick(() => {
+                        this.updateDemoChart();
+                    });
+                }
+            },
+            get filteredDemoTickers() {
+                const query = this.demoSearchQuery.toLowerCase();
+                let tickers = Object.values(this.tickers);
+                
+                // Фильтруем по поисковому запросу, если он есть
+                if (query) {
+                    
+                    tickers = tickers.filter(ticker => ticker.symbol.includes(this.asset));
+                }
+        
+                
+                if (this.inputSearch) {
+                    tickers = tickers.filter(ticker => 
+                        ticker.token.toLowerCase().includes(this.inputSearch.toLowerCase())
+                    );
+                }
+        
+                return tickers.sort((a, b) => {
+                    if (this.order === 'desc') {
+                        return b[this.sort] - a[this.sort];
+                    }
+                    return a[this.sort] - b[this.sort];
+                });
+            },
+            latestTrades() {
+                return this.showLatestTrades ? this.trades : [];
+            },
+            filteredShareTickers() {
+                let tickers = Object.values(this.tickers);
+                
+                if (this.shareAssetFilter === 'FAV') {
+                    tickers = tickers.filter(ticker => this.favorites.includes(ticker.symbol));
+                } else {
+                    tickers = tickers.filter(ticker => ticker.symbol.endsWith(this.shareAssetFilter));
+                }
+                
+                if (this.tickerSearch) {
+                    tickers = tickers.filter(ticker => 
+                        ticker.pair.toLowerCase().includes(this.tickerSearch.toLowerCase())
+                    );
+                }
+                
+                return tickers;
+            }
         },
         mounted() {
             this.sockInit();
@@ -2320,48 +2474,82 @@
             },
             filterTickers() {
                 let tickers = Object.values(this.tickers);
-        
                 
                 if (this.asset === 'FAV') {
                     tickers = tickers.filter(ticker => this.favorites.includes(ticker.symbol));
                 } else {
-                    
-                    tickers = tickers.filter(ticker => ticker.symbol.includes(this.asset));
+                    tickers = tickers.filter(ticker => ticker.asset === this.asset);
                 }
-        
                 
                 if (this.inputSearch) {
-                    tickers = tickers.filter(ticker => 
-                        ticker.token.toLowerCase().includes(this.inputSearch.toLowerCase())
-                    );
-                }
-        
-                return tickers.sort((a, b) => {
-                    if (this.order === 'desc') {
-                        return b[this.sort] - a[this.sort];
-                    }
-                    return a[this.sort] - b[this.sort];
-                });
-            },
-            latestTrades() {
-                return this.showLatestTrades ? this.trades : [];
-            },
-            filteredShareTickers() {
-                let tickers = Object.values(this.tickers);
-                
-                if (this.shareAssetFilter === 'FAV') {
-                    tickers = tickers.filter(ticker => this.favorites.includes(ticker.symbol));
-                } else {
-                    tickers = tickers.filter(ticker => ticker.symbol.endsWith(this.shareAssetFilter));
+                    const search = this.inputSearch.toLowerCase();
+                    tickers = tickers.filter(ticker => {
+                        return ticker.token.toLowerCase().includes(search) || 
+                               ticker.symbol.toLowerCase().includes(search) || 
+                               ticker.pair.toLowerCase().includes(search);
+                    });
                 }
                 
-                if (this.tickerSearch) {
-                    tickers = tickers.filter(ticker => 
-                        ticker.pair.toLowerCase().includes(this.tickerSearch.toLowerCase())
-                    );
+                if (this.sort === 'token') {
+                    tickers = tickers.sort((a, b) => {
+                        if (this.order === 'asc') {
+                            return a.token.localeCompare(b.token);
+                        } else {
+                            return b.token.localeCompare(a.token);
+                        }
+                    });
+                }
+                
+                if (this.sort === 'close') {
+                    tickers = tickers.sort((a, b) => {
+                        if (this.order === 'asc') {
+                            return parseFloat(a.close) - parseFloat(b.close);
+                        } else {
+                            return parseFloat(b.close) - parseFloat(a.close);
+                        }
+                    });
+                }
+                
+                if (this.sort === 'percent') {
+                    tickers = tickers.sort((a, b) => {
+                        if (this.order === 'asc') {
+                            return parseFloat(a.percent) - parseFloat(b.percent);
+                        } else {
+                            return parseFloat(b.percent) - parseFloat(a.percent);
+                        }
+                    });
+                }
+                
+                if (this.sort === 'assetVolume') {
+                    tickers = tickers.sort((a, b) => {
+                        if (this.order === 'asc') {
+                            return parseFloat(a.assetVolume) - parseFloat(b.assetVolume);
+                        } else {
+                            return parseFloat(b.assetVolume) - parseFloat(a.assetVolume);
+                        }
+                    });
                 }
                 
                 return tickers;
+            },
+            filteredDemoTickers() {
+                const query = this.demoSearchQuery.toLowerCase();
+                let tickers = Object.values(this.tickers);
+                
+                // Фильтруем по поисковому запросу, если он есть
+                if (query) {
+                    tickers = tickers.filter(ticker => {
+                        const symbol = ticker.symbol.toLowerCase();
+                        const pair = ticker.pair.toLowerCase();
+                        return symbol.includes(query) || pair.includes(query);
+                    });
+                }
+                
+                // Показываем только USDT пары для простоты
+                tickers = tickers.filter(ticker => ticker.symbol.endsWith('USDT'));
+                
+                // Сортируем по объему торгов (от большего к меньшему)
+                return tickers.sort((a, b) => parseFloat(b.assetVolume) - parseFloat(a.assetVolume));
             }
         }
     }).mount('#app')
@@ -2887,6 +3075,33 @@
     
     body.modal-open .fixed.bottom-0 {
         pointer-events: auto;
+    }
+
+    /* Стили для режима Demo Trading */
+    .demo-trading-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary-black);
+        z-index: 100;
+        overflow: auto;
+    }
+    
+    .demo-trading-screen-content {
+        height: 100%;
+        width: 100%;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .demo-trading-screen-content .cb {
+        background-color: var(--color-bg--300);
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        border-radius: 0.25rem;
     }
 </style>
 </body>
