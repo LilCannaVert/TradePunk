@@ -1303,16 +1303,12 @@
                 setTimeout(async () => { await this.prepareOrderBook() }, 500);
             },
             toggleOrderBookModal() {
-                if (this.showNewsScreen) {
-                    this.showNewsScreen = false;
-                }
-                
-                if (this.showOrderBookModal) {
-                    this.showOrderBookModal = false;
-                    document.body.classList.remove('no-scroll');
-                } else {
+                // If we're opening the modal
+                if (!this.showOrderBookModal) {
+                    // Close all modals first
                     this.closeAllModals();
                     
+                    // Then open this modal
                     this.showOrderBookModal = true;
                     document.body.classList.add('no-scroll');
                     
@@ -1322,6 +1318,10 @@
                             if (orderBookModal) orderBookModal.classList.add('modal-on-chart');
                         }, 0);
                     }
+                } else {
+                    // Just close this modal
+                    this.showOrderBookModal = false;
+                    document.body.classList.remove('no-scroll');
                 }
             },
             closeKeyboard() {
@@ -1346,12 +1346,10 @@
                 }
             },
             openShareModal() {
-                if (this.showNewsScreen) {
-                    this.showNewsScreen = false;
-                }
-                
+                // Always close all modals first
                 this.closeAllModals();
                 
+                // Then open share modal
                 this.showShareModal = true;
                 document.body.style.overflow = 'hidden';
                 
@@ -1464,16 +1462,12 @@
                 }
             },
             toggleCalculator() {
-                if (this.showNewsScreen) {
-                    this.showNewsScreen = false;
-                }
-                
-                if (this.showCalculator) {
-                    this.showCalculator = false;
-                    document.body.style.overflow = 'auto';
-                } else {
+                // If we're opening the calculator
+                if (!this.showCalculator) {
+                    // Close all modals first
                     this.closeAllModals();
                     
+                    // Then open calculator
                     this.showCalculator = true;
                     document.body.style.overflow = 'hidden';
                     
@@ -1483,6 +1477,10 @@
                             if (calculatorModal) calculatorModal.classList.add('modal-on-chart');
                         }, 0);
                     }
+                } else {
+                    // Just close calculator
+                    this.showCalculator = false;
+                    document.body.style.overflow = 'auto';
                 }
             },
             updateCalcSettings(settings) {
@@ -1524,16 +1522,12 @@
                 }
             },
             togglePortfolio() {
-                if (this.showNewsScreen) {
-                    this.showNewsScreen = false;
-                }
-                
-                if (this.showPortfolio) {
-                    this.showPortfolio = false;
-                    document.body.style.overflow = 'auto';
-                } else {
+                // If we're opening the portfolio
+                if (!this.showPortfolio) {
+                    // Close all modals first
                     this.closeAllModals();
                     
+                    // Then open portfolio
                     this.showPortfolio = true;
                     document.body.style.overflow = 'hidden';
                     
@@ -1543,6 +1537,10 @@
                             if (portfolioModal) portfolioModal.classList.add('modal-on-chart');
                         }, 0);
                     }
+                } else {
+                    // Just close portfolio
+                    this.showPortfolio = false;
+                    document.body.style.overflow = 'auto';
                 }
             },
             filterPortfolioCoins() {
@@ -1808,13 +1806,11 @@
             },
 
             toggleChartScreen() {
-                if (this.showNewsScreen) {
-                    this.showNewsScreen = false;
-                }
+                // Close all modals before toggling chart screen
+                this.closeAllModals();
                 
                 this.showChartScreen = !this.showChartScreen;
                 if (this.showChartScreen) {
-                    this.closeAllModals();
                     this.$nextTick(() => {
                         this.initFullscreenChart();
                     });
@@ -1935,13 +1931,21 @@
                 return price;
             },
             toggleNewsScreen() {
-                this.showNewsScreen = !this.showNewsScreen;
-                
-                if (this.showNewsScreen) {
+                // If we're opening news screen
+                if (!this.showNewsScreen) {
+                    // Close all modals first
+                    this.closeAllModals();
+                    
+                    // Then open news screen
+                    this.showNewsScreen = true;
+                    
                     if (this.newsItems.length === 0) {
                         this.newsPage = 1;
                         this.loadNews();
                     }
+                } else {
+                    // Just close news screen
+                    this.showNewsScreen = false;
                 }
             },
             
