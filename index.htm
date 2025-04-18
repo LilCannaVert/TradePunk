@@ -520,7 +520,7 @@
                   <div class="news-item-title">{{ item.title }}</div>
                   <div class="news-item-source">{{ item.source }}</div>
                   <div class="news-item-content">{{ item.summary }}</div>
-                  <a :href="'https://t.me/iv?url=' + encodeURIComponent(item.url)" target="_blank" class="news-item-link">Read more</a>
+                  <a :href="'tg://resolve?domain=iv&url=' + encodeURIComponent(item.url)" class="news-item-link">Read more</a>
                 </div>
               </div>
               
