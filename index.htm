@@ -1051,7 +1051,21 @@
                     tags: [],
                     date: null
                 },
-                newsItems: []
+                newsItems: [],
+                // Demo Trading данные
+                showDemoTrading: false,
+                demoAccount: {
+                    initialized: false,
+                    balance: 10000,
+                    positions: [],
+                    orders: [],
+                    transactions: []
+                },
+                demoOrderSymbol: '',
+                demoOrderAmount: '',
+                demoOrderSide: 'BUY',
+                demoUpdateInterval: null,
+                tickersLoaded: false, // Флаг для отслеживания загрузки тикеров
             }
         },
         methods: {
@@ -1081,62 +1095,16 @@
                 }));
             },
             sockMessage(e) {
-                let data = JSON.parse(e.data);
-                if (Array.isArray(data)) {
-                    data.forEach(ticker => {
-                        if (ticker.s.endsWith('BTC')) {
-                            this.tickers[ticker.s] = {
-                                symbol: ticker.s,
-                                pair: ticker.s.replace('BTC', '') + '/BTC',
-                                token: ticker.s.replace('BTC', ''),
-                                asset: 'BTC',
-                                close: parseFloat(ticker.c).toFixed(8),
-                                open: parseFloat(ticker.o).toFixed(8),
-                                high: parseFloat(ticker.h).toFixed(8),
-                                low: parseFloat(ticker.l).toFixed(8),
-                                volume: parseFloat(ticker.v).toFixed(8),
-                                quoteVolume: parseFloat(ticker.q).toFixed(8),
-                                tokenVolume: parseFloat(ticker.v).toFixed(2),
-                                assetVolume: parseFloat(ticker.q).toFixed(2),
-                                percent: parseFloat(ticker.P),
-                                arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
-                                style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
-                            }
-                        }
-                        if (ticker.s.endsWith('USDT')) {
-                            this.tickers[ticker.s] = {
-                                symbol: ticker.s,
-                                pair: ticker.s.replace('USDT', '') + '/USDT',
-                                token: ticker.s.replace('USDT', ''),
-                                asset: 'USDT',
-                                close: parseFloat(ticker.c).toFixed(8),
-                                open: parseFloat(ticker.o).toFixed(8),
-                                high: parseFloat(ticker.h).toFixed(8),
-                                low: parseFloat(ticker.l).toFixed(8),
-                                volume: parseFloat(ticker.v).toFixed(8),
-                                quoteVolume: parseFloat(ticker.q).toFixed(8),
-                                tokenVolume: parseFloat(ticker.v).toFixed(2),
-                                assetVolume: parseFloat(ticker.q).toFixed(0), 
-                                percent: parseFloat(ticker.P),
-                                arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
-                                style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
-                            }
-                        }
-                    });
-
-                    if (Object.keys(this.tickers).length > 0) {
-
-                        if (this.portfolioPositions.length === 0) {
-                            console.log('Tickers received, trying to load portfolio');
-                            this.loadState();
-                        }
-                        
-                        if (this.portfolioPositions.length > 0) {
-                            this.updatePortfolioTotals();
-                        }
+                if (this.sockActive) {
+                    let data = JSON.parse(e.data);
+                    this.processTickerData(data);
+                    
+                    // Если у нас есть портфельные позиции и это первый раз, когда мы получаем тикеры
+                    if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0 && !this.tickersLoaded) {
+                        console.log('Tickers loaded, updating portfolio calculations');
+                        this.updatePortfolioTotals();
+                        this.tickersLoaded = true;
                     }
-
-                    this.status = 2;
                 }
             },
             sockClose() {
@@ -1182,9 +1150,12 @@
                 localStorage.setItem('favorites', JSON.stringify(this.favorites));
             },
             filterAsset(asset) {
-                this.asset = asset; 
-                this.status = 1; 
+                this.asset = asset;
+                this.status = 'loading';
                 
+                setTimeout(() => {
+                    window.updateFilterButtonBubbles();
+                }, 50);
             },
             sortBy(field, order) {
                 this.sort = field;
@@ -1369,32 +1340,17 @@
                 this.shareAssetFilter = asset;
             },
             async updateTonPrice() {
-                try {
-                    const response = await fetch('https://tonapi.io/v2/rates?tokens=ton&currencies=usd');
-                    const data = await response.json();
-                    const price = data.rates.TON.prices.USD;
-                    const diff24h = data.rates.TON.diff_24h.USD.replace('%', '');
-                    
-                    this.tickers['TONUSDT'] = {
-                        symbol: 'TONUSDT',
-                        pair: 'TON/USDT',
-                        token: 'TON',
-                        asset: 'USDT',
-                        close: price.toFixed(8),
-                        open: price.toFixed(8), 
-                        high: price.toFixed(8), 
-                        low: price.toFixed(8),  
-                        volume: '0',            
-                        quoteVolume: '0',       
-                        tokenVolume: '0',      
-                        assetVolume: '0',     
-                        percent: parseFloat(diff24h),
-                        arrow: parseFloat(diff24h) >= 0 ? '↑' : '↓',
-                        style: parseFloat(diff24h) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
-                    };
-                } catch (error) {
-                    console.error('Error fetching TON price:', error);
-                }
+                fetch('https://api.coingecko.com/api/v3/simple/price?ids=toncoin&vs_currencies=usd')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.toncoin && data.toncoin.usd) {
+                            this.tonPrice = data.toncoin.usd;
+                            console.log('Updated TON price:', this.tonPrice);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching TON price:', error);
+                    });
             },
             toggleCalculator() {
                 if (this.showCalculator) {
@@ -1895,256 +1851,82 @@
             },
             // Методы для демо-торговли
             toggleDemoTrading() {
-                this.isDemoMode = !this.isDemoMode;
+                this.showDemoTrading = !this.showDemoTrading;
                 
-                // Закрываем бургер-меню
-                this.showBurgerMenu = false;
-                
-                if (this.isDemoMode) {
-                    // Загружаем сохраненные данные
-                    this.loadDemoTradingState();
-                    if (this.demoPositions && Object.keys(this.demoPositions).length > 0) {
-                        this.updateDemoPositions();
-                    }
-                    
-                    // Открываем полноэкранный режим демо-торговли
-                    this.showDemoTradingScreen = true;
-                    document.body.style.overflow = 'hidden';
-                    
-                    // Инициализируем график после открытия окна
-                    this.$nextTick(() => {
-                        this.initDemoTrading();
-                    });
-                } else {
-                    // Закрываем полноэкранный режим при отключении
-                    this.showDemoTradingScreen = false;
-                    document.body.style.overflow = 'auto';
-                    
-                    // Очищаем график при закрытии
-                    if (this.demoChartInstance) {
-                        this.demoChartInstance.remove();
-                        this.demoChartInstance = null;
-                    }
+                if (this.showDemoTrading && !this.demoAccount.initialized) {
+                    this.initDemoAccount();
                 }
                 
-                localStorage.setItem('isDemoMode', this.isDemoMode);
+                if (this.showDemoTrading) {
+                    this.startDemoUpdateInterval();
+                } else {
+                    clearInterval(this.demoUpdateInterval);
+                }
             },
-            toggleDemoTradingModal() {
-                this.showDemoTradingModal = !this.showDemoTradingModal;
+            initDemoAccount() {
+                // Попытка загрузить существующий демо-аккаунт из localStorage
+                const savedAccount = localStorage.getItem('demoTradingAccount');
                 
-                if (this.showDemoTradingModal) {
-                    this.closeAllModals();
-                    this.showDemoTradingModal = true;
-                    document.body.style.overflow = 'hidden';
-                    
-                    // Рассчитаем актуальные значения формы
-                    if (this.tickers[this.currentTicker]) {
-                        const currentPrice = parseFloat(this.tickers[this.currentTicker].close);
-                        // Для покупки
-                        this.demoForm.buyAmount = 0;
-                        this.demoForm.buyTotal = 0;
-                        
-                        // Для продажи
-                        const position = this.demoPositions[this.currentTicker];
-                        if (position && position.amount > 0) {
-                            this.demoForm.sellAmount = position.amount;
-                            this.demoForm.sellTotal = position.amount * currentPrice;
-                        } else {
-                            this.demoForm.sellAmount = 0;
-                            this.demoForm.sellTotal = 0;
-                        }
-                    }
-                    
-                    if (this.showChartScreen) {
-                        setTimeout(() => {
-                            const demoTradingModal = document.getElementById('demoTradingModal');
-                            if (demoTradingModal) demoTradingModal.classList.add('modal-on-chart');
-                        }, 0);
+                if (savedAccount) {
+                    try {
+                        const parsed = JSON.parse(savedAccount);
+                        this.demoAccount = parsed;
+                        console.log('Загружен существующий демо-аккаунт:', this.demoAccount);
+                    } catch (e) {
+                        console.error('Ошибка при загрузке демо-аккаунта:', e);
+                        this.resetDemoAccount();
                     }
                 } else {
-                    this.showDemoTradingModal = false;
-                    document.body.style.overflow = 'auto';
+                    this.resetDemoAccount();
                 }
             },
-            handleDemoTradingModalClick(event) {
-                if (event.target.id === 'demoTradingModal') {
-                    this.toggleDemoTradingModal();
-                }
-            },
-            loadDemoTradingState() {
-                try {
-                    // Загрузка баланса
-                    const savedBalance = localStorage.getItem('demoBalance');
-                    if (savedBalance) {
-                        this.demoBalance = parseFloat(savedBalance);
-                    }
-                    
-                    // Загрузка позиций
-                    const savedPositions = localStorage.getItem('demoPositions');
-                    if (savedPositions) {
-                        this.demoPositions = JSON.parse(savedPositions);
-                    }
-                    
-                    // Загрузка истории ордеров
-                    const savedOrders = localStorage.getItem('demoOrders');
-                    if (savedOrders) {
-                        this.demoOrders = JSON.parse(savedOrders);
-                    }
-                    
-                    console.log('Демо-торговля: данные загружены', {
-                        баланс: this.demoBalance,
-                        позиции: this.demoPositions,
-                        ордера: this.demoOrders
-                    });
-                    
-                    // Обновление текущих цен и PnL
-                    this.updateDemoPositions();
-                } catch (error) {
-                    console.error('Ошибка при загрузке данных демо-торговли:', error);
-                }
-            },
-            saveDemoTradingState() {
-                try {
-                    localStorage.setItem('demoBalance', this.demoBalance);
-                    localStorage.setItem('demoPositions', JSON.stringify(this.demoPositions));
-                    localStorage.setItem('demoOrders', JSON.stringify(this.demoOrders));
-                    console.log('Демо-торговля: данные сохранены');
-                } catch (error) {
-                    console.error('Ошибка при сохранении данных демо-торговли:', error);
-                }
-            },
-            updateDemoPositions() {
-                // Обновление текущих цен и расчет P&L
-                let totalPnl = 0;
-                
-                for (const symbol in this.demoPositions) {
-                    const position = this.demoPositions[symbol];
-                    const ticker = this.tickers[symbol];
-                    
-                    if (ticker && position.amount > 0) {
-                        position.currentPrice = parseFloat(ticker.close);
-                        const currentValue = position.amount * position.currentPrice;
-                        const cost = position.amount * position.avgPrice;
-                        position.pnl = currentValue - cost;
-                        position.pnlPercent = (position.pnl / cost) * 100;
-                        totalPnl += position.pnl;
-                    }
-                }
-                
-                this.demoProfitLoss = totalPnl;
-            },
-            // Метод для форматирования суммы с 8 знаками после запятой
-            formatAmount(amount) {
-                return parseFloat(amount).toFixed(8);
-            },
-            // Методы для покупки и продажи
-            setDemoBuyPercent(percent) {
-                if (!this.tickers[this.currentTicker]) return;
-                
-                const currentPrice = parseFloat(this.tickers[this.currentTicker].close);
-                this.demoForm.buyTotal = this.demoBalance * percent;
-                this.demoForm.buyAmount = this.demoForm.buyTotal / currentPrice;
-            },
-            setDemoSellPercent(percent) {
-                if (!this.tickers[this.currentTicker]) return;
-                
-                const position = this.demoPositions[this.currentTicker];
-                if (position && position.amount > 0) {
-                    const currentPrice = parseFloat(this.tickers[this.currentTicker].close);
-                    this.demoForm.sellAmount = position.amount * percent;
-                    this.demoForm.sellTotal = this.demoForm.sellAmount * currentPrice;
-                }
-            },
-            executeDemoBuy() {
-                if (!this.tickers[this.currentTicker]) return;
-                
-                const ticker = this.tickers[this.currentTicker];
-                const amount = parseFloat(this.demoForm.buyAmount);
-                const total = parseFloat(this.demoForm.buyTotal);
-                const price = parseFloat(ticker.close);
-                
-                // Проверки
-                if (amount <= 0 || total <= 0) {
-                    alert('Please enter a valid amount or total for purchase');
-                    return;
-                }
-                
-                if (total > this.demoBalance) {
-                    alert('Insufficient funds for purchase');
-                    return;
-                }
-                
-                // Расчёт комиссии (0.1%)
-                const fee = total * 0.001;
-                const totalWithFee = total + fee;
-                
-                // Обновляем баланс
-                this.demoBalance -= totalWithFee;
-                
-                // Создаём новый ордер
-                const order = {
-                    timestamp: Date.now(),
-                    symbol: ticker.symbol,
-                    pair: ticker.pair,
-                    type: 'buy',
-                    price: price,
-                    amount: amount,
-                    total: total,
-                    fee: fee
+            resetDemoAccount() {
+                this.demoAccount = {
+                    initialized: true,
+                    balance: 10000,  // Начальный баланс $10,000
+                    positions: [],
+                    orders: [],
+                    transactions: []
                 };
-                
-                // Добавляем ордер в историю
-                this.demoOrders.unshift(order);
-                
-                // Обновляем позицию
-                if (!this.demoPositions[ticker.symbol]) {
-                    this.demoPositions[ticker.symbol] = {
-                        symbol: ticker.symbol,
-                        pair: ticker.pair,
-                        amount: 0,
-                        avgPrice: 0,
-                        currentPrice: price,
-                        pnl: 0,
-                        pnlPercent: 0
-                    };
-                }
-                
-                const position = this.demoPositions[ticker.symbol];
-                const totalCost = position.amount * position.avgPrice + total;
-                const newAmount = position.amount + amount;
-                
-                // Вычисляем новую среднюю цену
-                position.avgPrice = totalCost / newAmount;
-                position.amount = newAmount;
-                position.currentPrice = price;
-                
-                // Обновляем P&L
-                this.updateDemoPositions();
-                
-                // Сохраняем состояние
-                this.saveDemoTradingState();
-                
-                // Очищаем форму
-                this.demoForm.buyAmount = 0;
-                this.demoForm.buyTotal = 0;
-                
-                console.log('Покупка выполнена:', order);
+                this.saveDemoAccount();
             },
-            executeDemoSell() {
-                if (!this.tickers[this.currentTicker]) return;
-                
-                const ticker = this.tickers[this.currentTicker];
-                const amount = parseFloat(this.demoForm.sellAmount);
-                const price = parseFloat(ticker.close);
-                const total = amount * price;
-                
-                // Проверяем наличие позиции
-                const position = this.demoPositions[ticker.symbol];
-                if (!position || position.amount <= 0 || amount <= 0) {
-                    alert('No available position to sell or invalid amount entered');
+            saveDemoAccount() {
+                localStorage.setItem('demoTradingAccount', JSON.stringify(this.demoAccount));
+            },
+            executeDemoOrder() {
+                if (!this.demoOrderSymbol || !this.demoOrderAmount || this.demoOrderAmount <= 0) {
+                    alert('Пожалуйста, выберите символ и введите сумму');
                     return;
                 }
                 
+                const ticker = this.tickers[this.demoOrderSymbol];
+                if (!ticker) {
+                    alert('Символ не найден в списке тикеров');
+                    return;
+                }
+                
+                const currentPrice = parseFloat(ticker.price);
+                const amount = parseFloat(this.demoOrderAmount);
+                
+                if (this.demoOrderSide === 'BUY') {
+                    // Проверка достаточного баланса
+                    if (amount > this.demoAccount.balance) {
+                        alert('Недостаточно средств на балансе');
+                        return;
+                    }
+                    
+                    // Покупка криптовалюты
+                    const coinAmount = amount / currentPrice;
+                    
+                    // Поиск существующей позиции
+                    const existingPosition = this.demoAccount.positions.find(p => p.symbol === this.demoOrderSymbol);
+                    
+                    if (existingPosition) {
+                        // Усреднение существующей позиции
+                        const totalCoins = existingPosition.amount + coinAmount;
+                        const totalInvestment = (existingPosition.amount * existingPosition.entryPrice) + amount;
+                        existingPosition.entryPrice = totalInvestment / totalCoins;
+                        existingPosition.amount = totalCoins;
                 if (amount > position.amount) {
                     alert('Sell amount exceeds available amount');
                     return;
@@ -2396,60 +2178,143 @@
                 }
                 
                 return tickers;
-            }
+            },
+            processTickerData(data) {
+                try {
+                    if (Array.isArray(data)) {
+                        data.forEach(ticker => {
+                            if (ticker.s.endsWith('BTC')) {
+                                this.tickers[ticker.s] = {
+                                    symbol: ticker.s,
+                                    pair: ticker.s.replace('BTC', '') + '/BTC',
+                                    token: ticker.s.replace('BTC', ''),
+                                    asset: 'BTC',
+                                    close: parseFloat(ticker.c).toFixed(8),
+                                    open: parseFloat(ticker.o).toFixed(8),
+                                    high: parseFloat(ticker.h).toFixed(8),
+                                    low: parseFloat(ticker.l).toFixed(8),
+                                    volume: parseFloat(ticker.v).toFixed(8),
+                                    quoteVolume: parseFloat(ticker.q).toFixed(8),
+                                    tokenVolume: parseFloat(ticker.v).toFixed(2),
+                                    assetVolume: parseFloat(ticker.q).toFixed(2),
+                                    percent: parseFloat(ticker.P),
+                                    arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
+                                    style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
+                                };
+                            }
+                            if (ticker.s.endsWith('USDT')) {
+                                this.tickers[ticker.s] = {
+                                    symbol: ticker.s,
+                                    pair: ticker.s.replace('USDT', '') + '/USDT',
+                                    token: ticker.s.replace('USDT', ''),
+                                    asset: 'USDT',
+                                    close: parseFloat(ticker.c).toFixed(8),
+                                    open: parseFloat(ticker.o).toFixed(8),
+                                    high: parseFloat(ticker.h).toFixed(8),
+                                    low: parseFloat(ticker.l).toFixed(8),
+                                    volume: parseFloat(ticker.v).toFixed(8),
+                                    quoteVolume: parseFloat(ticker.q).toFixed(8),
+                                    tokenVolume: parseFloat(ticker.v).toFixed(2),
+                                    assetVolume: parseFloat(ticker.q).toFixed(0), 
+                                    percent: parseFloat(ticker.P),
+                                    arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
+                                    style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
+                                };
+                            }
+                        });
+                    }
+                    this.status = 2;
+                } catch (error) {
+                    console.error('Error processing ticker data:', error);
+                }
+            },
+            getCoinData(ticker) {
+                if (ticker.s.endsWith('BTC')) {
+                    return {
+                        symbol: ticker.s,
+                        pair: ticker.s.replace('BTC', '') + '/BTC',
+                        token: ticker.s.replace('BTC', ''),
+                        asset: 'BTC',
+                        close: parseFloat(ticker.c).toFixed(8),
+                        open: parseFloat(ticker.o).toFixed(8),
+                        high: parseFloat(ticker.h).toFixed(8),
+                        low: parseFloat(ticker.l).toFixed(8),
+                        volume: parseFloat(ticker.v).toFixed(8),
+                        quoteVolume: parseFloat(ticker.q).toFixed(8),
+                        tokenVolume: parseFloat(ticker.v).toFixed(2),
+                        assetVolume: parseFloat(ticker.q).toFixed(2),
+                        percent: parseFloat(ticker.P),
+                        arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
+                        style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
+                    };
+                }
+                if (ticker.s.endsWith('USDT')) {
+                    return {
+                        symbol: ticker.s,
+                        pair: ticker.s.replace('USDT', '') + '/USDT',
+                        token: ticker.s.replace('USDT', ''),
+                        asset: 'USDT',
+                        close: parseFloat(ticker.c).toFixed(8),
+                        open: parseFloat(ticker.o).toFixed(8),
+                        high: parseFloat(ticker.h).toFixed(8),
+                        low: parseFloat(ticker.l).toFixed(8),
+                        volume: parseFloat(ticker.v).toFixed(8),
+                        quoteVolume: parseFloat(ticker.q).toFixed(8),
+                        tokenVolume: parseFloat(ticker.v).toFixed(2),
+                        assetVolume: parseFloat(ticker.q).toFixed(0),
+                        percent: parseFloat(ticker.P),
+                        arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
+                        style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
+                    };
+                }
+                return null;
+            },
         },
         mounted() {
-            this.sockInit();
-            this.appendScript(this.initWidget);
-            this.prepareOrderBook();
-            this.initWidget(); 
-            this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
-            
-            this.loadState();
-            
+            this.selectedAsset = localStorage.getItem('selectedAsset') || 'USDT';
+        },
+        mounted() {
+            this.selectedAsset = localStorage.getItem('selectedAsset') || 'USDT';
+            this.selectedStatus = localStorage.getItem('selectedStatus') || 'allcoins';
+            this.pairsPerPage = parseInt(localStorage.getItem('pairsPerPage')) || 50;
+            this.status = 0;
+
+            this.loadState(); // Загружаем состояние портфеля сразу
+
+            this.initTheme();
+
+            const calcSettingsStr = localStorage.getItem('calcSettings');
+            if (calcSettingsStr) {
+                try {
+                    this.calcSettings = JSON.parse(calcSettingsStr);
+                } catch (e) {
+                    console.error('Error parsing calc settings:', e);
+                }
+            }
+
+            this.sockInit(); // Инициализация WebSocket
+
+            // Повторная попытка загрузить состояние через 2 секунды, если портфель пуст
             setTimeout(() => {
-                if (this.portfolioPositions.length === 0) {
-                    console.log('Trying to load portfolio state again after delay');
+                if (this.portfolioPositions.length === 0 && Object.keys(this.tickers).length > 0) {
+                    console.log('Portfolio is empty after initial load, trying again...');
                     this.loadState();
                 }
             }, 2000);
 
+            // Устанавливаем интервал для обновления портфеля
             setInterval(() => {
                 if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
                     this.updatePortfolioTotals();
                 }
             }, 1000);
 
-            window.addEventListener('click', this.handleClick);
-
-            const savedSettings = localStorage.getItem('calcSettings');
-            if (savedSettings) {
-                this.calcSettings = JSON.parse(savedSettings);
-            }
+            this.updateTonPrice();
+            setInterval(this.updateTonPrice, 60000);
             
-            axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
-                this.coins = response.data.data.coins;
-            });
-            
-            this.updateBubbleElements();
-            
-            // Загрузка состояния демо-режима
-            const savedDemoMode = localStorage.getItem('isDemoMode');
-            if (savedDemoMode === 'true') {
-                this.isDemoMode = true;
-                this.loadDemoTradingState();
-            }
-            
-            // Обновление позиций демо-торговли каждую секунду если есть активные позиции
-            setInterval(() => {
-                if (this.isDemoMode && this.demoPositions && Object.keys(this.demoPositions).length > 0) {
-                    this.updateDemoPositions();
-                }
-            }, 1000);
-            
-            this.appendScript(() => {
-                // ... existing code ...
-            });
+            // Восстанавливаем необходимые инициализации
+            this.initDemoTrading();
+            document.addEventListener('keydown', this.handleKeyDown);
         },
         beforeUnmount() {
             this.sockClose();
@@ -3082,26 +2947,36 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: var(--color-primary-black);
-        z-index: 100;
-        overflow: auto;
+        right: 0;
+        bottom: 0;
+        background-color: var(--color-bg);
+        z-index: 9999;
+        overflow-y: auto;
+        overflow-x: hidden;
     }
     
     .demo-trading-screen-content {
-        height: 100%;
-        width: 100%;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
     }
     
-    .demo-trading-screen-content .cb {
-        background-color: var(--color-bg--300);
-        border: 2px solid var(--color-primary-purple);
-        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
-        border-radius: 0.25rem;
+    .cb {
+        background-color: var(--color-bg--400);
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Стили для компонентов Demo Trading */
+    .form-control:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--color-primary-blue);
+    }
+    
+    @media (max-width: 768px) {
+        .demo-trading-screen-content {
+            padding: 10px;
+        }
     }
 </style>
 </body>
@@ -3192,4 +3067,343 @@
         });
     });
 </script>
+
+<!-- Полноэкранный режим Demo Trading -->
+<div v-if="showDemoTradingScreen" class="demo-trading-screen-overlay">
+  <div class="demo-trading-screen-content">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-bold text-[--color-primary-silver]">Demo Trading Platform</h2>
+      <button @click="toggleDemoTrading" class="bg-red-500 text-white px-4 py-2 rounded">Exit Demo Mode</button>
+    </div>
+    
+    <div class="flex flex-col lg:flex-row gap-4">
+      <!-- Левая панель: список тикеров и инфо о текущем -->
+      <div class="lg:w-1/4">
+        <div class="cb mb-4 p-3">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-[--color-primary-blue] font-bold">Markets</h3>
+            <div class="relative">
+              <input 
+                type="text" 
+                v-model="demoSearchQuery" 
+                placeholder="Search..." 
+                class="bg-[--color-bg--500] text-white p-2 rounded w-full text-sm"
+              />
+            </div>
+          </div>
+          <div class="h-[30vh] overflow-y-auto">
+            <div 
+              v-for="ticker in filteredDemoTickers" 
+              :key="ticker.symbol" 
+              @click="selectDemoTicker(ticker.symbol)"
+              :class="[currentDemoTicker === ticker.symbol ? 'bg-[--color-bg--500]' : '', 'flex justify-between p-2 hover:bg-[--color-bg--500] cursor-pointer rounded mb-1']"
+            >
+              <div>{{ ticker.pair }}</div>
+              <div :class="ticker.style">{{ formatDisplayPrice(ticker) }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="cb mb-4 p-3">
+          <h3 class="text-[--color-primary-blue] font-bold mb-2">Account</h3>
+          <div class="flex justify-between mb-2">
+            <span class="text-[--color-primary-silver]">Balance:</span>
+            <span class="font-bold">{{ formatPrice(demoBalance) }}</span>
+          </div>
+          <div class="flex justify-between mb-2">
+            <span class="text-[--color-primary-silver]">Total P&L:</span>
+            <span :class="demoProfitLoss >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="font-bold">
+              {{ formatPrice(demoProfitLoss) }}
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[--color-primary-silver]">Available:</span>
+            <span class="font-bold">{{ formatPrice(demoBalance) }}</span>
+          </div>
+        </div>
+        
+        <div class="cb mb-4 p-3">
+          <h3 class="text-[--color-primary-blue] font-bold mb-2">Position Summary</h3>
+          <div class="max-h-[30vh] overflow-y-auto">
+            <div v-for="(position, symbol) in demoPositions" :key="symbol" v-if="position.amount > 0" class="mb-2 p-2 bg-[--color-bg--500] rounded">
+              <div class="flex justify-between mb-1">
+                <span class="font-bold">{{ position.pair }}</span>
+                <span>{{ formatAmount(position.amount) }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-[--color-primary-silver]">Avg: {{ formatPrice(position.avgPrice) }}</span>
+                <span :class="position.pnl >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="text-sm">
+                  {{ formatPrice(position.pnl) }} ({{ position.pnlPercent >= 0 ? '+' : '' }}{{ position.pnlPercent.toFixed(2) }}%)
+                </span>
+              </div>
+            </div>
+            <div v-if="Object.keys(demoPositions).filter(k => demoPositions[k].amount > 0).length === 0" class="text-center text-[--color-primary-silver] py-4">
+              No open positions
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Центральная панель: график и торговля -->
+      <div class="lg:w-2/4">
+        <!-- График текущего инструмента -->
+        <div class="cb mb-4 p-3">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-[--color-primary-blue] font-bold">{{ getTicker(currentDemoTicker)?.pair || 'Chart' }}</h3>
+            <div class="flex gap-2">
+              <button 
+                v-for="timeframe in ['1m', '5m', '15m', '1h', '4h', '1d']" 
+                :key="timeframe"
+                @click="setDemoTimeframe(timeframe)"
+                :class="[demoTimeframe === timeframe ? 'bg-[--color-primary-blue]' : 'bg-[--color-bg--500]', 'text-white px-2 py-1 rounded text-xs']"
+              >
+                {{ timeframe }}
+              </button>
+            </div>
+          </div>
+          <div class="relative" style="height: 400px;">
+            <div id="demo_chart_container" style="height: 100%; width: 100%;"></div>
+          </div>
+        </div>
+        
+        <!-- Торговые формы -->
+        <div class="flex gap-4">
+          <div class="cb p-3 flex-1">
+            <h3 class="text-[--color-primary-green] font-bold mb-2">BUY</h3>
+            <div class="form-group mb-2">
+              <label class="block text-xs text-[--color-primary-silver] mb-1">
+                Amount (in {{ getTicker(currentDemoTicker)?.token || '---' }})
+              </label>
+              <input v-model="demoForm.buyAmount" type="number" min="0" step="0.0001" 
+                    class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
+            </div>
+            <div class="form-group mb-2">
+              <label class="block text-xs text-[--color-primary-silver] mb-1">Total (in USDT)</label>
+              <input v-model="demoForm.buyTotal" type="number" min="0" step="0.01" 
+                    class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
+            </div>
+            <div class="flex justify-between gap-2 mb-2">
+              <button @click="setDemoBuyPercent(0.25)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">25%</button>
+              <button @click="setDemoBuyPercent(0.5)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">50%</button>
+              <button @click="setDemoBuyPercent(0.75)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">75%</button>
+              <button @click="setDemoBuyPercent(1)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">100%</button>
+            </div>
+            <button @click="executeDemoBuy" 
+                    class="bg-[--color-primary-green] hover:bg-green-600 text-white py-2 px-4 rounded w-full">BUY</button>
+          </div>
+          
+          <div class="cb p-3 flex-1">
+            <h3 class="text-[--color-primary--500] font-bold mb-2">SELL</h3>
+            <div class="form-group mb-2">
+              <label class="block text-xs text-[--color-primary-silver] mb-1">
+                Amount (in {{ getTicker(currentDemoTicker)?.token || '---' }})
+              </label>
+              <input v-model="demoForm.sellAmount" type="number" min="0" step="0.0001" 
+                    class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
+            </div>
+            <div class="form-group mb-2">
+              <label class="block text-xs text-[--color-primary-silver] mb-1">Total (in USDT)</label>
+              <input v-model="demoForm.sellTotal" type="number" min="0" step="0.01" 
+                    class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
+            </div>
+            <div class="flex justify-between gap-2 mb-2">
+              <button @click="setDemoSellPercent(0.25)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">25%</button>
+              <button @click="setDemoSellPercent(0.5)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">50%</button>
+              <button @click="setDemoSellPercent(0.75)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">75%</button>
+              <button @click="setDemoSellPercent(1)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">100%</button>
+            </div>
+            <button @click="executeDemoSell" 
+                    class="bg-[--color-primary--500] hover:bg-red-700 text-white py-2 px-4 rounded w-full">SELL</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Правая панель: ордера и история -->
+      <div class="lg:w-1/4">
+        <!-- Текущая цена -->
+        <div class="cb mb-4 p-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-[--color-primary-blue] font-bold">{{ getTicker(currentDemoTicker)?.pair || 'Current Ticker' }}</h3>
+            <div 
+              :class="getTicker(currentDemoTicker)?.style || ''" 
+              class="text-xl font-bold"
+            >
+              {{ getTicker(currentDemoTicker) ? formatPrice(parseFloat(getTicker(currentDemoTicker).close)) : '---' }}
+            </div>
+          </div>
+          <div class="flex justify-between mt-2" v-if="getTicker(currentDemoTicker)">
+            <div class="text-sm">
+              <div class="text-[--color-primary-silver]">24h Change</div>
+              <div :class="getTicker(currentDemoTicker)?.style">
+                {{ getTicker(currentDemoTicker)?.arrow }} {{ getTicker(currentDemoTicker)?.percent.toFixed(2) }}%
+              </div>
+            </div>
+            <div class="text-sm">
+              <div class="text-[--color-primary-silver]">24h High</div>
+              <div>{{ parseFloat(getTicker(currentDemoTicker)?.high).toFixed(2) }}</div>
+            </div>
+            <div class="text-sm">
+              <div class="text-[--color-primary-silver]">24h Low</div>
+              <div>{{ parseFloat(getTicker(currentDemoTicker)?.low).toFixed(2) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- История сделок -->
+        <div class="cb mb-4 p-3">
+          <h3 class="text-[--color-primary-blue] font-bold mb-2">Order History</h3>
+          <div class="max-h-[30vh] overflow-y-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-[--color-primary-silver]">
+                  <th class="text-left py-1">Time</th>
+                  <th class="text-left py-1">Pair</th>
+                  <th class="text-right py-1">Price</th>
+                  <th class="text-right py-1">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(order, index) in demoOrders.slice(0, 15)" :key="index" 
+                    :class="order.type === 'buy' ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                  <td class="py-1">{{ formatShortTime(order.timestamp) }}</td>
+                  <td class="py-1">{{ order.pair }}</td>
+                  <td class="py-1 text-right">{{ formatPrice(order.price) }}</td>
+                  <td class="py-1 text-right">{{ order.type === 'buy' ? '+' : '-' }}{{ formatAmount(order.amount) }}</td>
+                </tr>
+                <tr v-if="demoOrders.length === 0">
+                  <td colspan="4" class="py-4 text-center text-[--color-primary-silver]">No orders yet</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="demoTradingModal" v-show="showDemoTrading" class="modal" :class="{'is-active': showDemoTrading}">
+    <div class="modal-background" @click="toggleDemoTrading"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Demo Trading</p>
+            <button class="delete" aria-label="close" @click="toggleDemoTrading"></button>
+        </header>
+        <section class="modal-card-body">
+            <div class="columns">
+                <div class="column">
+                    <div class="box">
+                        <h3 class="title is-5">Account Balance</h3>
+                        <p class="is-size-4">${{demoAccount.balance.toFixed(2)}}</p>
+                        <button class="button is-small is-danger mt-2" @click="resetDemoAccount">Reset Account</button>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="box">
+                        <h3 class="title is-5">Place Order</h3>
+                        <div class="field">
+                            <label class="label">Symbol</label>
+                            <div class="control">
+                                <div class="select is-fullwidth">
+                                    <select v-model="demoOrderSymbol">
+                                        <option value="">Select Symbol</option>
+                                        <option v-for="ticker in Object.keys(tickers)" :value="ticker">{{ticker}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label class="label">Amount (USD)</label>
+                            <div class="control">
+                                <input class="input" type="number" v-model="demoOrderAmount" placeholder="Enter amount">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label class="label">Side</label>
+                            <div class="control">
+                                <div class="select is-fullwidth">
+                                    <select v-model="demoOrderSide">
+                                        <option value="BUY">BUY</option>
+                                        <option value="SELL">SELL</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="control">
+                                <button class="button is-primary is-fullwidth" @click="executeDemoOrder" :disabled="!demoOrderSymbol || !demoOrderAmount">
+                                    Place Order
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="box mt-4">
+                <h3 class="title is-5">Positions</h3>
+                <table class="table is-fullwidth" v-if="demoAccount.positions.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Amount</th>
+                            <th>Entry Price</th>
+                            <th>Current Price</th>
+                            <th>Current Value</th>
+                            <th>P/L</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="position in demoAccount.positions" :key="position.symbol">
+                            <td>{{position.symbol}}</td>
+                            <td>{{position.amount.toFixed(8)}}</td>
+                            <td>${{position.entryPrice.toFixed(2)}}</td>
+                            <td>${{position.currentPrice.toFixed(2)}}</td>
+                            <td>${{position.currentValue.toFixed(2)}}</td>
+                            <td :class="{'has-text-success': position.pnl > 0, 'has-text-danger': position.pnl < 0}">
+                                ${{position.pnl.toFixed(2)}} ({{position.pnlPercent.toFixed(2)}}%)
+                            </td>
+                            <td>
+                                <button class="button is-small is-danger" @click="closeDemoPosition(position)">Close</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p v-else class="has-text-centered">No open positions</p>
+            </div>
+            
+            <div class="box mt-4">
+                <h3 class="title is-5">Transaction History</h3>
+                <table class="table is-fullwidth" v-if="demoAccount.transactions.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Symbol</th>
+                            <th>Side</th>
+                            <th>Amount</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(tx, index) in demoAccount.transactions.slice().reverse()" :key="index">
+                            <td>{{new Date(tx.timestamp).toLocaleString()}}</td>
+                            <td>{{tx.symbol}}</td>
+                            <td :class="{'has-text-success': tx.side === 'BUY', 'has-text-danger': tx.side === 'SELL'}">
+                                {{tx.side}}
+                            </td>
+                            <td>{{tx.amount.toFixed(8)}}</td>
+                            <td>${{tx.price.toFixed(2)}}</td>
+                            <td>${{tx.total.toFixed(2)}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p v-else class="has-text-centered">No transactions yet</p>
+            </div>
+        </section>
+    </div>
+</div>
+
+</body>
 </html>
