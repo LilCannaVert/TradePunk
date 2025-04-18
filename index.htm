@@ -518,7 +518,7 @@
               <div v-else>
                 <div v-for="(item, index) in newsItems" :key="index" class="news-item">
                   <div class="news-item-title">{{ item.title }}</div>
-                  <div class="news-item-source">{{ item.source }} • {{ formatNewsDate(item.published_at) }}</div>
+                  <div class="news-item-source">{{ item.source }}</div>
                   <div class="news-item-content">{{ item.summary }}</div>
                   <a :href="item.url" target="_blank" class="news-item-link">Read more</a>
                 </div>
@@ -1069,12 +1069,15 @@
                 setTimeout(async () => { await this.prepareOrderBook() }, 500);
             },
             toggleOrderBookModal() {
+                // Закрываем новостную ленту, если она открыта
+                if (this.showNewsScreen) {
+                    this.showNewsScreen = false;
+                }
+                
                 if (this.showOrderBookModal) {
-
                     this.showOrderBookModal = false;
                     document.body.classList.remove('no-scroll');
                 } else {
-
                     this.closeAllModals();
                     
                     this.showOrderBookModal = true;
@@ -1110,7 +1113,11 @@
                 }
             },
             openShareModal() {
-
+                // Закрываем новостную ленту, если она открыта
+                if (this.showNewsScreen) {
+                    this.showNewsScreen = false;
+                }
+                
                 this.closeAllModals();
                 
                 this.showShareModal = true;
@@ -1220,12 +1227,15 @@
                 }
             },
             toggleCalculator() {
+                // Закрываем новостную ленту, если она открыта
+                if (this.showNewsScreen) {
+                    this.showNewsScreen = false;
+                }
+                
                 if (this.showCalculator) {
-
                     this.showCalculator = false;
                     document.body.style.overflow = 'auto';
                 } else {
-
                     this.closeAllModals();
                     
                     this.showCalculator = true;
@@ -1278,12 +1288,15 @@
                 }
             },
             togglePortfolio() {
+                // Закрываем новостную ленту, если она открыта
+                if (this.showNewsScreen) {
+                    this.showNewsScreen = false;
+                }
+                
                 if (this.showPortfolio) {
-
                     this.showPortfolio = false;
                     document.body.style.overflow = 'auto';
                 } else {
-
                     this.closeAllModals();
                     
                     this.showPortfolio = true;
@@ -1560,22 +1573,20 @@
             },
 
             toggleChartScreen() {
-                this.closeAllModals();
+                // Закрываем новостную ленту, если она открыта
+                if (this.showNewsScreen) {
+                    this.showNewsScreen = false;
+                }
                 
+                // Существующая логика переключения chart screen
                 this.showChartScreen = !this.showChartScreen;
                 if (this.showChartScreen) {
-
-                    document.body.classList.add('modal-open');
-
+                    this.closeAllModals();
                     this.$nextTick(() => {
                         this.initFullscreenChart();
                     });
-                    
-                    this.updateModalZIndexes(true);
                 } else {
-                    document.body.classList.remove('modal-open');
-                    
-                    this.updateModalZIndexes(false);
+                    document.body.style.overflow = 'auto';
                 }
             },
             
@@ -1665,14 +1676,13 @@
             },
 
             closeAllModals() {
-
-                this.showShareModal = false;
+                this.showChartModal = false;
                 this.showOrderBookModal = false;
+                this.showShareModal = false;
                 this.showCalculator = false;
                 this.showPortfolio = false;
-                
+                this.showNewsScreen = false; // Добавляем закрытие новостной ленты
                 document.body.style.overflow = 'auto';
-                document.body.classList.remove('no-scroll');
             },
             formatDisplayPrice(ticker) {
                 // Для USDT пар показываем только 4 цифры после запятой
@@ -2349,7 +2359,7 @@
         top: 10px;
         right: 10px;
         z-index: 10;
-        background-color: var(--color-primary-blue, #1e88e5);
+        background-color: var(--color-primary-purple, #800080);
         color: white;
         padding: 6px 12px;
         border-radius: 4px;
