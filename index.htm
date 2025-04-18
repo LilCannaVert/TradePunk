@@ -519,10 +519,12 @@
                 <div v-for="(item, index) in newsItems" :key="index" class="news-item">
                   <div class="news-item-title">{{ item.title }}</div>
                   <div class="news-item-source">{{ item.source }}</div>
-                  <div class="news-item-date" v-if="item.published_at">Опубликовано: {{ formatNewsDate(item.published_at) }}</div>
-                  <div class="news-item-date" v-else-if="item.published_utc">Опубликовано: {{ formatNewsDate(item.published_utc) }}</div>
                   <div class="news-item-content">{{ item.summary }}</div>
-                  <a :href="item.url" target="_blank" class="news-item-link">Read more</a>
+                  <div class="news-item-footer">
+                    <span class="news-item-date" v-if="item.published_at">{{ formatNewsDate(item.published_at) }}</span>
+                    <span class="news-item-date" v-else-if="item.published_utc">{{ formatNewsDate(item.published_utc) }}</span>
+                    <a :href="item.url" target="_blank" class="news-item-link">Read more</a>
+                  </div>
                 </div>
               </div>
               
@@ -2438,16 +2440,21 @@
         margin-bottom: 10px;
     }
     
+    .news-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .news-item-date {
+        font-size: 0.8rem;
+        color: #aaaaaa;
+    }
+    
     .news-item-link {
         color: var(--color-primary-yellow, #eab308);
         text-decoration: underline;
-    }
-
-    .news-item-date {
-        font-size: 0.75rem;
-        color: #aaaaaa;
-        margin-top: 2px;
-        margin-bottom: 6px;
     }
 </style>
 </body>
