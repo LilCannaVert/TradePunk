@@ -967,36 +967,11 @@
                 this.asset = asset; 
                 this.status = 1;
                 
-                this.$nextTick(() => {
-                    const filterButtons = document.querySelectorAll('.filter-button');
-                    filterButtons.forEach(btn => {
-                        if (btn.classList.contains('active')) {
-
-                            const oldId = btn.getAttribute('data-bubble-id');
-                            if (oldId && window.bubbleIntervals && window.bubbleIntervals[oldId]) {
-                                clearInterval(window.bubbleIntervals[oldId]);
-                                delete window.bubbleIntervals[oldId];
-                            }
-                            
-                            const bubbles = btn.querySelectorAll('.bubble');
-                            bubbles.forEach(bubble => bubble.remove());
-                            
-                            if (typeof window.startBubbleGeneration === 'function') {
-                                window.startBubbleGeneration(btn);
-                            }
-                        } else {
-
-                            const oldId = btn.getAttribute('data-bubble-id');
-                            if (oldId && window.bubbleIntervals && window.bubbleIntervals[oldId]) {
-                                clearInterval(window.bubbleIntervals[oldId]);
-                                delete window.bubbleIntervals[oldId];
-                            }
-                            
-                            const bubbles = btn.querySelectorAll('.bubble');
-                            bubbles.forEach(bubble => bubble.remove());
-                        }
-                    });
-                });
+                setTimeout(() => {
+                    if (window.updateFilterButtonBubbles) {
+                        window.updateFilterButtonBubbles();
+                    }
+                }, 50);
             },
             sortBy(field, order) {
                 this.sort = field;
@@ -1565,7 +1540,7 @@
                 } else {
 
                     document.body.classList.remove('modal-open');
-                    
+
                     this.updateModalZIndexes(false);
                 }
             },
@@ -1666,11 +1641,11 @@
                 document.body.classList.remove('no-scroll');
             },
             formatDisplayPrice(ticker) {
-
+                // Для USDT пар показываем только 4 цифры после запятой
                 if (ticker.symbol.endsWith('USDT')) {
                     return parseFloat(ticker.close).toFixed(4);
                 }
-
+                // Для остальных пар показываем полное значение
                 return ticker.close;
             },
         },
@@ -2317,9 +2292,9 @@
 <script>
 
     document.addEventListener('DOMContentLoaded', function() {
+
         const navButtons = document.querySelectorAll('.nav-button');
         const modalButtons = document.querySelectorAll('.modal-button');
-        const filterButtons = document.querySelectorAll('.filter-button');
         const bubbleIntervals = {};
         
         window.bubbleIntervals = bubbleIntervals;
@@ -2339,6 +2314,10 @@
         }
         
         function startBubbleGeneration(button) {
+            if (button.classList.contains('filter-button') && !button.classList.contains('active')) {
+                return;
+            }
+            
             const buttonId = button.textContent.trim() + (Math.random() * 1000).toFixed(0);
             if (!bubbleIntervals[buttonId]) {
                 button.setAttribute('data-bubble-id', buttonId);
@@ -2357,9 +2336,25 @@
             }
         }
         
+        function updateFilterButtonBubbles() {
+            const filterButtons = document.querySelectorAll('.filter-button');
+            
+            filterButtons.forEach(button => {
+                stopBubbleGeneration(button);
+                const bubbles = button.querySelectorAll('.bubble');
+                bubbles.forEach(bubble => bubble.remove());
+            });
+            
+            const activeButton = document.querySelector('.filter-button.active');
+            if (activeButton) {
+                startBubbleGeneration(activeButton);
+            }
+        }
+        
         window.createBubble = createBubble;
         window.startBubbleGeneration = startBubbleGeneration;
         window.stopBubbleGeneration = stopBubbleGeneration;
+        window.updateFilterButtonBubbles = updateFilterButtonBubbles;
         
         navButtons.forEach(button => {
             startBubbleGeneration(button);
@@ -2373,27 +2368,15 @@
             });
         });
         
+        updateFilterButtonBubbles();
+        
+        const filterButtons = document.querySelectorAll('.filter-button');
         filterButtons.forEach(button => {
-
-            if (button.classList.contains('active')) {
-                startBubbleGeneration(button);
-            }
-            
             button.addEventListener('click', () => {
 
-                filterButtons.forEach(btn => {
-                    stopBubbleGeneration(btn);
-                });
-                
                 setTimeout(() => {
-                    filterButtons.forEach(btn => {
-                        if (btn.classList.contains('active')) {
-                            startBubbleGeneration(btn);
-                        } else {
-                            stopBubbleGeneration(btn);
-                        }
-                    });
-                }, 50);
+                    updateFilterButtonBubbles();
+                }, 100);
             });
             
             button.addEventListener('mouseenter', () => {
@@ -2442,6 +2425,91 @@
                 startBubbleGeneration(button);
             });
         });
+    });
+
+    window.updateFilterButtonBubbles = function() {
+        const filterButtons = document.querySelectorAll('.filter-button');
+        
+        filterButtons.forEach(btn => {
+            const oldId = btn.getAttribute('data-bubble-id');
+            if (oldId && window.bubbleIntervals && window.bubbleIntervals[oldId]) {
+                clearInterval(window.bubbleIntervals[oldId]);
+                delete window.bubbleIntervals[oldId];
+            }
+            
+            const bubbles = btn.querySelectorAll('.bubble');
+            bubbles.forEach(bubble => bubble.remove());
+        });
+        
+        filterButtons.forEach(btn => {
+            if (btn.classList.contains('active')) {
+                if (typeof window.startBubbleGeneration === 'function') {
+                    window.startBubbleGeneration(btn);
+                }
+            }
+        });
+    };
+
+    window.startBubbleGeneration = function(button) {
+
+        const bubbleId = Date.now().toString();
+        button.setAttribute('data-bubble-id', bubbleId);
+        
+        if (!window.bubbleIntervals) {
+            window.bubbleIntervals = {};
+        }
+        
+        window.bubbleIntervals[bubbleId] = setInterval(() => {
+
+            const bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+            
+            const size = Math.random() * 15 + 5;
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+            
+            const posX = Math.random() * 100;
+            bubble.style.left = `${posX}%`;
+            bubble.style.bottom = '0';
+            
+            button.appendChild(bubble);
+            
+            setTimeout(() => {
+                bubble.remove();
+            }, 2000);
+        }, 300);
+    };
+
+    const style = document.createElement('style');
+    style.textContent = `
+    .filter-button {
+        position: relative;
+        overflow: hidden;
+    }
+    .bubble {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        animation: bubble-rise 2s ease-in-out;
+        pointer-events: none;
+    }
+    @keyframes bubble-rise {
+        0% {
+            transform: translateY(0) scale(0.5);
+            opacity: 0.1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+        100% {
+            transform: translateY(-100px) scale(1.2);
+            opacity: 0;
+        }
+    }`;
+    document.head.appendChild(style);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(window.updateFilterButtonBubbles, 500);
     });
 </script>
 </html>
