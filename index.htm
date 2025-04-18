@@ -1520,6 +1520,11 @@
 
             toggleChartScreen() {
 
+                if (!this.showChartScreen) {
+
+                    this.closeAllModals();
+                }
+                
                 this.showChartScreen = !this.showChartScreen;
                 if (this.showChartScreen) {
 
@@ -2051,6 +2056,8 @@
         background-color: var(--color-bg--300);
         box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
         padding: 18px 0;
+        pointer-events: auto !important;
+        z-index: 200 !important; 
     }
     
     .nav-button {
@@ -2240,6 +2247,21 @@
     .modal-button:active {
         transform: translateY(1px);
         box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .chart-screen-overlay,
+    body.modal-open .modal-on-chart,
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+    
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
     }
 </style>
 </body>
