@@ -14,7 +14,7 @@
         <div class="relative p-2">
           <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
             <div class="flex items-center">
-              <!-- Индикатор статуса удален -->
+
             </div>
             
             <Transition>
@@ -117,7 +117,6 @@
                 </div>
               </div>
 
-              <!-- Удаляем модальное окно Chart -->
               <div v-if="showChartModal" 
                    id="chartModal" 
                    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
@@ -128,14 +127,12 @@
                     <button @click="toggleChartModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
                   </div>
                   
-                  <!-- Chart Display -->
                   <div class="mt-4 mb-4">
                     <div class="cb relative" style="height: 500px; width: 100%;">
                       <div :id="'chart_container_modal'" style="height: 100%; width: 100%;"></div>
                     </div>
                   </div>
 
-                  <!-- Chart Controls -->
                   <div class="mt-4 flex flex-wrap gap-2">
                     <button @click="setTimeframe('1m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1m</button>
                     <button @click="setTimeframe('5m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">5m</button>
@@ -148,14 +145,12 @@
                 </div>
               </div>
 
-              <!-- Добавляем полноэкранный Chart screen -->
               <div v-if="showChartScreen" class="chart-screen-overlay">
                 <div class="chart-screen-content">
                   <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-[--color-primary-silver]">{{ currentTicker }}</h2>
                   </div>
                   
-                  <!-- Advanced Chart Display -->
                   <div class="cb relative flex-grow" style="width: 100%;">
                     <div id="chart_container_fullscreen" style="height: 100%; width: 100%;"></div>
                   </div>
@@ -173,7 +168,6 @@
                     <button @click="toggleOrderBookModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
                   </div>
                   
-                  <!-- Search Section -->
                   <div class="mt-4 mb-4">
                     <div class="form-group relative">
                         <div class="flex-grow relative">
@@ -185,7 +179,6 @@
                                 class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm"
                                 placeholder="Search ticker..." />
                             
-                            <!-- Dropdown for filtered results -->
                             <div v-if="showOrderBookDropdown && filteredOrderBookCoins.length > 0" 
                                  class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-48 overflow-y-auto">
                                 <div v-for="ticker in filteredOrderBookCoins" 
@@ -253,9 +246,8 @@
             </div>
           </section>
 
-          <!-- Settings Modal -->
           <div v-if="showSettings" id="staticModal" class="bg-[#00000080] fixed flex items-center justify-center top-0 left-0 right-0 z-50 w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
-            <!-- Modal content -->
+
             <div class="relative w-full max-w-2xl max-h-full">
               <div class="relative">
                 <div class="flex">
@@ -368,7 +360,6 @@
             </div>
           </div>
 
-          <!-- Calculator Modal -->
           <div v-if="showCalculator" id="calculatorModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-sm mx-4" @click.stop>
                 <div class="flex justify-between items-center mb-2 sticky top-0 bg-[--color-bg--300] z-10">
@@ -386,7 +377,6 @@
             </div>
           </div>
 
-          <!-- Portfolio Modal -->
           <div v-if="showPortfolio" id="portfolioModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-xl mx-4" @click.stop>
                 <div class="flex justify-between items-center mb-2">
@@ -394,7 +384,6 @@
                     <button @click="togglePortfolio" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Close</button>
                 </div>
 
-                <!-- Total Summary - перемещено вверх -->
                 <div class="mb-2 bg-[--color-primary-purple] p-3 rounded-lg">
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -421,10 +410,9 @@
                     </div>
                 </div>
 
-                <!-- Add Position Form -->
                 <div class="mb-2 bg-[--color-bg--500] p-3 rounded-lg">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-                        <!-- Coin Selection -->
+
                         <div class="form-group relative">
                             <input
                                 v-model="portfolioForm.searchQuery"
@@ -434,7 +422,6 @@
                                 class="form-control bg-[--color-bg--300] text-white p-1 rounded w-full text-sm"
                                 placeholder="Search coin..." />
                             
-                            <!-- Dropdown for filtered results -->
                             <div v-if="showPortfolioDropdown && filteredPortfolioCoins.length > 0" 
                                  class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-36 overflow-y-auto">
                                 <div v-for="ticker in filteredPortfolioCoins" 
@@ -446,7 +433,6 @@
                             </div>
                         </div>
 
-                        <!-- Amount -->
                         <div class="form-group">
                             <input 
                                 v-model="portfolioForm.amount"
@@ -457,7 +443,6 @@
                                 placeholder="Amount of coins" />
                         </div>
 
-                        <!-- Buy Price -->
                         <div class="form-group">
                             <input 
                                 v-model="portfolioForm.buyPrice"
@@ -468,7 +453,6 @@
                                 placeholder="Buy price per coin" />
                         </div>
 
-                        <!-- Add Button -->
                         <div class="form-group flex items-end">
                             <button @click="addPortfolioPosition" 
                                     class="bg-[--color-primary-blue] text-white px-3 py-1 rounded text-sm w-full">
@@ -478,7 +462,6 @@
                     </div>
                 </div>
 
-                <!-- Portfolio Positions с возможностью скролла -->
                 <div class="bg-[--color-bg--500] rounded-lg p-3">
                     <div style="height: 150px; overflow-y: scroll; padding-right: 4px;" class="portfolio-positions-container">
                         <div v-for="(position, index) in portfolioPositions" 
@@ -512,7 +495,6 @@
           </div>
         </div>
 
-        <!-- Добавляем навигационную панель внизу экрана -->
         <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
           <div class="container mx-auto flex justify-center">
             <button v-if="!showChartScreen" @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
@@ -536,13 +518,11 @@
           </div>
         </div>
 
-        <!-- Добавляем отступ, чтобы контент не перекрывался панелью навигации -->
         <div class="pb-40"></div>
     </div>
 <script>
     const { createApp } = Vue
     
-    // Calculator component
     const CalculatorComponent = {
         props: ['settings', 'coins', 'tickers'],
         template: `
@@ -687,9 +667,9 @@
                         return (symbol.includes(query) || pair.includes(query)) && 
                                ticker.symbol.endsWith('USDT');
                     })
-                    .slice(0, 5) // Limit to top 5 results
+                    .slice(0, 5) 
                     .sort((a, b) => {
-                        // Exact matches first
+
                         const aExact = a.symbol.toLowerCase().startsWith(query);
                         const bExact = b.symbol.toLowerCase().startsWith(query);
                         if (aExact && !bExact) return -1;
@@ -751,7 +731,6 @@
             }
         },
         mounted() {
-            // Close dropdown when clicking outside
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.form-group')) {
                     this.showDropdown = false;
@@ -853,7 +832,6 @@
                 totalProfitPercent: 0,
                 lastUpdate: Date.now(),
                 
-                // Добавляем новые переменные для Chart Modal
                 showChartModal: false,
                 currentTimeframe: '30',
                 chartModalInstance: null,
@@ -923,7 +901,7 @@
                                 volume: parseFloat(ticker.v).toFixed(8),
                                 quoteVolume: parseFloat(ticker.q).toFixed(8),
                                 tokenVolume: parseFloat(ticker.v).toFixed(2),
-                                assetVolume: parseFloat(ticker.q).toFixed(0), // Убираем две цифры после запятой для USDT тикеров
+                                assetVolume: parseFloat(ticker.q).toFixed(0), 
                                 percent: parseFloat(ticker.P),
                                 arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
                                 style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
@@ -931,15 +909,13 @@
                         }
                     });
 
-                    // Проверяем наличие тикеров и статус портфолио
                     if (Object.keys(this.tickers).length > 0) {
-                        // При первом получении тикеров попробуем загрузить портфолио, если оно еще пустое
+
                         if (this.portfolioPositions.length === 0) {
                             console.log('Tickers received, trying to load portfolio');
                             this.loadState();
                         }
                         
-                        // Обновляем портфолио при получении новых цен
                         if (this.portfolioPositions.length > 0) {
                             this.updatePortfolioTotals();
                         }
@@ -964,16 +940,15 @@
                     window.tvWidget.setSymbol('BINANCE:' + symbol);
                 }
                 
-                // Если открыт полноэкранный график, обновляем его
                 if (this.showChartScreen && this.fullscreenChartInstance) {
-                    // Пытаемся обновить символ через API TradingView
+
                     try {
                         this.fullscreenChartInstance.setSymbol('BINANCE:' + symbol, () => {
                             console.log('Chart symbol updated to', symbol);
                         });
                     } catch (e) {
                         console.error('Error updating chart symbol:', e);
-                        // Если не получилось обновить, переинициализируем график
+
                         this.$nextTick(() => {
                             this.initFullscreenChart();
                         });
@@ -1054,18 +1029,16 @@
             },
             toggleOrderBookModal() {
                 if (this.showOrderBookModal) {
-                    // Если окно уже открыто, просто закрываем его
+
                     this.showOrderBookModal = false;
                     document.body.classList.remove('no-scroll');
                 } else {
-                    // Закрываем все другие модальные окна перед открытием этого
+
                     this.closeAllModals();
                     
-                    // Открываем Order Book
                     this.showOrderBookModal = true;
                     document.body.classList.add('no-scroll');
                     
-                    // Если открыто поверх Chart
                     if (this.showChartScreen) {
                         setTimeout(() => {
                             const orderBookModal = document.getElementById('orderBookModal');
@@ -1096,14 +1069,12 @@
                 }
             },
             openShareModal() {
-                // Закрываем все другие модальные окна перед открытием этого
+
                 this.closeAllModals();
                 
-                // Открываем Share Modal
                 this.showShareModal = true;
                 document.body.style.overflow = 'hidden';
                 
-                // Если открыто поверх Chart
                 if (this.showChartScreen) {
                     setTimeout(() => {
                         const shareModal = document.getElementById('shareModal');
@@ -1113,11 +1084,11 @@
             },
             toggleShareModal() {
                 if (this.showShareModal) {
-                    // Если окно уже открыто, просто закрываем его
+
                     this.showShareModal = false;
                     document.body.style.overflow = 'auto';
                 } else {
-                    // Используем существующий метод для открытия
+
                     this.openShareModal();
                 }
             },
@@ -1209,18 +1180,16 @@
             },
             toggleCalculator() {
                 if (this.showCalculator) {
-                    // Если окно уже открыто, просто закрываем его
+
                     this.showCalculator = false;
                     document.body.style.overflow = 'auto';
                 } else {
-                    // Закрываем все другие модальные окна перед открытием этого
+
                     this.closeAllModals();
                     
-                    // Открываем Calculator
                     this.showCalculator = true;
                     document.body.style.overflow = 'hidden';
                     
-                    // Если открыто поверх Chart
                     if (this.showChartScreen) {
                         setTimeout(() => {
                             const calculatorModal = document.getElementById('calculatorModal');
@@ -1256,7 +1225,7 @@
                 this.currentTicker = ticker.symbol;
                 this.ticker = ticker.symbol;
                 this.showOrderBookDropdown = false;
-                // Сразу обновляем Order Book и график
+
                 this.prepareOrderBook();
                 if (window.tvWidget) {
                     window.tvWidget.setSymbol('BINANCE:' + this.currentTicker);
@@ -1269,18 +1238,16 @@
             },
             togglePortfolio() {
                 if (this.showPortfolio) {
-                    // Если окно уже открыто, просто закрываем его
+
                     this.showPortfolio = false;
                     document.body.style.overflow = 'auto';
                 } else {
-                    // Закрываем все другие модальные окна перед открытием этого
+
                     this.closeAllModals();
                     
-                    // Открываем Portfolio
                     this.showPortfolio = true;
                     document.body.style.overflow = 'hidden';
                     
-                    // Если открыто поверх Chart
                     if (this.showChartScreen) {
                         setTimeout(() => {
                             const portfolioModal = document.getElementById('portfolioModal');
@@ -1332,26 +1299,23 @@
                 console.log('Adding position to portfolio:', position);
                 this.portfolioPositions.push(position);
                 
-                // Сохраняем состояние после добавления позиции
                 this.saveState();
 
-                // Сбрасываем форму
                 this.portfolioForm.searchQuery = '';
                 this.portfolioForm.selectedCoin = null;
                 this.portfolioForm.amount = '';
                 this.portfolioForm.buyPrice = '';
 
-                // Обновляем расчеты
                 this.updatePortfolioTotals();
             },
             removePosition(index) {
                 this.portfolioPositions.splice(index, 1);
-                this.saveState(); // Сохраняем состояние после удаления
+                this.saveState(); 
                 this.updatePortfolioTotals();
             },
             saveState() {
                 try {
-                    // Сохраняем только необходимые данные с дополнительной проверкой
+
                     if (!Array.isArray(this.portfolioPositions)) {
                         console.error('portfolioPositions is not an array:', this.portfolioPositions);
                         return;
@@ -1360,7 +1324,7 @@
                     const portfolioState = this.portfolioPositions.map(pos => ({
                         symbol: pos.symbol,
                         pair: pos.pair,
-                        amount: parseFloat(pos.amount),  // Убедимся, что это числа
+                        amount: parseFloat(pos.amount),  
                         buyPrice: parseFloat(pos.buyPrice)
                     }));
                     
@@ -1396,7 +1360,6 @@
                                 
                                 console.log('Portfolio state loaded with', this.portfolioPositions.length, 'positions:', this.portfolioPositions);
                                 
-                                // Сразу обновляем расчеты после загрузки, если тикеры доступны
                                 if (Object.keys(this.tickers).length > 0) {
                                     console.log('Tickers available, updating portfolio calculations');
                                     this.updatePortfolioTotals();
@@ -1491,35 +1454,33 @@
                 this.status = 2;
             },
             
-            // Добавляем новые методы для Chart Modal
             toggleChartModal() {
                 this.showChartModal = !this.showChartModal;
                 if (this.showChartModal) {
-                    // Инициализируем график в модальном окне после того, как DOM обновится
+
                     this.$nextTick(() => {
                         this.initChartModal();
                     });
                 }
             },
             handleChartModalClick(event) {
-                // Закрываем модальное окно при клике на затемненную область
+
                 if (event.target.id === 'chartModal') {
                     this.toggleChartModal();
                 }
             },
             initChartModal() {
-                // Инициализация TradingView графика в модальном окне
+
                 const chartContainerId = 'chart_container_modal';
                 const container = document.getElementById(chartContainerId);
                 
                 if (container && window.TradingView) {
-                    // Если уже есть экземпляр графика в модальном окне, удаляем его
+
                     if (this.chartModalInstance) {
                         this.chartModalInstance.remove();
                         this.chartModalInstance = null;
                     }
                     
-                    // Создаем новый экземпляр графика с текущим ticker и timeframe
                     this.chartModalInstance = new window.TradingView.widget({
                         container_id: chartContainerId,
                         autosize: true,
@@ -1545,44 +1506,41 @@
             setTimeframe(timeframe) {
                 this.currentTimeframe = timeframe;
                 if (this.chartModalInstance) {
-                    // Обновляем интервал графика
+
                     this.chartModalInstance.setInterval(timeframe);
                 }
             },
             setChartTimeframe(timeframe) {
                 this.currentTimeframe = timeframe;
                 if (this.chartModalInstance) {
-                    // Обновляем интервал графика
+
                     this.chartModalInstance.setInterval(timeframe);
                 }
             },
-            // Метод для открытия/закрытия полноэкранного графика
+
             toggleChartScreen() {
-                // Chart Screen - это особый случай, который не требует закрытия
+
                 this.showChartScreen = !this.showChartScreen;
                 if (this.showChartScreen) {
-                    // Блокируем прокрутку и кликабельность основного экрана
+
                     document.body.classList.add('modal-open');
-                    // Инициализируем график в полноэкранном режиме после того, как DOM обновится
+
                     this.$nextTick(() => {
                         this.initFullscreenChart();
                     });
                     
-                    // Устанавливаем z-index модальных окон поверх Chart, если они открыты
                     this.updateModalZIndexes(true);
                 } else {
-                    // Разблокируем прокрутку и кликабельность основного экрана при закрытии графика
+
                     document.body.classList.remove('modal-open');
                     
-                    // Возвращаем z-index модальных окон к исходному значению
                     this.updateModalZIndexes(false);
                 }
             },
             
-            // Вспомогательный метод для обновления z-index всех модальных окон
             updateModalZIndexes(isChartOpen) {
                 setTimeout(() => {
-                    // Order Book modal
+
                     if (this.showOrderBookModal) {
                         const orderBookModal = document.getElementById('orderBookModal');
                         if (orderBookModal) {
@@ -1594,7 +1552,6 @@
                         }
                     }
                     
-                    // Share modal
                     if (this.showShareModal) {
                         const shareModal = document.getElementById('shareModal');
                         if (shareModal) {
@@ -1606,7 +1563,6 @@
                         }
                     }
                     
-                    // Calculator modal
                     if (this.showCalculator) {
                         const calculatorModal = document.getElementById('calculatorModal');
                         if (calculatorModal) {
@@ -1618,7 +1574,6 @@
                         }
                     }
                     
-                    // Portfolio modal
                     if (this.showPortfolio) {
                         const portfolioModal = document.getElementById('portfolioModal');
                         if (portfolioModal) {
@@ -1632,13 +1587,12 @@
                 }, 0);
             },
             
-            // Инициализация TradingView графика в полноэкранном режиме
             initFullscreenChart() {
                 const chartContainerId = 'chart_container_fullscreen';
                 const container = document.getElementById(chartContainerId);
                 
                 if (container && window.TradingView) {
-                    // Создаем новый экземпляр графика с теми же настройками, что и основной график
+
                     new TradingView.widget({
                         container_id: chartContainerId,
                         width: '100%', 
@@ -1662,22 +1616,20 @@
                 }
             },
             
-            // Установка временного интервала для полноэкранного графика
             setChartTimeframe(timeframe) {
                 this.currentTimeframe = timeframe;
                 if (this.fullscreenChartInstance && this.fullscreenChartInstance.iframe && this.fullscreenChartInstance.iframe.contentWindow) {
                     this.fullscreenChartInstance.setInterval(timeframe);
                 }
             },
-            // Метод для закрытия всех модальных окон
+
             closeAllModals() {
-                // Закрываем все модальные окна, кроме Chart Screen
+
                 this.showShareModal = false;
                 this.showOrderBookModal = false;
                 this.showCalculator = false;
                 this.showPortfolio = false;
                 
-                // Восстанавливаем прокрутку страницы
                 document.body.style.overflow = 'auto';
                 document.body.classList.remove('no-scroll');
             },
@@ -1689,10 +1641,8 @@
             this.initWidget(); 
             this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
             
-            // Загружаем сохраненное состояние портфеля сразу
             this.loadState();
             
-            // И также пробуем загрузить через 2 секунды (если к этому моменту будут загружены тикеры)
             setTimeout(() => {
                 if (this.portfolioPositions.length === 0) {
                     console.log('Trying to load portfolio state again after delay');
@@ -1700,7 +1650,6 @@
                 }
             }, 2000);
 
-            // Обновляем данные портфолио при получении новых цен
             setInterval(() => {
                 if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
                     this.updatePortfolioTotals();
@@ -1709,13 +1658,11 @@
 
             window.addEventListener('click', this.handleClick);
 
-            // Load saved calculator settings
             const savedSettings = localStorage.getItem('calcSettings');
             if (savedSettings) {
                 this.calcSettings = JSON.parse(savedSettings);
             }
             
-            // Get coins data
             axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
                 this.coins = response.data.data.coins;
             });
@@ -1794,29 +1741,16 @@
     @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;200;300;400;700&display=swap');
 
     :root {
-        --ui-notch-amount: 0.5rem;
-        --ui-notch-hypotenuse: 0.7071067811865476rem;
-        --ui-notch-path: polygon(
-            var(--ui-notch-amount) 0,
-            calc(100% - var(--ui-notch-amount)) 0,
-            100% var(--ui-notch-amount),
-            100% calc(100% - var(--ui-notch-amount)),
-            calc(100% - var(--ui-notch-amount)) 100%,
-            var(--ui-notch-amount) 100%,
-            0 calc(100% - var(--ui-notch-amount)),
-            0 var(--ui-notch-amount)
-        );
-        --ui-notch-path-r: polygon(
-            0 var(--ui-notch-amount),
-            var(--ui-notch-amount) 0,
-            calc(100% - var(--ui-notch-amount)) 0,
-            100% var(--ui-notch-amount),
-            100% calc(100% - var(--ui-notch-amount)),
-            calc(100% - var(--ui-notch-amount)) 100%,
-            var(--ui-notch-amount) 100%,
-            0 calc(100% - var(--ui-notch-amount))
-        );
-        --ui-glow-text: 0 0 0.125em currentColor;
+        --color-primary-black: #13151a;
+        --color-bg--300: rgb(22, 28, 36);
+        --color-bg--500: rgb(27, 38, 59);
+        --color-primary--500: rgb(239, 68, 68);
+        --color-primary-green: #10b981;
+        --color-primary-silver: #a1a1aa;
+        --color-primary-blue: #3c82f6;
+        --color-primary-purple: #800080;
+        --color-primary-yellow: #eab308;
+        --ui-notch-path: polygon(0 0, 100% 0, 100% 80%, 90% 100%, 10% 100%, 0 80%);
     }
 
     body {
@@ -2179,9 +2113,8 @@
         letter-spacing: 0.05em;
         text-transform: uppercase;
         font-weight: 600;
-        border: 1px solid var(--color-primary-blue);
-        box-shadow: 0 0 5px var(--color-primary-blue);
-        clip-path: var(--ui-notch-path);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
         min-width: 90px;
         max-width: 90px;
         min-height: 60px;
@@ -2190,18 +2123,49 @@
         margin: 0 3px;
         text-align: center;
         line-height: 1.2;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    @keyframes lavaLamp {
+        0% { background-position: 0% 100%; }
+        50% { background-position: 100% 0%; }
+        100% { background-position: 0% 100%; }
     }
     
     .nav-button:hover {
-        background-color: var(--color-primary-purple);
-        box-shadow: 0 0 15px var(--color-primary-blue);
         transform: translateY(-3px);
-        border-color: var(--color-primary-purple);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
     }
     
     .nav-button:active {
         transform: translateY(1px);
-        box-shadow: 0 0 8px var(--color-primary-purple);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+    
+    .bubble {
+        position: absolute;
+        bottom: 0;
+        background-color: rgba(200, 0, 200, 0.6);
+        border-radius: 50%;
+        opacity: 1;
+    }
+    
+    @keyframes bubble {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
     }
     
     @media (max-width: 640px) {
@@ -2305,4 +2269,55 @@
     }
 </style>
 </body>
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const navButtons = document.querySelectorAll('.nav-button');
+        const bubbleIntervals = {};
+        
+        function createBubble(button) {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.style.left = `${Math.random() * 100}%`;
+            bubble.style.width = `${Math.random() * 3 + 4}px`;
+            bubble.style.height = bubble.style.width;
+            bubble.style.animationDuration = `${Math.random() * 2 + 2}s`;
+            button.appendChild(bubble);
+            bubble.style.animation = `bubble ${bubble.style.animationDuration} linear forwards`;
+            bubble.addEventListener('animationend', () => {
+                bubble.remove();
+            });
+        }
+        
+        function startBubbleGeneration(button) {
+            const buttonId = button.textContent.trim();
+            if (!bubbleIntervals[buttonId]) {
+                bubbleIntervals[buttonId] = setInterval(() => createBubble(button), 200);
+            }
+        }
+        
+        function stopBubbleGeneration(button) {
+            const buttonId = button.textContent.trim();
+            if (bubbleIntervals[buttonId]) {
+                clearInterval(bubbleIntervals[buttonId]);
+                bubbleIntervals[buttonId] = null;
+                
+                const bubbles = button.querySelectorAll('.bubble');
+                bubbles.forEach(bubble => bubble.remove());
+            }
+        }
+        
+        navButtons.forEach(button => {
+            startBubbleGeneration(button);
+            
+            button.addEventListener('mouseenter', () => {
+                stopBubbleGeneration(button);
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                startBubbleGeneration(button);
+            });
+        });
+    });
+</script>
 </html>
