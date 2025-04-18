@@ -48,6 +48,9 @@
               <button @click="toggleNewsScreen" class="news-button">
                 News
               </button>
+              <button @click="toggleMempoolModal" class="news-button ml-2">
+                Mempool
+              </button>
             </div>
 
             <Transition>
@@ -594,6 +597,142 @@
           </div>
         </div>
 
+        <div v-if="showMempoolModal" 
+             id="mempoolModal" 
+             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
+            <div class="flex justify-between items-center">
+              <h2 class="text-lg font-bold text-[--color-primary-silver]">Bitcoin Mempool</h2>
+              <button @click="toggleMempoolModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
+            </div>
+            
+            <!-- Loading indicator -->
+            <div v-if="mempoolLoading" class="flex justify-center items-center p-10">
+              <svg class="animate-spin h-10 w-10 text-[--color-primary-yellow]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            
+            <!-- Mempool content -->
+            <div v-else class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Difficulty Adjustment -->
+              <div class="bg-[--color-bg--500] rounded-lg p-4">
+                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Difficulty Adjustment</h3>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="text-sm text-[--color-primary-silver]">Current Difficulty:</div>
+                  <div class="text-sm font-mono text-white">{{ mempoolData.difficultyAdjustment?.current_difficulty?.toLocaleString() || 'N/A' }}</div>
+                  
+                  <div class="text-sm text-[--color-primary-silver]">Estimated Adjustment:</div>
+                  <div class="text-sm font-mono" :class="getDifficultyClass(mempoolData.difficultyAdjustment?.estimated_adjustment)">
+                    {{ formatPercentage(mempoolData.difficultyAdjustment?.estimated_adjustment) }}
+                  </div>
+                  
+                  <div class="text-sm text-[--color-primary-silver]">Previous Retarget:</div>
+                  <div class="text-sm font-mono text-white">{{ formatTimeAgo(mempoolData.difficultyAdjustment?.previous_retarget) }}</div>
+                  
+                  <div class="text-sm text-[--color-primary-silver]">Next Retarget:</div>
+                  <div class="text-sm font-mono text-white">{{ formatTimeAgo(mempoolData.difficultyAdjustment?.next_retarget) }}</div>
+                  
+                  <div class="text-sm text-[--color-primary-silver]">Progress:</div>
+                  <div class="text-sm font-mono text-white">{{ mempoolData.difficultyAdjustment?.progress?.toFixed(2) }}%</div>
+                </div>
+              </div>
+              
+              <!-- Bitcoin Price -->
+              <div class="bg-[--color-bg--500] rounded-lg p-4">
+                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Bitcoin Price</h3>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="text-sm text-[--color-primary-silver]">USD:</div>
+                  <div class="text-sm font-mono text-white">${{ mempoolData.prices?.USD?.toLocaleString() || 'N/A' }}</div>
+                  
+                  <div class="text-sm text-[--color-primary-silver]">EUR:</div>
+                  <div class="text-sm font-mono text-white">€{{ mempoolData.prices?.EUR?.toLocaleString() || 'N/A' }}</div>
+                  
+                  <div class="text-sm text-[--color-primary-silver]">GBP:</div>
+                  <div class="text-sm font-mono text-white">£{{ mempoolData.prices?.GBP?.toLocaleString() || 'N/A' }}</div>
+                  
+                  <div class="text-sm text-[--color-primary-silver]">CAD:</div>
+                  <div class="text-sm font-mono text-white">C${{ mempoolData.prices?.CAD?.toLocaleString() || 'N/A' }}</div>
+                </div>
+              </div>
+              
+              <!-- Latest Blocks -->
+              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Latest Blocks</h3>
+                <div class="overflow-x-auto">
+                  <table class="w-full">
+                    <thead>
+                      <tr class="text-[--color-primary-silver] text-left">
+                        <th class="px-2 py-1">Height</th>
+                        <th class="px-2 py-1">Hash</th>
+                        <th class="px-2 py-1">Time</th>
+                        <th class="px-2 py-1">Size</th>
+                        <th class="px-2 py-1">Tx Count</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="block in mempoolData.blocks" :key="block.id" class="text-white hover:bg-[--color-bg--300]">
+                        <td class="px-2 py-1 font-mono">{{ block.height }}</td>
+                        <td class="px-2 py-1 font-mono text-xs truncate max-w-[120px]">{{ block.id }}</td>
+                        <td class="px-2 py-1">{{ formatTimeAgo(block.timestamp) }}</td>
+                        <td class="px-2 py-1">{{ formatBytes(block.size) }}</td>
+                        <td class="px-2 py-1">{{ block.tx_count }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              <!-- Address Lookup -->
+              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Bitcoin Address Lookup</h3>
+                <div class="flex">
+                  <input 
+                    v-model="btcAddressInput" 
+                    type="text" 
+                    placeholder="Enter BTC address" 
+                    class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                  />
+                  <button 
+                    @click="lookupBtcAddress" 
+                    class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
+                    :disabled="addressLoading"
+                  >
+                    <span v-if="!addressLoading">Lookup</span>
+                    <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </button>
+                </div>
+                
+                <!-- Address Details -->
+                <div v-if="addressData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="text-sm text-[--color-primary-silver]">Balance:</div>
+                    <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum - addressData.chain_stats?.spent_txo_sum) }} BTC</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Transactions:</div>
+                    <div class="text-sm font-mono text-white">{{ addressData.chain_stats?.tx_count || 0 }}</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Received:</div>
+                    <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum) }} BTC</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Spent:</div>
+                    <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.spent_txo_sum) }} BTC</div>
+                  </div>
+                </div>
+                
+                <!-- Address Lookup Error -->
+                <div v-if="addressError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
+                  {{ addressError }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="pb-40"></div>
     </div>
 
@@ -1097,6 +1236,19 @@
                 newsItems: [],
                 newsPage: 1,
                 newsLoading: false,
+                
+                // Mempool data
+                showMempoolModal: false,
+                mempoolLoading: false,
+                mempoolData: {
+                    difficultyAdjustment: null,
+                    prices: null,
+                    blocks: []
+                },
+                btcAddressInput: '',
+                addressData: null,
+                addressLoading: false,
+                addressError: null,
             }
         },
         methods: {
@@ -2049,6 +2201,129 @@
                 } catch (error) {
                     return "No date";
                 }
+            },
+            
+            toggleMempoolModal() {
+                // If we're opening the modal
+                if (!this.showMempoolModal) {
+                    // Close all modals first
+                    this.closeAllModals();
+                    
+                    // Then open this modal
+                    this.showMempoolModal = true;
+                    document.body.style.overflow = 'hidden';
+                    
+                    // Fetch mempool data
+                    this.fetchMempoolData();
+                    
+                    if (this.showChartScreen) {
+                        setTimeout(() => {
+                            const mempoolModal = document.getElementById('mempoolModal');
+                            if (mempoolModal) mempoolModal.classList.add('modal-on-chart');
+                        }, 0);
+                    }
+                } else {
+                    // Just close this modal
+                    this.showMempoolModal = false;
+                    document.body.style.overflow = 'auto';
+                }
+            },
+            
+            async fetchMempoolData() {
+                this.mempoolLoading = true;
+                
+                try {
+                    // Fetch difficulty adjustment
+                    const difficultyResponse = await fetch('https://mempool.space/api/v1/difficulty-adjustment');
+                    const difficultyData = await difficultyResponse.json();
+                    this.mempoolData.difficultyAdjustment = difficultyData;
+                    
+                    // Fetch prices
+                    const pricesResponse = await fetch('https://mempool.space/api/v1/prices');
+                    const pricesData = await pricesResponse.json();
+                    this.mempoolData.prices = pricesData;
+                    
+                    // Fetch blocks
+                    const blocksResponse = await fetch('https://mempool.space/api/v1/blocks');
+                    const blocksData = await blocksResponse.json();
+                    this.mempoolData.blocks = blocksData.slice(0, 5); // Get only the 5 latest blocks
+                } catch (error) {
+                    console.error('Error fetching mempool data:', error);
+                } finally {
+                    this.mempoolLoading = false;
+                }
+            },
+            
+            async lookupBtcAddress() {
+                if (!this.btcAddressInput || this.btcAddressInput.trim() === '') {
+                    this.addressError = 'Please enter a Bitcoin address';
+                    return;
+                }
+                
+                this.addressLoading = true;
+                this.addressError = null;
+                this.addressData = null;
+                
+                try {
+                    // Validate address
+                    const validationResponse = await fetch(`https://mempool.space/api/v1/validate-address/${this.btcAddressInput}`);
+                    const validationData = await validationResponse.json();
+                    
+                    if (!validationData.isvalid) {
+                        this.addressError = 'Invalid Bitcoin address';
+                        return;
+                    }
+                    
+                    // Fetch address data
+                    const addressResponse = await fetch(`https://mempool.space/api/address/${this.btcAddressInput}`);
+                    if (!addressResponse.ok) {
+                        throw new Error(`HTTP error! status: ${addressResponse.status}`);
+                    }
+                    
+                    const addressData = await addressResponse.json();
+                    this.addressData = addressData;
+                } catch (error) {
+                    console.error('Error looking up address:', error);
+                    this.addressError = 'Error looking up address: ' + error.message;
+                } finally {
+                    this.addressLoading = false;
+                }
+            },
+            
+            formatTimeAgo(timestamp) {
+                if (!timestamp) return 'N/A';
+                
+                const now = Date.now();
+                const date = new Date(timestamp * 1000);
+                const diff = Math.floor((now - date) / 1000);
+                
+                if (diff < 60) return `${diff} seconds ago`;
+                if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+                if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+                return `${Math.floor(diff / 86400)} days ago`;
+            },
+            
+            formatBytes(bytes) {
+                if (!bytes) return 'N/A';
+                
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+            },
+            
+            formatBtc(satoshis) {
+                if (satoshis === undefined || satoshis === null) return '0';
+                return (satoshis / 100000000).toFixed(8);
+            },
+            
+            formatPercentage(value) {
+                if (value === undefined || value === null) return 'N/A';
+                return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
+            },
+            
+            getDifficultyClass(value) {
+                if (value === undefined || value === null) return '';
+                return value > 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]';
             },
         },
         mounted() {
