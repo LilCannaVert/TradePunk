@@ -965,8 +965,38 @@
             },
             filterAsset(asset) {
                 this.asset = asset; 
-                this.status = 1; 
+                this.status = 1;
                 
+                this.$nextTick(() => {
+                    const filterButtons = document.querySelectorAll('.filter-button');
+                    filterButtons.forEach(btn => {
+                        if (btn.classList.contains('active')) {
+
+                            const oldId = btn.getAttribute('data-bubble-id');
+                            if (oldId && window.bubbleIntervals && window.bubbleIntervals[oldId]) {
+                                clearInterval(window.bubbleIntervals[oldId]);
+                                delete window.bubbleIntervals[oldId];
+                            }
+                            
+                            const bubbles = btn.querySelectorAll('.bubble');
+                            bubbles.forEach(bubble => bubble.remove());
+                            
+                            if (typeof window.startBubbleGeneration === 'function') {
+                                window.startBubbleGeneration(btn);
+                            }
+                        } else {
+
+                            const oldId = btn.getAttribute('data-bubble-id');
+                            if (oldId && window.bubbleIntervals && window.bubbleIntervals[oldId]) {
+                                clearInterval(window.bubbleIntervals[oldId]);
+                                delete window.bubbleIntervals[oldId];
+                            }
+                            
+                            const bubbles = btn.querySelectorAll('.bubble');
+                            bubbles.forEach(bubble => bubble.remove());
+                        }
+                    });
+                });
             },
             sortBy(field, order) {
                 this.sort = field;
@@ -1519,6 +1549,7 @@
             },
 
             toggleChartScreen() {
+
                 this.closeAllModals();
                 
                 this.showChartScreen = !this.showChartScreen;
@@ -1635,11 +1666,11 @@
                 document.body.classList.remove('no-scroll');
             },
             formatDisplayPrice(ticker) {
-                // Для USDT пар показываем только 4 цифры после запятой
+
                 if (ticker.symbol.endsWith('USDT')) {
                     return parseFloat(ticker.close).toFixed(4);
                 }
-                // Для остальных пар показываем полное значение
+
                 return ticker.close;
             },
         },
@@ -2286,11 +2317,12 @@
 <script>
 
     document.addEventListener('DOMContentLoaded', function() {
-
         const navButtons = document.querySelectorAll('.nav-button');
         const modalButtons = document.querySelectorAll('.modal-button');
         const filterButtons = document.querySelectorAll('.filter-button');
         const bubbleIntervals = {};
+        
+        window.bubbleIntervals = bubbleIntervals;
         
         function createBubble(button) {
             const bubble = document.createElement('div');
@@ -2325,6 +2357,10 @@
             }
         }
         
+        window.createBubble = createBubble;
+        window.startBubbleGeneration = startBubbleGeneration;
+        window.stopBubbleGeneration = stopBubbleGeneration;
+        
         navButtons.forEach(button => {
             startBubbleGeneration(button);
             
@@ -2338,6 +2374,7 @@
         });
         
         filterButtons.forEach(button => {
+
             if (button.classList.contains('active')) {
                 startBubbleGeneration(button);
             }
@@ -2349,10 +2386,14 @@
                 });
                 
                 setTimeout(() => {
-                    if (button.classList.contains('active')) {
-                        startBubbleGeneration(button);
-                    }
-                }, 100);
+                    filterButtons.forEach(btn => {
+                        if (btn.classList.contains('active')) {
+                            startBubbleGeneration(btn);
+                        } else {
+                            stopBubbleGeneration(btn);
+                        }
+                    });
+                }, 50);
             });
             
             button.addEventListener('mouseenter', () => {
@@ -2360,6 +2401,7 @@
             });
             
             button.addEventListener('mouseleave', () => {
+
                 if (button.classList.contains('active')) {
                     startBubbleGeneration(button);
                 }
