@@ -923,7 +923,7 @@
                                 volume: parseFloat(ticker.v).toFixed(8),
                                 quoteVolume: parseFloat(ticker.q).toFixed(8),
                                 tokenVolume: parseFloat(ticker.v).toFixed(2),
-                                assetVolume: parseFloat(ticker.q).toFixed(2),
+                                assetVolume: parseFloat(ticker.q).toFixed(0), // Убираем две цифры после запятой для USDT тикеров
                                 percent: parseFloat(ticker.P),
                                 arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
                                 style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
@@ -2044,7 +2044,7 @@
         height: 100%;
         width: 100%;
         padding: 1rem;
-        padding-bottom: 100px; /* Добавляем дополнительный отступ снизу */
+        padding-bottom: 100px;
         display: flex;
         flex-direction: column;
     }
@@ -2053,7 +2053,7 @@
         background-color: var(--color-bg--300);
         border: 2px solid var(--color-primary-purple);
         box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9);
-        height: calc(100vh - 250px); /* Уменьшаем высоту графика, увеличивая вычитаемое значение со 180px до 250px */
+        height: calc(100vh - 250px);
     }
     
     body.modal-open {
@@ -2069,12 +2069,10 @@
         z-index: 200 !important;
     }
     
-    /* Стили для модальных окон на Chart */
     body.modal-open .modal-on-chart {
         pointer-events: auto;
     }
     
-    /* Создаем небольшую тень для модальных окон на Chart */
     .chart-screen-overlay + .modal-on-chart > div {
         box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
         border: 2px solid var(--color-primary-purple);
@@ -2106,7 +2104,7 @@
     }
 
     #shareModal .grid {
-        max-height: 40vh; /* Уменьшаем максимальную высоту сетки тикеров с 60vh до 40vh */
+        max-height: 40vh;
         overflow-y: auto;
         overflow-x: hidden;
         scrollbar-width: thin;
@@ -2118,15 +2116,15 @@
         position: fixed;
         inset: 0;
         display: flex;
-        align-items: flex-start; /* Изменяем с center на flex-start, чтобы окно было выше */
+        align-items: flex-start;
         justify-content: center;
         z-index: 50;
-        padding-top: 5vh; /* Добавляем отступ сверху для лучшего позиционирования */
-        padding-bottom: 120px; /* Добавляем отступ снизу для учета высоты нижней панели навигации */
+        padding-top: 5vh;
+        padding-bottom: 120px;
     }
 
     #shareModal .bg-[--color-bg--300] {
-        max-height: 70vh; /* Уменьшаем с 80vh до 70vh для лучшего позиционирования */
+        max-height: 70vh;
         overflow: hidden;
         width: 90%;
         max-width: 900px;
@@ -2168,11 +2166,10 @@
         color: white;
     }
     
-    /* Стили для нижней навигационной панели */
     .fixed.bottom-0 {
         background-color: var(--color-bg--300);
         box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
-        padding: 18px 0; /* Увеличиваем вертикальный отступ для нижней панели с 15px до 18px */
+        padding: 18px 0;
     }
     
     .nav-button {
@@ -2181,15 +2178,15 @@
         overflow: hidden;
         letter-spacing: 0.05em;
         text-transform: uppercase;
-        font-weight: 600; /* Увеличиваем толщину шрифта с 500 до 600 */
+        font-weight: 600;
         border: 1px solid var(--color-primary-blue);
         box-shadow: 0 0 5px var(--color-primary-blue);
         clip-path: var(--ui-notch-path);
         min-width: 90px;
         max-width: 90px;
-        min-height: 60px; /* Увеличиваем минимальную высоту кнопок с 50px до 60px */
-        padding: 1.25rem 0; /* Увеличиваем вертикальный padding с 1rem до 1.25rem */
-        font-size: 1rem; /* Увеличиваем размер шрифта с 0.95rem до 1rem */
+        min-height: 60px;
+        padding: 1.25rem 0;
+        font-size: 1rem;
         margin: 0 3px;
         text-align: center;
         line-height: 1.2;
@@ -2207,7 +2204,6 @@
         box-shadow: 0 0 8px var(--color-primary-purple);
     }
     
-    /* Дополнительные стили для панели навигации */
     @media (max-width: 640px) {
         .fixed.bottom-0 .container {
             flex-wrap: wrap;
@@ -2217,10 +2213,10 @@
         .nav-button {
             min-width: 70px;
             max-width: 70px;
-            min-height: 40px; /* Увеличиваем минимальную высоту кнопок с 28px до 40px для маленьких экранов */
+            min-height: 40px;
             margin: 2px;
-            font-size: 0.75rem; /* Увеличиваем шрифт с 0.7rem до 0.75rem */
-            padding: 0.5rem 0; /* Увеличиваем padding с 0.4rem до 0.5rem */
+            font-size: 0.75rem;
+            padding: 0.5rem 0;
         }
     }
     
@@ -2228,18 +2224,16 @@
         .nav-button {
             min-width: 60px;
             max-width: 60px;
-            min-height: 36px; /* Увеличиваем минимальную высоту кнопок с 26px до 36px */
-            font-size: 0.7rem; /* Увеличиваем шрифт с 0.65rem до 0.7rem */
-            padding: 0.45rem 0; /* Увеличиваем padding с 0.35rem до 0.45rem */
+            min-height: 36px;
+            font-size: 0.7rem;
+            padding: 0.45rem 0;
         }
     }
 
-    /* Добавляем новые стили для нижней навигационной панели при открытом Chart */
     body.modal-open .fixed.bottom-0 {
         pointer-events: auto;
     }
 
-    /* Подняли график на 9 пикселей вверх */
     .chart-screen-content {
         margin-top: -9px;
     }
@@ -2248,34 +2242,32 @@
         position: fixed;
         inset: 0;
         display: flex;
-        align-items: flex-start; /* Выравниваем окно к верхней части экрана */
+        align-items: flex-start;
         justify-content: center;
         z-index: 50;
-        padding-top: 2vh; /* Уменьшаем отступ сверху с 5vh до 2vh */
-        padding-bottom: 100px; /* Уменьшаем отступ снизу со 140px до 100px */
-        max-height: calc(100vh - 100px); /* Ограничиваем максимальную высоту модального окна */
+        padding-top: 2vh;
+        padding-bottom: 100px;
+        max-height: calc(100vh - 100px);
     }
 
     #portfolioModal .bg-[--color-bg--300] {
-        max-height: calc(100vh - 150px); /* Уменьшаем высоту чтобы не выходило за пределы экрана */
-        overflow: auto; /* Добавляем прокрутку при необходимости */
+        max-height: calc(100vh - 150px);
+        overflow: auto;
         width: 90%;
         max-width: 900px;
     }
     
-    /* Отступ для нижних кнопок в портфолио */
     #portfolioModal .mt-6 {
-        margin-bottom: 15px; /* Увеличиваем отступ снизу с 10px до 15px */
+        margin-bottom: 15px;
     }
     
-    /* Стили для области с позициями портфолио */
     .portfolio-positions-container {
         scrollbar-width: thin;
         scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
         border: 1px solid var(--color-primary-purple);
         border-radius: 4px;
         display: block;
-        height: 150px !important; /* Уменьшаем высоту с 200px до 150px */
+        height: 150px !important;
         overflow-y: scroll !important;
     }
     
@@ -2293,7 +2285,6 @@
         border-radius: 4px;
     }
     
-    /* Убираем старые неиспользуемые стили */
     #portfolioModal .grid.max-h-\[300px\] {
         scrollbar-width: thin;
         scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
