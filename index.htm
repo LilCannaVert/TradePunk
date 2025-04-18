@@ -42,15 +42,15 @@
         <div class="relative p-2">
           <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
             <div class="flex items-center">
-              <button @click="toggleNewsScreen" class="news-button mr-2">
-                News
-              </button>
               <button @click="toggleMempoolModal" class="news-button">
                 Mempool
               </button>
             </div>
             
             <div class="absolute top-0 right-0">
+              <button @click="toggleNewsScreen" class="news-button">
+                News
+              </button>
             </div>
 
             <Transition>
