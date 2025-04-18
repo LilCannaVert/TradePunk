@@ -14,6 +14,7 @@
         <div class="relative p-2">
           <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
             <div class="flex items-center">
+
             </div>
             
             <Transition>
@@ -63,43 +64,8 @@
             <div class="flex gap-2 flex-col lg:flex-row">
               <div class="tickers w-full max-w-[500px] mx-auto"> 
                 <div class="mb-1">
-                  <div class="flex items-center justify-between">
+                  <div class="flex items-center">
                     <h2 class="text-glow font-bold text-xl ml-2"></h2>
-                    <div class="relative burger-menu-container">
-                      <button @click="toggleBurgerMenu" class="text-white p-2 rounded-full hover:bg-[--color-bg--500]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                        </svg>
-                      </button>
-                      <!-- Выпадающее меню бургера -->
-                      <div v-if="showBurgerMenu" class="absolute right-0 mt-1 w-48 bg-[--color-bg--300] rounded-md shadow-lg z-50 overflow-hidden cb">
-                        <div class="py-1">
-                          <button @click="toggleDemoTrading" class="flex w-full items-center px-4 py-2 text-sm text-white hover:bg-[--color-bg--500]">
-                            <span v-if="isDemoMode" class="inline-block h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-                            <span v-else class="inline-block h-2 w-2 rounded-full bg-gray-500 mr-2"></span>
-                            Demo Trading
-                          </button>
-                          <button @click="toggleNotesModal" class="flex w-full items-center px-4 py-2 text-sm text-white hover:bg-[--color-bg--500]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Notes
-                          </button>
-                          <button @click="toggleNewsModal" class="flex w-full items-center px-4 py-2 text-sm text-white hover:bg-[--color-bg--500]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                            </svg>
-                            Новости
-                          </button>
-                          <button @click="toggleTheme" class="flex w-full items-center px-4 py-2 text-sm text-white hover:bg-[--color-bg--500]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                            </svg>
-                            Сменить тему
-                          </button>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                   <div class="delimiter2 my-2"></div>
                   <div class="cb flex items-center" style="max-height: 80px;">
@@ -279,156 +245,6 @@
               </div>
             </div>
           </section>
-
-          <!-- Модальное окно демо-торговли -->
-          <div v-if="showDemoTradingModal" 
-               id="demoTradingModal" 
-               class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-               @click="handleDemoTradingModalClick">
-            <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
-              <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-[--color-primary-silver]">Demo Trading: {{ currentTicker }}</h2>
-                <button @click="toggleDemoTradingModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
-              </div>
-              
-              <!-- Balance and Information -->
-              <div class="flex flex-wrap mb-4 gap-2">
-                <div class="cb p-3 text-center flex-1">
-                  <div class="text-[--color-primary-silver]">Demo Balance</div>
-                  <div class="text-xl font-bold">{{ formatPrice(demoBalance) }}</div>
-                </div>
-                <div class="cb p-3 text-center flex-1">
-                  <div class="text-[--color-primary-silver]">Current Price</div>
-                  <div class="text-xl font-bold" :class="tickers[currentTicker] ? tickers[currentTicker].style : ''">
-                    {{ tickers[currentTicker] ? formatPrice(parseFloat(tickers[currentTicker].close)) : '---' }}
-                  </div>
-                </div>
-                <div class="cb p-3 text-center flex-1">
-                  <div class="text-[--color-primary-silver]">P&L</div>
-                  <div class="text-xl font-bold" :class="demoProfitLoss >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
-                    {{ formatPrice(demoProfitLoss) }}
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Buy/Sell Forms -->
-              <div class="flex flex-col md:flex-row gap-4 mb-4">
-                <div class="cb p-3 flex-1">
-                  <h3 class="text-[--color-primary-blue] font-bold mb-2">КУПИТЬ</h3>
-                  <div class="form-group mb-2">
-                    <label class="block text-xs text-[--color-primary-silver] mb-1">Количество (в {{ tickers[currentTicker] ? tickers[currentTicker].token : '---' }})</label>
-                    <input v-model="demoForm.buyAmount" type="number" min="0" step="0.0001" 
-                           class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
-                  </div>
-                  <div class="form-group mb-2">
-                    <label class="block text-xs text-[--color-primary-silver] mb-1">На сумму (в USDT)</label>
-                    <input v-model="demoForm.buyTotal" type="number" min="0" step="0.01" 
-                           class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
-                  </div>
-                  <div class="flex justify-between gap-2 mb-2">
-                    <button @click="setDemoBuyPercent(0.25)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">25%</button>
-                    <button @click="setDemoBuyPercent(0.5)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">50%</button>
-                    <button @click="setDemoBuyPercent(0.75)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">75%</button>
-                    <button @click="setDemoBuyPercent(1)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">100%</button>
-                  </div>
-                  <button @click="executeDemoBuy" 
-                          class="bg-[--color-primary-green] hover:bg-green-600 text-white py-2 px-4 rounded w-full">КУПИТЬ</button>
-                </div>
-                
-                <div class="cb p-3 flex-1">
-                  <h3 class="text-[--color-primary--500] font-bold mb-2">ПРОДАТЬ</h3>
-                  <div class="form-group mb-2">
-                    <label class="block text-xs text-[--color-primary-silver] mb-1">Количество (в {{ tickers[currentTicker] ? tickers[currentTicker].token : '---' }})</label>
-                    <input v-model="demoForm.sellAmount" type="number" min="0" step="0.0001" 
-                           class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
-                  </div>
-                  <div class="form-group mb-2">
-                    <label class="block text-xs text-[--color-primary-silver] mb-1">На сумму (в USDT)</label>
-                    <input v-model="demoForm.sellTotal" type="number" min="0" step="0.01" 
-                           class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
-                  </div>
-                  <div class="flex justify-between gap-2 mb-2">
-                    <button @click="setDemoSellPercent(0.25)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">25%</button>
-                    <button @click="setDemoSellPercent(0.5)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">50%</button>
-                    <button @click="setDemoSellPercent(0.75)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">75%</button>
-                    <button @click="setDemoSellPercent(1)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">100%</button>
-                  </div>
-                  <button @click="executeDemoSell" 
-                          class="bg-[--color-primary--500] hover:bg-red-700 text-white py-2 px-4 rounded w-full">ПРОДАТЬ</button>
-                </div>
-              </div>
-              
-              <!-- Order History -->
-              <div>
-                <h3 class="text-[--color-primary-silver] font-bold mb-2">Order History</h3>
-                <div class="cb mb-2 max-h-60 overflow-y-auto">
-                  <table class="w-full border-collapse">
-                    <thead>
-                      <tr class="text-[--color-primary-blue]">
-                        <th class="p-2 text-left">Время</th>
-                        <th class="p-2 text-left">Пара</th>
-                        <th class="p-2 text-left">Тип</th>
-                        <th class="p-2 text-right">Цена</th>
-                        <th class="p-2 text-right">Количество</th>
-                        <th class="p-2 text-right">Сумма</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="(order, index) in demoOrders" :key="index" 
-                          :class="order.type === 'buy' ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
-                        <td class="p-2">{{ formatTime(order.timestamp) }}</td>
-                        <td class="p-2">{{ order.pair }}</td>
-                        <td class="p-2 font-bold">{{ order.type === 'buy' ? 'КУПИТЬ' : 'ПРОДАТЬ' }}</td>
-                        <td class="p-2 text-right">{{ formatPrice(order.price) }}</td>
-                        <td class="p-2 text-right">{{ formatAmount(order.amount) }}</td>
-                        <td class="p-2 text-right">{{ formatPrice(order.total) }}</td>
-                      </tr>
-                      <tr v-if="demoOrders.length === 0">
-                        <td colspan="6" class="p-4 text-center text-[--color-primary-silver]">Сделок пока нет</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
-              <!-- Your Positions -->
-              <div>
-                <h3 class="text-[--color-primary-silver] font-bold mb-2">Your Positions</h3>
-                <div class="cb mb-2 max-h-60 overflow-y-auto">
-                  <table class="w-full border-collapse">
-                    <thead>
-                      <tr class="text-[--color-primary-blue]">
-                        <th class="p-2 text-left">Монета</th>
-                        <th class="p-2 text-right">Количество</th>
-                        <th class="p-2 text-right">Средняя цена</th>
-                        <th class="p-2 text-right">Текущая цена</th>
-                        <th class="p-2 text-right">P&L</th>
-                        <th class="p-2 text-right">P&L %</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="(position, symbol) in demoPositions" :key="symbol" 
-                          v-if="position.amount > 0">
-                        <td class="p-2">{{ position.pair }}</td>
-                        <td class="p-2 text-right">{{ formatAmount(position.amount) }}</td>
-                        <td class="p-2 text-right">{{ formatPrice(position.avgPrice) }}</td>
-                        <td class="p-2 text-right">{{ position.currentPrice ? formatPrice(position.currentPrice) : '---' }}</td>
-                        <td class="p-2 text-right" :class="position.pnl >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
-                          {{ formatPrice(position.pnl) }}
-                        </td>
-                        <td class="p-2 text-right" :class="position.pnlPercent >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
-                          {{ position.pnlPercent >= 0 ? '+' : '' }}{{ position.pnlPercent.toFixed(2) }}%
-                        </td>
-                      </tr>
-                      <tr v-if="Object.keys(demoPositions).filter(k => demoPositions[k].amount > 0).length === 0">
-                        <td colspan="6" class="p-4 text-center text-[--color-primary-silver]">Нет открытых позиций</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <div v-if="showSettings" id="staticModal" class="bg-[#00000080] fixed flex items-center justify-center top-0 left-0 right-0 z-50 w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
 
@@ -1021,51 +837,6 @@
                 chartModalInstance: null,
                 showChartScreen: false,
                 fullscreenChartInstance: null,
-                showDemoTradingModal: false,
-                isDemoMode: false,
-                demoBalance: 1000,
-                demoProfitLoss: 0,
-                demoOrders: [],
-                demoPositions: {},
-                demoForm: {
-                    buyAmount: 0,
-                    buyTotal: 0,
-                    sellAmount: 0,
-                    sellTotal: 0
-                },
-                demoSearchQuery: '',
-                currentDemoTicker: 'BTCUSDT',
-                demoTimeframe: '1h',
-                demoChartInstance: null,
-                showBurgerMenu: false,
-                showNotesModal: false,
-                showNewsModal: false,
-                isDarkTheme: true,
-                showDemoTradingScreen: false,
-                notes: [],
-                currentNote: {
-                    id: null,
-                    title: '',
-                    content: '',
-                    symbol: '',
-                    tags: [],
-                    date: null
-                },
-                newsItems: [],
-                // Demo Trading данные
-                showDemoTrading: false,
-                demoAccount: {
-                    initialized: false,
-                    balance: 10000,
-                    positions: [],
-                    orders: [],
-                    transactions: []
-                },
-                demoOrderSymbol: '',
-                demoOrderAmount: '',
-                demoOrderSide: 'BUY',
-                demoUpdateInterval: null,
-                tickersLoaded: false, // Флаг для отслеживания загрузки тикеров
             }
         },
         methods: {
@@ -1095,16 +866,62 @@
                 }));
             },
             sockMessage(e) {
-                if (this.sockActive) {
-                    let data = JSON.parse(e.data);
-                    this.processTickerData(data);
-                    
-                    // Если у нас есть портфельные позиции и это первый раз, когда мы получаем тикеры
-                    if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0 && !this.tickersLoaded) {
-                        console.log('Tickers loaded, updating portfolio calculations');
-                        this.updatePortfolioTotals();
-                        this.tickersLoaded = true;
+                let data = JSON.parse(e.data);
+                if (Array.isArray(data)) {
+                    data.forEach(ticker => {
+                        if (ticker.s.endsWith('BTC')) {
+                            this.tickers[ticker.s] = {
+                                symbol: ticker.s,
+                                pair: ticker.s.replace('BTC', '') + '/BTC',
+                                token: ticker.s.replace('BTC', ''),
+                                asset: 'BTC',
+                                close: parseFloat(ticker.c).toFixed(8),
+                                open: parseFloat(ticker.o).toFixed(8),
+                                high: parseFloat(ticker.h).toFixed(8),
+                                low: parseFloat(ticker.l).toFixed(8),
+                                volume: parseFloat(ticker.v).toFixed(8),
+                                quoteVolume: parseFloat(ticker.q).toFixed(8),
+                                tokenVolume: parseFloat(ticker.v).toFixed(2),
+                                assetVolume: parseFloat(ticker.q).toFixed(2),
+                                percent: parseFloat(ticker.P),
+                                arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
+                                style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
+                            }
+                        }
+                        if (ticker.s.endsWith('USDT')) {
+                            this.tickers[ticker.s] = {
+                                symbol: ticker.s,
+                                pair: ticker.s.replace('USDT', '') + '/USDT',
+                                token: ticker.s.replace('USDT', ''),
+                                asset: 'USDT',
+                                close: parseFloat(ticker.c).toFixed(8),
+                                open: parseFloat(ticker.o).toFixed(8),
+                                high: parseFloat(ticker.h).toFixed(8),
+                                low: parseFloat(ticker.l).toFixed(8),
+                                volume: parseFloat(ticker.v).toFixed(8),
+                                quoteVolume: parseFloat(ticker.q).toFixed(8),
+                                tokenVolume: parseFloat(ticker.v).toFixed(2),
+                                assetVolume: parseFloat(ticker.q).toFixed(0), 
+                                percent: parseFloat(ticker.P),
+                                arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
+                                style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
+                            }
+                        }
+                    });
+
+                    if (Object.keys(this.tickers).length > 0) {
+
+                        if (this.portfolioPositions.length === 0) {
+                            console.log('Tickers received, trying to load portfolio');
+                            this.loadState();
+                        }
+                        
+                        if (this.portfolioPositions.length > 0) {
+                            this.updatePortfolioTotals();
+                        }
                     }
+
+                    this.status = 2;
                 }
             },
             sockClose() {
@@ -1124,21 +941,18 @@
                 }
                 
                 if (this.showChartScreen && this.fullscreenChartInstance) {
+
                     try {
                         this.fullscreenChartInstance.setSymbol('BINANCE:' + symbol, () => {
                             console.log('Chart symbol updated to', symbol);
                         });
                     } catch (e) {
                         console.error('Error updating chart symbol:', e);
+
                         this.$nextTick(() => {
                             this.initFullscreenChart();
                         });
                     }
-                }
-                
-                // Открываем модальное окно демо-торговли если включен режим демо
-                if (this.isDemoMode) {
-                    this.toggleDemoTradingModal();
                 }
             },
             setFavorite(symbol) {
@@ -1150,12 +964,9 @@
                 localStorage.setItem('favorites', JSON.stringify(this.favorites));
             },
             filterAsset(asset) {
-                this.asset = asset;
-                this.status = 'loading';
+                this.asset = asset; 
+                this.status = 1; 
                 
-                setTimeout(() => {
-                    window.updateFilterButtonBubbles();
-                }, 50);
             },
             sortBy(field, order) {
                 this.sort = field;
@@ -1340,17 +1151,32 @@
                 this.shareAssetFilter = asset;
             },
             async updateTonPrice() {
-                fetch('https://api.coingecko.com/api/v3/simple/price?ids=toncoin&vs_currencies=usd')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.toncoin && data.toncoin.usd) {
-                            this.tonPrice = data.toncoin.usd;
-                            console.log('Updated TON price:', this.tonPrice);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching TON price:', error);
-                    });
+                try {
+                    const response = await fetch('https://tonapi.io/v2/rates?tokens=ton&currencies=usd');
+                    const data = await response.json();
+                    const price = data.rates.TON.prices.USD;
+                    const diff24h = data.rates.TON.diff_24h.USD.replace('%', '');
+                    
+                    this.tickers['TONUSDT'] = {
+                        symbol: 'TONUSDT',
+                        pair: 'TON/USDT',
+                        token: 'TON',
+                        asset: 'USDT',
+                        close: price.toFixed(8),
+                        open: price.toFixed(8), 
+                        high: price.toFixed(8), 
+                        low: price.toFixed(8),  
+                        volume: '0',            
+                        quoteVolume: '0',       
+                        tokenVolume: '0',      
+                        assetVolume: '0',     
+                        percent: parseFloat(diff24h),
+                        arrow: parseFloat(diff24h) >= 0 ? '↑' : '↓',
+                        style: parseFloat(diff24h) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
+                    };
+                } catch (error) {
+                    console.error('Error fetching TON price:', error);
+                }
             },
             toggleCalculator() {
                 if (this.showCalculator) {
@@ -1798,16 +1624,12 @@
             },
 
             closeAllModals() {
-                // Закрываем все модальные окна
-                this.showChartModal = false;
-                this.showOrderBookModal = false;
-                this.showDemoTradingModal = false;
-                this.showCalculator = false;
+
                 this.showShareModal = false;
-                this.showSettings = false;
+                this.showOrderBookModal = false;
+                this.showCalculator = false;
                 this.showPortfolio = false;
                 
-                // Восстанавливаем прокрутку
                 document.body.style.overflow = 'auto';
                 document.body.classList.remove('no-scroll');
             },
@@ -1819,328 +1641,68 @@
                 // Для остальных пар показываем полное значение
                 return ticker.close;
             },
-            setDemoBuyPercent(percent) {
-                this.demoForm.buyTotal = this.demoBalance * percent;
-                this.demoForm.buyAmount = this.demoForm.buyTotal / this.tickers[this.ticker].close;
-            },
-            setDemoSellPercent(percent) {
-                this.demoForm.sellTotal = this.demoBalance * percent;
-                this.demoForm.sellAmount = this.demoForm.sellTotal / this.tickers[this.ticker].close;
-            },
-            executeDemoBuy() {
-                // Implement demo buy logic
-                console.log('Demo buy:', this.demoForm);
-            },
-            executeDemoSell() {
-                // Implement demo sell logic
-                console.log('Demo sell:', this.demoForm);
-            },
-            formatTime(timestamp) {
-                const date = new Date(timestamp);
-                return date.toLocaleString('ru-RU', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    day: '2-digit',
-                    month: '2-digit'
-                });
-            },
-            updateBubbleElements() {
-                // Метод-заглушка для будущей реализации анимации пузырьков
-                console.log("updateBubbleElements called");
-            },
-            // Методы для демо-торговли
-            toggleDemoTrading() {
-                this.showDemoTrading = !this.showDemoTrading;
-                
-                if (this.showDemoTrading && !this.demoAccount.initialized) {
-                    this.initDemoAccount();
+        },
+        mounted() {
+            this.sockInit();
+            this.appendScript(this.initWidget);
+            this.prepareOrderBook();
+            this.initWidget(); 
+            this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
+            
+            this.loadState();
+            
+            setTimeout(() => {
+                if (this.portfolioPositions.length === 0) {
+                    console.log('Trying to load portfolio state again after delay');
+                    this.loadState();
                 }
-                
-                if (this.showDemoTrading) {
-                    this.startDemoUpdateInterval();
-                } else {
-                    clearInterval(this.demoUpdateInterval);
+            }, 2000);
+
+            setInterval(() => {
+                if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
+                    this.updatePortfolioTotals();
                 }
-            },
-            initDemoAccount() {
-                // Попытка загрузить существующий демо-аккаунт из localStorage
-                const savedAccount = localStorage.getItem('demoTradingAccount');
-                
-                if (savedAccount) {
-                    try {
-                        const parsed = JSON.parse(savedAccount);
-                        this.demoAccount = parsed;
-                        console.log('Загружен существующий демо-аккаунт:', this.demoAccount);
-                    } catch (e) {
-                        console.error('Ошибка при загрузке демо-аккаунта:', e);
-                        this.resetDemoAccount();
-                    }
-                } else {
-                    this.resetDemoAccount();
+            }, 1000);
+
+            window.addEventListener('click', this.handleClick);
+
+            const savedSettings = localStorage.getItem('calcSettings');
+            if (savedSettings) {
+                this.calcSettings = JSON.parse(savedSettings);
+            }
+            
+            axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
+                this.coins = response.data.data.coins;
+            });
+        },
+        beforeUnmount() {
+            this.sockClose();
+            window.removeEventListener('click', this.handleClick);
+            if (this.tonUpdateInterval) {
+                clearInterval(this.tonUpdateInterval);
+            }
+        },
+        computed: {
+            statusMsg() {
+                let msg = '';
+                if (this.status == 0) {
+                    msg = 'Connecting...';
                 }
-            },
-            resetDemoAccount() {
-                this.demoAccount = {
-                    initialized: true,
-                    balance: 10000,  // Начальный баланс $10,000
-                    positions: [],
-                    orders: [],
-                    transactions: []
-                };
-                this.saveDemoAccount();
-            },
-            saveDemoAccount() {
-                localStorage.setItem('demoTradingAccount', JSON.stringify(this.demoAccount));
-            },
-            executeDemoOrder() {
-                if (!this.demoOrderSymbol || !this.demoOrderAmount || this.demoOrderAmount <= 0) {
-                    alert('Пожалуйста, выберите символ и введите сумму');
-                    return;
+                if (this.status == 1) {
+                    msg = 'Loading...';
                 }
-                
-                const ticker = this.tickers[this.demoOrderSymbol];
-                if (!ticker) {
-                    alert('Символ не найден в списке тикеров');
-                    return;
+                if (this.status == 2) {
+                    msg = 'Done';
                 }
-                
-                const currentPrice = parseFloat(ticker.price);
-                const amount = parseFloat(this.demoOrderAmount);
-                
-                if (this.demoOrderSide === 'BUY') {
-                    // Проверка достаточного баланса
-                    if (amount > this.demoAccount.balance) {
-                        alert('Недостаточно средств на балансе');
-                        return;
-                    }
-                    
-                    // Покупка криптовалюты
-                    const coinAmount = amount / currentPrice;
-                    
-                    // Поиск существующей позиции
-                    const existingPosition = this.demoAccount.positions.find(p => p.symbol === this.demoOrderSymbol);
-                    
-                    if (existingPosition) {
-                        // Усреднение существующей позиции
-                        const totalCoins = existingPosition.amount + coinAmount;
-                        const totalInvestment = (existingPosition.amount * existingPosition.entryPrice) + amount;
-                        existingPosition.entryPrice = totalInvestment / totalCoins;
-                        existingPosition.amount = totalCoins;
-                if (amount > position.amount) {
-                    alert('Sell amount exceeds available amount');
-                    return;
-                }
-                
-                // Расчёт комиссии (0.1%)
-                const fee = total * 0.001;
-                const totalAfterFee = total - fee;
-                
-                // Создаём новый ордер
-                const order = {
-                    timestamp: Date.now(),
-                    symbol: ticker.symbol,
-                    pair: ticker.pair,
-                    type: 'sell',
-                    price: price,
-                    amount: amount,
-                    total: total,
-                    fee: fee
-                };
-                
-                // Добавляем ордер в историю
-                this.demoOrders.unshift(order);
-                
-                // Обновляем позицию
-                position.amount -= amount;
-                
-                // Обновляем баланс
-                this.demoBalance += totalAfterFee;
-                
-                // Обновляем P&L
-                this.updateDemoPositions();
-                
-                // Сохраняем состояние
-                this.saveDemoTradingState();
-                
-                // Очищаем форму
-                this.demoForm.sellAmount = 0;
-                this.demoForm.sellTotal = 0;
-                
-                console.log('Продажа выполнена:', order);
+                return msg;
             },
-            // Метод для форматирования цены
-            formatPrice(price) {
-                return new Intl.NumberFormat('ru-RU', {
-                    style: 'currency',
-                    currency: 'USD',
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }).format(price);
-            },
-            formatTime(timestamp) {
-                const date = new Date(timestamp);
-                return date.toLocaleString('ru-RU', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    day: '2-digit',
-                    month: '2-digit'
-                });
-            },
-            toggleBurgerMenu() {
-                this.showBurgerMenu = !this.showBurgerMenu;
-                // Добавляем обработчик для закрытия меню при клике вне его
-                if (this.showBurgerMenu) {
-                    this.$nextTick(() => {
-                        const closeMenu = (e) => {
-                            if (!e.target.closest('.burger-menu-container')) {
-                                this.showBurgerMenu = false;
-                                document.removeEventListener('click', closeMenu);
-                            }
-                        };
-                        // Небольшая задержка, чтобы не сработало сразу
-                        setTimeout(() => {
-                            document.addEventListener('click', closeMenu);
-                        }, 100);
-                    });
-                }
-            },
-            toggleNotesModal() {
-                // Закрываем бургер-меню
-                this.showBurgerMenu = false;
-                
-                // Заглушка для будущей функциональности заметок
-                alert('Notes feature will be available in the next update!');
-                
-                // Действие при будущей реализации:
-                // this.showNotesModal = !this.showNotesModal;
-                // if (this.showNotesModal) {
-                //     this.closeAllModals();
-                //     this.showNotesModal = true;
-                //     document.body.style.overflow = 'hidden';
-                // }
-            },
-            toggleNewsModal() {
-                // Закрываем бургер-меню
-                this.showBurgerMenu = false;
-                
-                // Заглушка для будущей функциональности новостей
-                alert('News feature will be available in the next update!');
-                
-                // Действие при будущей реализации:
-                // this.showNewsModal = !this.showNewsModal;
-                // if (this.showNewsModal) {
-                //     this.closeAllModals();
-                //     this.showNewsModal = true;
-                //     document.body.style.overflow = 'hidden';
-                //     this.loadNews();
-                // }
-            },
-            toggleTheme() {
-                // Закрываем бургер-меню
-                this.showBurgerMenu = false;
-                
-                // Заглушка для будущей функциональности смены темы
-                alert('Theme toggle feature will be available in the next update!');
-                
-                // Действие при будущей реализации:
-                // this.isDarkTheme = !this.isDarkTheme;
-                // document.documentElement.classList.toggle('light-theme', !this.isDarkTheme);
-                // localStorage.setItem('isDarkTheme', this.isDarkTheme);
-            },
-            formatShortTime(timestamp) {
-                const date = new Date(timestamp);
-                return date.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            },
-            getTicker(symbol) {
-                return this.tickers[symbol] || null;
-            },
-            selectDemoTicker(symbol) {
-                this.currentDemoTicker = symbol;
-                
-                // Обновляем формы торговли
-                this.demoForm.buyAmount = 0;
-                this.demoForm.buyTotal = 0;
-                
-                // Для продажи проверяем, есть ли имеющаяся позиция
-                const position = this.demoPositions[symbol];
-                if (position && position.amount > 0) {
-                    const currentPrice = parseFloat(this.tickers[symbol].close);
-                    this.demoForm.sellAmount = position.amount;
-                    this.demoForm.sellTotal = position.amount * currentPrice;
-                } else {
-                    this.demoForm.sellAmount = 0;
-                    this.demoForm.sellTotal = 0;
-                }
-                
-                // Обновляем график
-                this.updateDemoChart();
-            },
-            setDemoTimeframe(timeframe) {
-                this.demoTimeframe = timeframe;
-                // Обновляем график с новым таймфреймом
-                this.updateDemoChart();
-            },
-            updateDemoChart() {
-                // Если у нас уже есть график TradingView и выбран тикер
-                if (window.TradingView && this.currentDemoTicker) {
-                    const container = document.getElementById('demo_chart_container');
-                    if (container) {
-                        // Если экземпляр уже существует, удаляем его
-                        if (this.demoChartInstance) {
-                            this.demoChartInstance.remove();
-                            this.demoChartInstance = null;
-                        }
-                        
-                        // Создаем новый экземпляр графика
-                        this.demoChartInstance = new window.TradingView.widget({
-                            container_id: 'demo_chart_container',
-                            autosize: true,
-                            symbol: 'BINANCE:' + this.currentDemoTicker,
-                            interval: this.demoTimeframe,
-                            timezone: 'Etc/UTC',
-                            theme: 'dark',
-                            style: '1',
-                            locale: 'en',
-                            toolbar_bg: '#f1f3f6',
-                            enable_publishing: false,
-                            allow_symbol_change: false,
-                            save_image: false,
-                            studies: ['RSI@tv-basicstudies'],
-                            hide_side_toolbar: true,
-                            hidevolume: false
-                        });
-                    }
-                }
-            },
-            initDemoTrading() {
-                // Загружаем TradingView виджет, если он еще не загружен
-                if (!window.TradingView) {
-                    const script = document.createElement('script');
-                    script.src = 'https://s3.tradingview.com/tv.js';
-                    script.async = true;
-                    script.onload = () => {
-                        this.$nextTick(() => {
-                            this.updateDemoChart();
-                        });
-                    };
-                    document.head.appendChild(script);
-                } else {
-                    this.$nextTick(() => {
-                        this.updateDemoChart();
-                    });
-                }
-            },
-            get filteredDemoTickers() {
-                const query = this.demoSearchQuery.toLowerCase();
+            filterTickers() {
                 let tickers = Object.values(this.tickers);
+        
                 
-                // Фильтруем по поисковому запросу, если он есть
-                if (query) {
+                if (this.asset === 'FAV') {
+                    tickers = tickers.filter(ticker => this.favorites.includes(ticker.symbol));
+                } else {
                     
                     tickers = tickers.filter(ticker => ticker.symbol.includes(this.asset));
                 }
@@ -2178,243 +1740,6 @@
                 }
                 
                 return tickers;
-            },
-            processTickerData(data) {
-                try {
-                    if (Array.isArray(data)) {
-                        data.forEach(ticker => {
-                            if (ticker.s.endsWith('BTC')) {
-                                this.tickers[ticker.s] = {
-                                    symbol: ticker.s,
-                                    pair: ticker.s.replace('BTC', '') + '/BTC',
-                                    token: ticker.s.replace('BTC', ''),
-                                    asset: 'BTC',
-                                    close: parseFloat(ticker.c).toFixed(8),
-                                    open: parseFloat(ticker.o).toFixed(8),
-                                    high: parseFloat(ticker.h).toFixed(8),
-                                    low: parseFloat(ticker.l).toFixed(8),
-                                    volume: parseFloat(ticker.v).toFixed(8),
-                                    quoteVolume: parseFloat(ticker.q).toFixed(8),
-                                    tokenVolume: parseFloat(ticker.v).toFixed(2),
-                                    assetVolume: parseFloat(ticker.q).toFixed(2),
-                                    percent: parseFloat(ticker.P),
-                                    arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
-                                    style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
-                                };
-                            }
-                            if (ticker.s.endsWith('USDT')) {
-                                this.tickers[ticker.s] = {
-                                    symbol: ticker.s,
-                                    pair: ticker.s.replace('USDT', '') + '/USDT',
-                                    token: ticker.s.replace('USDT', ''),
-                                    asset: 'USDT',
-                                    close: parseFloat(ticker.c).toFixed(8),
-                                    open: parseFloat(ticker.o).toFixed(8),
-                                    high: parseFloat(ticker.h).toFixed(8),
-                                    low: parseFloat(ticker.l).toFixed(8),
-                                    volume: parseFloat(ticker.v).toFixed(8),
-                                    quoteVolume: parseFloat(ticker.q).toFixed(8),
-                                    tokenVolume: parseFloat(ticker.v).toFixed(2),
-                                    assetVolume: parseFloat(ticker.q).toFixed(0), 
-                                    percent: parseFloat(ticker.P),
-                                    arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
-                                    style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
-                                };
-                            }
-                        });
-                    }
-                    this.status = 2;
-                } catch (error) {
-                    console.error('Error processing ticker data:', error);
-                }
-            },
-            getCoinData(ticker) {
-                if (ticker.s.endsWith('BTC')) {
-                    return {
-                        symbol: ticker.s,
-                        pair: ticker.s.replace('BTC', '') + '/BTC',
-                        token: ticker.s.replace('BTC', ''),
-                        asset: 'BTC',
-                        close: parseFloat(ticker.c).toFixed(8),
-                        open: parseFloat(ticker.o).toFixed(8),
-                        high: parseFloat(ticker.h).toFixed(8),
-                        low: parseFloat(ticker.l).toFixed(8),
-                        volume: parseFloat(ticker.v).toFixed(8),
-                        quoteVolume: parseFloat(ticker.q).toFixed(8),
-                        tokenVolume: parseFloat(ticker.v).toFixed(2),
-                        assetVolume: parseFloat(ticker.q).toFixed(2),
-                        percent: parseFloat(ticker.P),
-                        arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
-                        style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
-                    };
-                }
-                if (ticker.s.endsWith('USDT')) {
-                    return {
-                        symbol: ticker.s,
-                        pair: ticker.s.replace('USDT', '') + '/USDT',
-                        token: ticker.s.replace('USDT', ''),
-                        asset: 'USDT',
-                        close: parseFloat(ticker.c).toFixed(8),
-                        open: parseFloat(ticker.o).toFixed(8),
-                        high: parseFloat(ticker.h).toFixed(8),
-                        low: parseFloat(ticker.l).toFixed(8),
-                        volume: parseFloat(ticker.v).toFixed(8),
-                        quoteVolume: parseFloat(ticker.q).toFixed(8),
-                        tokenVolume: parseFloat(ticker.v).toFixed(2),
-                        assetVolume: parseFloat(ticker.q).toFixed(0),
-                        percent: parseFloat(ticker.P),
-                        arrow: parseFloat(ticker.P) >= 0 ? '↑' : '↓',
-                        style: parseFloat(ticker.P) >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'
-                    };
-                }
-                return null;
-            },
-        },
-        mounted() {
-            this.selectedAsset = localStorage.getItem('selectedAsset') || 'USDT';
-        },
-        mounted() {
-            this.selectedAsset = localStorage.getItem('selectedAsset') || 'USDT';
-            this.selectedStatus = localStorage.getItem('selectedStatus') || 'allcoins';
-            this.pairsPerPage = parseInt(localStorage.getItem('pairsPerPage')) || 50;
-            this.status = 0;
-
-            this.loadState(); // Загружаем состояние портфеля сразу
-
-            this.initTheme();
-
-            const calcSettingsStr = localStorage.getItem('calcSettings');
-            if (calcSettingsStr) {
-                try {
-                    this.calcSettings = JSON.parse(calcSettingsStr);
-                } catch (e) {
-                    console.error('Error parsing calc settings:', e);
-                }
-            }
-
-            this.sockInit(); // Инициализация WebSocket
-
-            // Повторная попытка загрузить состояние через 2 секунды, если портфель пуст
-            setTimeout(() => {
-                if (this.portfolioPositions.length === 0 && Object.keys(this.tickers).length > 0) {
-                    console.log('Portfolio is empty after initial load, trying again...');
-                    this.loadState();
-                }
-            }, 2000);
-
-            // Устанавливаем интервал для обновления портфеля
-            setInterval(() => {
-                if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
-                    this.updatePortfolioTotals();
-                }
-            }, 1000);
-
-            this.updateTonPrice();
-            setInterval(this.updateTonPrice, 60000);
-            
-            // Восстанавливаем необходимые инициализации
-            this.initDemoTrading();
-            document.addEventListener('keydown', this.handleKeyDown);
-        },
-        beforeUnmount() {
-            this.sockClose();
-            window.removeEventListener('click', this.handleClick);
-            if (this.tonUpdateInterval) {
-                clearInterval(this.tonUpdateInterval);
-            }
-        },
-        computed: {
-            statusMsg() {
-                let msg = '';
-                if (this.status == 0) {
-                    msg = 'Connecting...';
-                }
-                if (this.status == 1) {
-                    msg = 'Loading...';
-                }
-                if (this.status == 2) {
-                    msg = 'Done';
-                }
-                return msg;
-            },
-            filterTickers() {
-                let tickers = Object.values(this.tickers);
-                
-                if (this.asset === 'FAV') {
-                    tickers = tickers.filter(ticker => this.favorites.includes(ticker.symbol));
-                } else {
-                    tickers = tickers.filter(ticker => ticker.asset === this.asset);
-                }
-                
-                if (this.inputSearch) {
-                    const search = this.inputSearch.toLowerCase();
-                    tickers = tickers.filter(ticker => {
-                        return ticker.token.toLowerCase().includes(search) || 
-                               ticker.symbol.toLowerCase().includes(search) || 
-                               ticker.pair.toLowerCase().includes(search);
-                    });
-                }
-                
-                if (this.sort === 'token') {
-                    tickers = tickers.sort((a, b) => {
-                        if (this.order === 'asc') {
-                            return a.token.localeCompare(b.token);
-                        } else {
-                            return b.token.localeCompare(a.token);
-                        }
-                    });
-                }
-                
-                if (this.sort === 'close') {
-                    tickers = tickers.sort((a, b) => {
-                        if (this.order === 'asc') {
-                            return parseFloat(a.close) - parseFloat(b.close);
-                        } else {
-                            return parseFloat(b.close) - parseFloat(a.close);
-                        }
-                    });
-                }
-                
-                if (this.sort === 'percent') {
-                    tickers = tickers.sort((a, b) => {
-                        if (this.order === 'asc') {
-                            return parseFloat(a.percent) - parseFloat(b.percent);
-                        } else {
-                            return parseFloat(b.percent) - parseFloat(a.percent);
-                        }
-                    });
-                }
-                
-                if (this.sort === 'assetVolume') {
-                    tickers = tickers.sort((a, b) => {
-                        if (this.order === 'asc') {
-                            return parseFloat(a.assetVolume) - parseFloat(b.assetVolume);
-                        } else {
-                            return parseFloat(b.assetVolume) - parseFloat(a.assetVolume);
-                        }
-                    });
-                }
-                
-                return tickers;
-            },
-            filteredDemoTickers() {
-                const query = this.demoSearchQuery.toLowerCase();
-                let tickers = Object.values(this.tickers);
-                
-                // Фильтруем по поисковому запросу, если он есть
-                if (query) {
-                    tickers = tickers.filter(ticker => {
-                        const symbol = ticker.symbol.toLowerCase();
-                        const pair = ticker.pair.toLowerCase();
-                        return symbol.includes(query) || pair.includes(query);
-                    });
-                }
-                
-                // Показываем только USDT пары для простоты
-                tickers = tickers.filter(ticker => ticker.symbol.endsWith('USDT'));
-                
-                // Сортируем по объему торгов (от большего к меньшему)
-                return tickers.sort((a, b) => parseFloat(b.assetVolume) - parseFloat(a.assetVolume));
             }
         }
     }).mount('#app')
@@ -2941,43 +2266,6 @@
     body.modal-open .fixed.bottom-0 {
         pointer-events: auto;
     }
-
-    /* Стили для режима Demo Trading */
-    .demo-trading-screen-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: var(--color-bg);
-        z-index: 9999;
-        overflow-y: auto;
-        overflow-x: hidden;
-    }
-    
-    .demo-trading-screen-content {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-    
-    .cb {
-        background-color: var(--color-bg--400);
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Стили для компонентов Demo Trading */
-    .form-control:focus {
-        outline: none;
-        box-shadow: 0 0 0 2px var(--color-primary-blue);
-    }
-    
-    @media (max-width: 768px) {
-        .demo-trading-screen-content {
-            padding: 10px;
-        }
-    }
 </style>
 </body>
 <script>
@@ -3067,343 +2355,4 @@
         });
     });
 </script>
-
-<!-- Полноэкранный режим Demo Trading -->
-<div v-if="showDemoTradingScreen" class="demo-trading-screen-overlay">
-  <div class="demo-trading-screen-content">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg font-bold text-[--color-primary-silver]">Demo Trading Platform</h2>
-      <button @click="toggleDemoTrading" class="bg-red-500 text-white px-4 py-2 rounded">Exit Demo Mode</button>
-    </div>
-    
-    <div class="flex flex-col lg:flex-row gap-4">
-      <!-- Левая панель: список тикеров и инфо о текущем -->
-      <div class="lg:w-1/4">
-        <div class="cb mb-4 p-3">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-[--color-primary-blue] font-bold">Markets</h3>
-            <div class="relative">
-              <input 
-                type="text" 
-                v-model="demoSearchQuery" 
-                placeholder="Search..." 
-                class="bg-[--color-bg--500] text-white p-2 rounded w-full text-sm"
-              />
-            </div>
-          </div>
-          <div class="h-[30vh] overflow-y-auto">
-            <div 
-              v-for="ticker in filteredDemoTickers" 
-              :key="ticker.symbol" 
-              @click="selectDemoTicker(ticker.symbol)"
-              :class="[currentDemoTicker === ticker.symbol ? 'bg-[--color-bg--500]' : '', 'flex justify-between p-2 hover:bg-[--color-bg--500] cursor-pointer rounded mb-1']"
-            >
-              <div>{{ ticker.pair }}</div>
-              <div :class="ticker.style">{{ formatDisplayPrice(ticker) }}</div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="cb mb-4 p-3">
-          <h3 class="text-[--color-primary-blue] font-bold mb-2">Account</h3>
-          <div class="flex justify-between mb-2">
-            <span class="text-[--color-primary-silver]">Balance:</span>
-            <span class="font-bold">{{ formatPrice(demoBalance) }}</span>
-          </div>
-          <div class="flex justify-between mb-2">
-            <span class="text-[--color-primary-silver]">Total P&L:</span>
-            <span :class="demoProfitLoss >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="font-bold">
-              {{ formatPrice(demoProfitLoss) }}
-            </span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-[--color-primary-silver]">Available:</span>
-            <span class="font-bold">{{ formatPrice(demoBalance) }}</span>
-          </div>
-        </div>
-        
-        <div class="cb mb-4 p-3">
-          <h3 class="text-[--color-primary-blue] font-bold mb-2">Position Summary</h3>
-          <div class="max-h-[30vh] overflow-y-auto">
-            <div v-for="(position, symbol) in demoPositions" :key="symbol" v-if="position.amount > 0" class="mb-2 p-2 bg-[--color-bg--500] rounded">
-              <div class="flex justify-between mb-1">
-                <span class="font-bold">{{ position.pair }}</span>
-                <span>{{ formatAmount(position.amount) }}</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-[--color-primary-silver]">Avg: {{ formatPrice(position.avgPrice) }}</span>
-                <span :class="position.pnl >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'" class="text-sm">
-                  {{ formatPrice(position.pnl) }} ({{ position.pnlPercent >= 0 ? '+' : '' }}{{ position.pnlPercent.toFixed(2) }}%)
-                </span>
-              </div>
-            </div>
-            <div v-if="Object.keys(demoPositions).filter(k => demoPositions[k].amount > 0).length === 0" class="text-center text-[--color-primary-silver] py-4">
-              No open positions
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Центральная панель: график и торговля -->
-      <div class="lg:w-2/4">
-        <!-- График текущего инструмента -->
-        <div class="cb mb-4 p-3">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="text-[--color-primary-blue] font-bold">{{ getTicker(currentDemoTicker)?.pair || 'Chart' }}</h3>
-            <div class="flex gap-2">
-              <button 
-                v-for="timeframe in ['1m', '5m', '15m', '1h', '4h', '1d']" 
-                :key="timeframe"
-                @click="setDemoTimeframe(timeframe)"
-                :class="[demoTimeframe === timeframe ? 'bg-[--color-primary-blue]' : 'bg-[--color-bg--500]', 'text-white px-2 py-1 rounded text-xs']"
-              >
-                {{ timeframe }}
-              </button>
-            </div>
-          </div>
-          <div class="relative" style="height: 400px;">
-            <div id="demo_chart_container" style="height: 100%; width: 100%;"></div>
-          </div>
-        </div>
-        
-        <!-- Торговые формы -->
-        <div class="flex gap-4">
-          <div class="cb p-3 flex-1">
-            <h3 class="text-[--color-primary-green] font-bold mb-2">BUY</h3>
-            <div class="form-group mb-2">
-              <label class="block text-xs text-[--color-primary-silver] mb-1">
-                Amount (in {{ getTicker(currentDemoTicker)?.token || '---' }})
-              </label>
-              <input v-model="demoForm.buyAmount" type="number" min="0" step="0.0001" 
-                    class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
-            </div>
-            <div class="form-group mb-2">
-              <label class="block text-xs text-[--color-primary-silver] mb-1">Total (in USDT)</label>
-              <input v-model="demoForm.buyTotal" type="number" min="0" step="0.01" 
-                    class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
-            </div>
-            <div class="flex justify-between gap-2 mb-2">
-              <button @click="setDemoBuyPercent(0.25)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">25%</button>
-              <button @click="setDemoBuyPercent(0.5)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">50%</button>
-              <button @click="setDemoBuyPercent(0.75)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">75%</button>
-              <button @click="setDemoBuyPercent(1)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">100%</button>
-            </div>
-            <button @click="executeDemoBuy" 
-                    class="bg-[--color-primary-green] hover:bg-green-600 text-white py-2 px-4 rounded w-full">BUY</button>
-          </div>
-          
-          <div class="cb p-3 flex-1">
-            <h3 class="text-[--color-primary--500] font-bold mb-2">SELL</h3>
-            <div class="form-group mb-2">
-              <label class="block text-xs text-[--color-primary-silver] mb-1">
-                Amount (in {{ getTicker(currentDemoTicker)?.token || '---' }})
-              </label>
-              <input v-model="demoForm.sellAmount" type="number" min="0" step="0.0001" 
-                    class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
-            </div>
-            <div class="form-group mb-2">
-              <label class="block text-xs text-[--color-primary-silver] mb-1">Total (in USDT)</label>
-              <input v-model="demoForm.sellTotal" type="number" min="0" step="0.01" 
-                    class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm" placeholder="0.0" />
-            </div>
-            <div class="flex justify-between gap-2 mb-2">
-              <button @click="setDemoSellPercent(0.25)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">25%</button>
-              <button @click="setDemoSellPercent(0.5)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">50%</button>
-              <button @click="setDemoSellPercent(0.75)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">75%</button>
-              <button @click="setDemoSellPercent(1)" class="bg-[--color-bg--500] text-white py-1 px-2 rounded text-xs">100%</button>
-            </div>
-            <button @click="executeDemoSell" 
-                    class="bg-[--color-primary--500] hover:bg-red-700 text-white py-2 px-4 rounded w-full">SELL</button>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Правая панель: ордера и история -->
-      <div class="lg:w-1/4">
-        <!-- Текущая цена -->
-        <div class="cb mb-4 p-3">
-          <div class="flex justify-between items-center">
-            <h3 class="text-[--color-primary-blue] font-bold">{{ getTicker(currentDemoTicker)?.pair || 'Current Ticker' }}</h3>
-            <div 
-              :class="getTicker(currentDemoTicker)?.style || ''" 
-              class="text-xl font-bold"
-            >
-              {{ getTicker(currentDemoTicker) ? formatPrice(parseFloat(getTicker(currentDemoTicker).close)) : '---' }}
-            </div>
-          </div>
-          <div class="flex justify-between mt-2" v-if="getTicker(currentDemoTicker)">
-            <div class="text-sm">
-              <div class="text-[--color-primary-silver]">24h Change</div>
-              <div :class="getTicker(currentDemoTicker)?.style">
-                {{ getTicker(currentDemoTicker)?.arrow }} {{ getTicker(currentDemoTicker)?.percent.toFixed(2) }}%
-              </div>
-            </div>
-            <div class="text-sm">
-              <div class="text-[--color-primary-silver]">24h High</div>
-              <div>{{ parseFloat(getTicker(currentDemoTicker)?.high).toFixed(2) }}</div>
-            </div>
-            <div class="text-sm">
-              <div class="text-[--color-primary-silver]">24h Low</div>
-              <div>{{ parseFloat(getTicker(currentDemoTicker)?.low).toFixed(2) }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- История сделок -->
-        <div class="cb mb-4 p-3">
-          <h3 class="text-[--color-primary-blue] font-bold mb-2">Order History</h3>
-          <div class="max-h-[30vh] overflow-y-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="text-[--color-primary-silver]">
-                  <th class="text-left py-1">Time</th>
-                  <th class="text-left py-1">Pair</th>
-                  <th class="text-right py-1">Price</th>
-                  <th class="text-right py-1">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(order, index) in demoOrders.slice(0, 15)" :key="index" 
-                    :class="order.type === 'buy' ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
-                  <td class="py-1">{{ formatShortTime(order.timestamp) }}</td>
-                  <td class="py-1">{{ order.pair }}</td>
-                  <td class="py-1 text-right">{{ formatPrice(order.price) }}</td>
-                  <td class="py-1 text-right">{{ order.type === 'buy' ? '+' : '-' }}{{ formatAmount(order.amount) }}</td>
-                </tr>
-                <tr v-if="demoOrders.length === 0">
-                  <td colspan="4" class="py-4 text-center text-[--color-primary-silver]">No orders yet</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="demoTradingModal" v-show="showDemoTrading" class="modal" :class="{'is-active': showDemoTrading}">
-    <div class="modal-background" @click="toggleDemoTrading"></div>
-    <div class="modal-card">
-        <header class="modal-card-head">
-            <p class="modal-card-title">Demo Trading</p>
-            <button class="delete" aria-label="close" @click="toggleDemoTrading"></button>
-        </header>
-        <section class="modal-card-body">
-            <div class="columns">
-                <div class="column">
-                    <div class="box">
-                        <h3 class="title is-5">Account Balance</h3>
-                        <p class="is-size-4">${{demoAccount.balance.toFixed(2)}}</p>
-                        <button class="button is-small is-danger mt-2" @click="resetDemoAccount">Reset Account</button>
-                    </div>
-                </div>
-                <div class="column">
-                    <div class="box">
-                        <h3 class="title is-5">Place Order</h3>
-                        <div class="field">
-                            <label class="label">Symbol</label>
-                            <div class="control">
-                                <div class="select is-fullwidth">
-                                    <select v-model="demoOrderSymbol">
-                                        <option value="">Select Symbol</option>
-                                        <option v-for="ticker in Object.keys(tickers)" :value="ticker">{{ticker}}</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <label class="label">Amount (USD)</label>
-                            <div class="control">
-                                <input class="input" type="number" v-model="demoOrderAmount" placeholder="Enter amount">
-                            </div>
-                        </div>
-                        <div class="field">
-                            <label class="label">Side</label>
-                            <div class="control">
-                                <div class="select is-fullwidth">
-                                    <select v-model="demoOrderSide">
-                                        <option value="BUY">BUY</option>
-                                        <option value="SELL">SELL</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <div class="control">
-                                <button class="button is-primary is-fullwidth" @click="executeDemoOrder" :disabled="!demoOrderSymbol || !demoOrderAmount">
-                                    Place Order
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="box mt-4">
-                <h3 class="title is-5">Positions</h3>
-                <table class="table is-fullwidth" v-if="demoAccount.positions.length > 0">
-                    <thead>
-                        <tr>
-                            <th>Symbol</th>
-                            <th>Amount</th>
-                            <th>Entry Price</th>
-                            <th>Current Price</th>
-                            <th>Current Value</th>
-                            <th>P/L</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="position in demoAccount.positions" :key="position.symbol">
-                            <td>{{position.symbol}}</td>
-                            <td>{{position.amount.toFixed(8)}}</td>
-                            <td>${{position.entryPrice.toFixed(2)}}</td>
-                            <td>${{position.currentPrice.toFixed(2)}}</td>
-                            <td>${{position.currentValue.toFixed(2)}}</td>
-                            <td :class="{'has-text-success': position.pnl > 0, 'has-text-danger': position.pnl < 0}">
-                                ${{position.pnl.toFixed(2)}} ({{position.pnlPercent.toFixed(2)}}%)
-                            </td>
-                            <td>
-                                <button class="button is-small is-danger" @click="closeDemoPosition(position)">Close</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p v-else class="has-text-centered">No open positions</p>
-            </div>
-            
-            <div class="box mt-4">
-                <h3 class="title is-5">Transaction History</h3>
-                <table class="table is-fullwidth" v-if="demoAccount.transactions.length > 0">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Symbol</th>
-                            <th>Side</th>
-                            <th>Amount</th>
-                            <th>Price</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(tx, index) in demoAccount.transactions.slice().reverse()" :key="index">
-                            <td>{{new Date(tx.timestamp).toLocaleString()}}</td>
-                            <td>{{tx.symbol}}</td>
-                            <td :class="{'has-text-success': tx.side === 'BUY', 'has-text-danger': tx.side === 'SELL'}">
-                                {{tx.side}}
-                            </td>
-                            <td>{{tx.amount.toFixed(8)}}</td>
-                            <td>${{tx.price.toFixed(2)}}</td>
-                            <td>${{tx.total.toFixed(2)}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p v-else class="has-text-centered">No transactions yet</p>
-            </div>
-        </section>
-    </div>
-</div>
-
-</body>
 </html>
