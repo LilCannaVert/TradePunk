@@ -103,7 +103,7 @@
                     <div v-else>
                       <div v-for="ticker in filterTickers" :key="ticker.symbol" class="flex hover:bg-[#eab30840] cursor-pointer" style="font-family: 'Roboto Mono', monospace;">
                         <div @click="changeTicker(ticker.symbol)" class="w-1/4 dotdotdot silver">{{ticker.pair}}</div>
-                        <div @click="changeTicker(ticker.symbol)" :class="ticker.style" class="w-1/4 dotdotdot text-end">{{ticker.close}}</div>
+                        <div @click="changeTicker(ticker.symbol)" :class="ticker.style" class="w-1/4 dotdotdot text-end">{{formatDisplayPrice(ticker)}}</div>
                         <div @click="changeTicker(ticker.symbol)" :class="ticker.style" class="w-1/4 dotdotdot text-center">{{ticker.arrow}} {{ticker.percent.toFixed(2)}}</div>
                         <div class="w-1/4 dotdotdot silver text-end flex gap-2 justify-end">
                           <span @click="changeTicker(ticker.symbol)" class="text-sm">{{ticker.assetVolume}}</span>
@@ -1532,7 +1532,6 @@
                     
                     this.updateModalZIndexes(true);
                 } else {
-    
                     document.body.classList.remove('modal-open');
                     
                     this.updateModalZIndexes(false);
@@ -1633,6 +1632,14 @@
                 
                 document.body.style.overflow = 'auto';
                 document.body.classList.remove('no-scroll');
+            },
+            formatDisplayPrice(ticker) {
+                // Для USDT пар показываем только 4 цифры после запятой
+                if (ticker.symbol.endsWith('USDT')) {
+                    return parseFloat(ticker.close).toFixed(4);
+                }
+                // Для остальных пар показываем полное значение
+                return ticker.close;
             },
         },
         mounted() {
