@@ -30,6 +30,28 @@
         display: block;
         filter: contrast(1.2) brightness(1.1);
     }
+    
+    /* Стили для кнопок в верхнем углу экрана */
+    .top-corner-button {
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+    }
+    .left-button {
+        background-color: var(--color-primary-purple);
+        color: white;
+        margin-left: 5px;
+    }
+    .right-button {
+        background-color: var(--color-primary-blue);
+        color: white;
+    }
+    .top-corner-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
     </style>
 </head>
 <body>
@@ -41,14 +63,14 @@
     <div id="app">
         <div class="relative p-2">
           <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
-            <div class="flex items-center">
-              <button @click="toggleMempoolModal" class="news-button">
+            <div class="flex items-center absolute left-0 top-0">
+              <button @click="toggleMempoolModal" class="top-corner-button left-button">
                 Mempool
               </button>
             </div>
             
             <div class="absolute top-0 right-0">
-              <button @click="toggleNewsScreen" class="news-button">
+              <button @click="toggleNewsScreen" class="top-corner-button right-button">
                 News
               </button>
             </div>
