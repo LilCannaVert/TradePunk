@@ -40,28 +40,26 @@
         transition: all 0.2s ease-in-out;
         display: inline-block;
         text-align: center;
-        border: 2px solid;
+        border: 2px solid rgba(128, 0, 128, 0.6);
         z-index: 100;
         position: relative;
         font-size: 14px;
         margin-top: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        background: var(--color-primary-purple);
+        color: white;
+        text-shadow: var(--ui-glow-text);
     }
     .left-button {
-        background-color: var(--color-primary-purple);
-        color: white;
         margin-left: 10px;
-        border-color: rgba(255, 255, 255, 0.5);
     }
     .right-button {
-        background-color: var(--color-primary-blue);
-        color: white;
         margin-right: 10px;
-        border-color: rgba(255, 255, 255, 0.5);
     }
     .top-corner-button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.9);
+        background-color: rgba(150, 0, 150, 0.9);
     }
     </style>
 </head>
