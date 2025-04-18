@@ -77,13 +77,13 @@
                           <button @click="toggleDemoTrading" class="flex w-full items-center px-4 py-2 text-sm text-white hover:bg-[--color-bg--500]">
                             <span v-if="isDemoMode" class="inline-block h-2 w-2 rounded-full bg-green-500 mr-2"></span>
                             <span v-else class="inline-block h-2 w-2 rounded-full bg-gray-500 mr-2"></span>
-                            Демо-трейдинг
+                            Demo Trading
                           </button>
                           <button @click="toggleNotesModal" class="flex w-full items-center px-4 py-2 text-sm text-white hover:bg-[--color-bg--500]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            Заметки
+                            Notes
                           </button>
                           <button @click="toggleNewsModal" class="flex w-full items-center px-4 py-2 text-sm text-white hover:bg-[--color-bg--500]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -287,18 +287,18 @@
                @click="handleDemoTradingModalClick">
             <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
               <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-[--color-primary-silver]">Демо-трейдинг: {{ currentTicker }}</h2>
-                <button @click="toggleDemoTradingModal" class="bg-red-500 text-white px-4 py-2 rounded">Закрыть</button>
+                <h2 class="text-lg font-bold text-[--color-primary-silver]">Demo Trading: {{ currentTicker }}</h2>
+                <button @click="toggleDemoTradingModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
               </div>
               
-              <!-- Баланс и информация -->
+              <!-- Balance and Information -->
               <div class="flex flex-wrap mb-4 gap-2">
                 <div class="cb p-3 text-center flex-1">
-                  <div class="text-[--color-primary-silver]">Демо-баланс</div>
+                  <div class="text-[--color-primary-silver]">Demo Balance</div>
                   <div class="text-xl font-bold">{{ formatPrice(demoBalance) }}</div>
                 </div>
                 <div class="cb p-3 text-center flex-1">
-                  <div class="text-[--color-primary-silver]">Текущая цена</div>
+                  <div class="text-[--color-primary-silver]">Current Price</div>
                   <div class="text-xl font-bold" :class="tickers[currentTicker] ? tickers[currentTicker].style : ''">
                     {{ tickers[currentTicker] ? formatPrice(parseFloat(tickers[currentTicker].close)) : '---' }}
                   </div>
@@ -311,7 +311,7 @@
                 </div>
               </div>
               
-              <!-- Формы для покупки/продажи -->
+              <!-- Buy/Sell Forms -->
               <div class="flex flex-col md:flex-row gap-4 mb-4">
                 <div class="cb p-3 flex-1">
                   <h3 class="text-[--color-primary-blue] font-bold mb-2">КУПИТЬ</h3>
@@ -358,9 +358,9 @@
                 </div>
               </div>
               
-              <!-- История сделок -->
+              <!-- Order History -->
               <div>
-                <h3 class="text-[--color-primary-silver] font-bold mb-2">История сделок</h3>
+                <h3 class="text-[--color-primary-silver] font-bold mb-2">Order History</h3>
                 <div class="cb mb-2 max-h-60 overflow-y-auto">
                   <table class="w-full border-collapse">
                     <thead>
@@ -391,9 +391,9 @@
                 </div>
               </div>
               
-              <!-- Ваши позиции -->
+              <!-- Your Positions -->
               <div>
-                <h3 class="text-[--color-primary-silver] font-bold mb-2">Ваши позиции</h3>
+                <h3 class="text-[--color-primary-silver] font-bold mb-2">Your Positions</h3>
                 <div class="cb mb-2 max-h-60 overflow-y-auto">
                   <table class="w-full border-collapse">
                     <thead>
@@ -2041,12 +2041,12 @@
                 
                 // Проверки
                 if (amount <= 0 || total <= 0) {
-                    alert('Введите корректное количество или сумму для покупки');
+                    alert('Please enter a valid amount or total for purchase');
                     return;
                 }
                 
                 if (total > this.demoBalance) {
-                    alert('Недостаточно средств для покупки');
+                    alert('Insufficient funds for purchase');
                     return;
                 }
                 
@@ -2117,12 +2117,12 @@
                 // Проверяем наличие позиции
                 const position = this.demoPositions[ticker.symbol];
                 if (!position || position.amount <= 0 || amount <= 0) {
-                    alert('Нет доступной позиции для продажи или введено некорректное количество');
+                    alert('No available position to sell or invalid amount entered');
                     return;
                 }
                 
                 if (amount > position.amount) {
-                    alert('Количество для продажи превышает имеющееся');
+                    alert('Sell amount exceeds available amount');
                     return;
                 }
                 
@@ -2205,7 +2205,7 @@
                 this.showBurgerMenu = false;
                 
                 // Заглушка для будущей функциональности заметок
-                alert('Функция заметок будет доступна в следующем обновлении!');
+                alert('Notes feature will be available in the next update!');
                 
                 // Действие при будущей реализации:
                 // this.showNotesModal = !this.showNotesModal;
@@ -2220,7 +2220,7 @@
                 this.showBurgerMenu = false;
                 
                 // Заглушка для будущей функциональности новостей
-                alert('Функция новостей будет доступна в следующем обновлении!');
+                alert('News feature will be available in the next update!');
                 
                 // Действие при будущей реализации:
                 // this.showNewsModal = !this.showNewsModal;
@@ -2236,7 +2236,7 @@
                 this.showBurgerMenu = false;
                 
                 // Заглушка для будущей функциональности смены темы
-                alert('Функция смены темы будет доступна в следующем обновлении!');
+                alert('Theme toggle feature will be available in the next update!');
                 
                 // Действие при будущей реализации:
                 // this.isDarkTheme = !this.isDarkTheme;
