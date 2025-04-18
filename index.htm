@@ -499,7 +499,6 @@
             </div>
           </div>
           
-          <!-- Добавляем модальное окно для отображения новостной ленты -->
           <div v-if="showNewsScreen" class="news-screen-overlay">
             <div class="news-screen-content">
               <div class="flex justify-between items-center mb-4">
@@ -529,7 +528,16 @@
               </div>
               
               <div v-if="newsItems.length > 0" class="flex justify-center mt-4 mb-4">
-                <button @click="loadMoreNews" class="load-more-news-button">Load More</button>
+                <button @click="loadMoreNews" class="load-more-news-button" :disabled="newsLoading">
+                  <span v-if="!newsLoading">Load More</span>
+                  <span v-else class="flex items-center justify-center">
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading...
+                  </span>
+                </button>
               </div>
             </div>
           </div>
@@ -880,6 +888,7 @@
                 showNewsScreen: false,
                 newsItems: [],
                 newsPage: 1,
+                newsLoading: false,
             }
         },
         methods: {
@@ -1071,7 +1080,7 @@
                 setTimeout(async () => { await this.prepareOrderBook() }, 500);
             },
             toggleOrderBookModal() {
-                // Закрываем новостную ленту, если она открыта
+
                 if (this.showNewsScreen) {
                     this.showNewsScreen = false;
                 }
@@ -1115,7 +1124,7 @@
                 }
             },
             openShareModal() {
-                // Закрываем новостную ленту, если она открыта
+
                 if (this.showNewsScreen) {
                     this.showNewsScreen = false;
                 }
@@ -1229,7 +1238,7 @@
                 }
             },
             toggleCalculator() {
-                // Закрываем новостную ленту, если она открыта
+
                 if (this.showNewsScreen) {
                     this.showNewsScreen = false;
                 }
@@ -1290,7 +1299,7 @@
                 }
             },
             togglePortfolio() {
-                // Закрываем новостную ленту, если она открыта
+
                 if (this.showNewsScreen) {
                     this.showNewsScreen = false;
                 }
@@ -1575,12 +1584,11 @@
             },
 
             toggleChartScreen() {
-                // Закрываем новостную ленту, если она открыта
+
                 if (this.showNewsScreen) {
                     this.showNewsScreen = false;
                 }
                 
-                // Существующая логика переключения chart screen
                 this.showChartScreen = !this.showChartScreen;
                 if (this.showChartScreen) {
                     this.closeAllModals();
@@ -1683,75 +1691,79 @@
                 this.showShareModal = false;
                 this.showCalculator = false;
                 this.showPortfolio = false;
-                this.showNewsScreen = false; // Добавляем закрытие новостной ленты
+                this.showNewsScreen = false; 
                 document.body.style.overflow = 'auto';
             },
             formatDisplayPrice(ticker) {
-                // Для USDT пар показываем только 4 цифры после запятой
+
                 if (ticker.symbol.endsWith('USDT')) {
                     return parseFloat(ticker.close).toFixed(4);
                 }
-                // Для остальных пар показываем полное значение
+
                 return ticker.close;
             },
             toggleNewsScreen() {
                 this.showNewsScreen = !this.showNewsScreen;
                 
-                if (this.showNewsScreen && this.newsItems.length === 0) {
-                    this.loadNews();
+                if (this.showNewsScreen) {
+                    if (this.newsItems.length === 0) {
+
+                        this.newsPage = 1;
+                        this.loadNews();
+                    }
                 }
             },
             
             async loadNews() {
                 try {
-                    // Используем параметр toTs для загрузки более старых новостей
-                    let toTs = '';
+                    console.log(`Loading ${this.newsPage}`);
                     
-                    // Если страница больше 1, вычисляем временную метку для загрузки предыдущих дней
-                    if (this.newsPage > 1) {
-                        // Каждая страница смещает на ~20 новостей, которые примерно равны 1 дню
-                        // Получаем текущую временную метку минус (newsPage-1) дней
-                        const date = new Date();
-                        date.setDate(date.getDate() - (this.newsPage - 1));
-                        toTs = Math.floor(date.getTime() / 1000); // Unix timestamp в секундах
+                    let apiUrl = `https://min-api.cryptocompare.com/data/v2/news/?lang=EN&sortOrder=latest`;
+                    
+                    apiUrl += "&limit=20";
+                    
+                    if (this.newsPage > 1 && this.newsItems.length > 0) {
+
+                        const lastNewsTimestamp = this.newsItems[this.newsItems.length - 1].published_on;
+                        apiUrl += `&lTs=${lastNewsTimestamp}`;
                     }
                     
-                    // Добавляем toTs в запрос API, если он определен
-                    let apiUrl = `https://min-api.cryptocompare.com/data/v2/news/?lang=EN&page=1`;
-                    if (toTs) {
-                        apiUrl += `&toTs=${toTs}`;
-                    }
+                    console.log(`API URL: ${apiUrl}`);
                     
                     const response = await fetch(apiUrl);
                     const data = await response.json();
                     
                     if (data.Data && Array.isArray(data.Data)) {
-                        // Отладка - выводим все свойства первой новости
-                        if (data.Data.length > 0) {
-                            console.log('Новости страницы ' + this.newsPage + ':', data.Data.length);
-                            // Выводим диапазон дат
-                            if (data.Data.length > 0) {
-                                const firstDate = new Date(data.Data[0].published_on * 1000);
-                                const lastDate = new Date(data.Data[data.Data.length-1].published_on * 1000);
-                                console.log('Диапазон дат:', firstDate.toLocaleDateString(), '-', lastDate.toLocaleDateString());
-                            }
-                        }
+                        console.log(`Получено новостей: ${data.Data.length}`);
                         
-                        // Для первой загрузки заменяем массив, для подгрузки добавляем к существующему
-                        if (this.newsPage === 1) {
-                            this.newsItems = data.Data;
-                        } else {
+                        if (data.Data.length > 0) {
+
+                            const firstDate = new Date(data.Data[0].published_on * 1000);
+                            const lastDate = new Date(data.Data[data.Data.length-1].published_on * 1000);
+                            console.log(`Диапазон дат: ${firstDate.toLocaleDateString()} - ${lastDate.toLocaleDateString()}`);
+                            
                             this.newsItems = [...this.newsItems, ...data.Data];
+                        } else {
+                            console.log("No more News");
                         }
+                    } else {
+                        console.log("-");
                     }
                 } catch (error) {
-                    console.error('Error loading news:', error);
+                    console.error('Error:', error);
                 }
             },
             
             loadMoreNews() {
+
+                if (this.newsLoading) return;
+                
+                this.newsLoading = true;
                 this.newsPage++;
-                this.loadNews();
+                
+                this.loadNews().finally(() => {
+                    this.newsLoading = false;
+                });
             },
             
             formatNewsDate(timestamp) {
@@ -1760,22 +1772,19 @@
                 try {
                     let date;
                     
-                    // Если это число или строка с числом (timestamp)
                     if (!isNaN(timestamp) && !isNaN(parseFloat(timestamp))) {
-                        // Преобразуем в число и умножаем на 1000, если это секунды
+
                         const ts = Number(timestamp);
                         date = new Date(ts < 10000000000 ? ts * 1000 : ts);
                     } else {
-                        // Иначе пробуем разобрать как строку с датой
+
                         date = new Date(timestamp);
                     }
                     
-                    // Проверяем валидность даты
                     if (isNaN(date.getTime())) {
-                        return "Дата не указана";
+                        return "-";
                     }
                     
-                    // Форматируем только день и месяц
                     return date.getDate() + '/' + (date.getMonth() + 1);
                     
                 } catch (error) {
@@ -2426,7 +2435,7 @@
         top: 0;
         left: 0;
         right: 0;
-        bottom: 60px; /* Оставляем место для нижней панели навигации */
+        bottom: 60px; 
         background-color: var(--color-primary-black, #191b20);
         z-index: 100;
         overflow-y: auto;
@@ -2434,7 +2443,7 @@
     
     .news-screen-content {
         padding: 20px;
-        padding-bottom: 80px; /* Дополнительный отступ внизу для кнопки Load More */
+        padding-bottom: 80px; 
     }
     
     .news-item {
@@ -2499,6 +2508,13 @@
 
     .load-more-news-button:active {
         transform: translateY(1px);
+    }
+
+    .load-more-news-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
     }
 </style>
 </body>
