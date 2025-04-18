@@ -1704,18 +1704,37 @@
             
             async loadNews() {
                 try {
-                    // Используем CryptoCompare API для получения новостей
-                    const response = await fetch(`https://min-api.cryptocompare.com/data/v2/news/?lang=EN&page=${this.newsPage}`);
+                    // Используем параметр toTs для загрузки более старых новостей
+                    let toTs = '';
+                    
+                    // Если страница больше 1, вычисляем временную метку для загрузки предыдущих дней
+                    if (this.newsPage > 1) {
+                        // Каждая страница смещает на ~20 новостей, которые примерно равны 1 дню
+                        // Получаем текущую временную метку минус (newsPage-1) дней
+                        const date = new Date();
+                        date.setDate(date.getDate() - (this.newsPage - 1));
+                        toTs = Math.floor(date.getTime() / 1000); // Unix timestamp в секундах
+                    }
+                    
+                    // Добавляем toTs в запрос API, если он определен
+                    let apiUrl = `https://min-api.cryptocompare.com/data/v2/news/?lang=EN&page=1`;
+                    if (toTs) {
+                        apiUrl += `&toTs=${toTs}`;
+                    }
+                    
+                    const response = await fetch(apiUrl);
                     const data = await response.json();
                     
                     if (data.Data && Array.isArray(data.Data)) {
                         // Отладка - выводим все свойства первой новости
                         if (data.Data.length > 0) {
-                            console.log('Полная новость:', data.Data[0]);
-                            // Выводим все ключи объекта новости
-                            console.log('Ключи новости:', Object.keys(data.Data[0]));
-                            // Проверка поля published_on
-                            console.log('published_on:', data.Data[0].published_on);
+                            console.log('Новости страницы ' + this.newsPage + ':', data.Data.length);
+                            // Выводим диапазон дат
+                            if (data.Data.length > 0) {
+                                const firstDate = new Date(data.Data[0].published_on * 1000);
+                                const lastDate = new Date(data.Data[data.Data.length-1].published_on * 1000);
+                                console.log('Диапазон дат:', firstDate.toLocaleDateString(), '-', lastDate.toLocaleDateString());
+                            }
                         }
                         
                         // Для первой загрузки заменяем массив, для подгрузки добавляем к существующему
