@@ -77,9 +77,9 @@
                 </div>
                 <div class="mb-1">
                     <ul class="flex gap-2 justify-between h-8 flex-wrap"> 
-                        <li @click="filterAsset('USDT')" :class="[asset === 'USDT' ? 'active' : '']" class="cb2 flex flex-grow items-center justify-center cursor-pointer">USDT</li>
-                        <li @click="filterAsset('BTC')" :class="[asset === 'BTC' ? 'active' : '']" class="cb2 flex flex-grow items-center justify-center cursor-pointer">BTC</li>
-                        <li @click="filterAsset('FAV')" :class="[asset === 'FAV' ? 'active' : '']" class="cb2 flex flex-grow items-center justify-center cursor-pointer">
+                        <li @click="filterAsset('USDT')" :class="[asset === 'USDT' ? 'active filter-button' : 'filter-button']" class="cb2 relative overflow-hidden flex flex-grow items-center justify-center cursor-pointer">USDT</li>
+                        <li @click="filterAsset('BTC')" :class="[asset === 'BTC' ? 'active filter-button' : 'filter-button']" class="cb2 relative overflow-hidden flex flex-grow items-center justify-center cursor-pointer">BTC</li>
+                        <li @click="filterAsset('FAV')" :class="[asset === 'FAV' ? 'active filter-button' : 'filter-button']" class="cb2 relative overflow-hidden flex flex-grow items-center justify-center cursor-pointer">
                             FAV
                             <span v-if="favorites.length > 0" class="text-[--color-primary-yellow]">★</span> 
                         </li>
@@ -1532,6 +1532,7 @@
                     
                     this.updateModalZIndexes(true);
                 } else {
+
                     document.body.classList.remove('modal-open');
                     
                     this.updateModalZIndexes(false);
@@ -2266,12 +2267,29 @@
     body.modal-open .fixed.bottom-0 {
         pointer-events: auto;
     }
+
+    .filter-button {
+        transition: all 0.3s ease;
+        position: relative;
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 5px rgba(128, 0, 128, 0.6);
+        overflow: hidden;
+    }
+    
+    .filter-button.active {
+        background-color: var(--color-primary-purple);
+        color: white;
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.8);
+    }
 </style>
 </body>
 <script>
+
     document.addEventListener('DOMContentLoaded', function() {
+
         const navButtons = document.querySelectorAll('.nav-button');
         const modalButtons = document.querySelectorAll('.modal-button');
+        const filterButtons = document.querySelectorAll('.filter-button');
         const bubbleIntervals = {};
         
         function createBubble(button) {
@@ -2316,6 +2334,35 @@
             
             button.addEventListener('mouseleave', () => {
                 startBubbleGeneration(button);
+            });
+        });
+        
+        filterButtons.forEach(button => {
+            if (button.classList.contains('active')) {
+                startBubbleGeneration(button);
+            }
+            
+            button.addEventListener('click', () => {
+
+                filterButtons.forEach(btn => {
+                    stopBubbleGeneration(btn);
+                });
+                
+                setTimeout(() => {
+                    if (button.classList.contains('active')) {
+                        startBubbleGeneration(button);
+                    }
+                }, 100);
+            });
+            
+            button.addEventListener('mouseenter', () => {
+                stopBubbleGeneration(button);
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                if (button.classList.contains('active')) {
+                    startBubbleGeneration(button);
+                }
             });
         });
         
