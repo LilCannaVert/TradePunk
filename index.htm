@@ -1519,11 +1519,7 @@
             },
 
             toggleChartScreen() {
-
-                if (!this.showChartScreen) {
-
-                    this.closeAllModals();
-                }
+                this.closeAllModals();
                 
                 this.showChartScreen = !this.showChartScreen;
                 if (this.showChartScreen) {
@@ -1536,7 +1532,7 @@
                     
                     this.updateModalZIndexes(true);
                 } else {
-
+    
                     document.body.classList.remove('modal-open');
                     
                     this.updateModalZIndexes(false);
@@ -2353,4 +2349,3 @@
     });
 </script>
 </html>
-
