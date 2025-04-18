@@ -1712,16 +1712,20 @@
                     this.newsLoading = true;
                     
                     console.log(`Loading news for page ${this.newsPage}`);
+
+
+                    let apiUrl = 'https://min-api.cryptocompare.com/data/v2/news/?lang=EN';
                     
-                    let apiUrl = `https://min-api.cryptocompare.com/data/v2/news/?lang=EN&extraParams=BTCPunkTrade&sortOrder=latest`;
-                    
-                    if (this.newsPage > 1 && this.newsItems.length > 0) {
-                        const oldestNews = [...this.newsItems].sort((a, b) => a.published_on - b.published_on)[0];
-                        
-                        if (oldestNews && oldestNews.published_on) {
-                            apiUrl += `&ts=${oldestNews.published_on - 1}`;
-                            console.log(`Loading news older than: ${new Date(oldestNews.published_on * 1000).toLocaleString()}`);
-                        }
+                    if (this.newsPage === 1) {
+                        apiUrl += '&sortOrder=latest';
+                    } 
+
+                    else if (this.newsItems.length > 0) {
+
+                        const oldestItem = [...this.newsItems].sort((a, b) => a.published_on - b.published_on)[0];
+
+                        apiUrl += `&sortOrder=latest&toTs=${oldestItem.published_on - 1}`;
+                        console.log(`Getting news older than ${new Date(oldestItem.published_on * 1000).toLocaleString()}`);
                     }
                     
                     console.log(`API URL: ${apiUrl}`);
@@ -1730,34 +1734,33 @@
                     const data = await response.json();
                     
                     if (data.Data && Array.isArray(data.Data) && data.Data.length > 0) {
-                        console.log(`Received news items: ${data.Data.length}`);
+                        console.log(`Received ${data.Data.length} news items`);
                         
-                        const firstDate = new Date(data.Data[0].published_on * 1000);
-                        const lastDate = new Date(data.Data[data.Data.length-1].published_on * 1000);
-                        console.log(`Date range: ${firstDate.toLocaleString()} - ${lastDate.toLocaleString()}`);
+                        if (data.Data.length > 0) {
+                            const firstDate = new Date(data.Data[0].published_on * 1000);
+                            const lastDate = new Date(data.Data[data.Data.length-1].published_on * 1000);
+                            console.log(`News date range: ${firstDate.toLocaleString()} - ${lastDate.toLocaleString()}`);
+                        }
                         
                         if (this.newsPage === 1) {
                             this.newsItems = data.Data;
-                        } else {
+                        } 
+
+                        else {
+
                             const existingIds = new Set(this.newsItems.map(item => item.id));
-                            const newItems = data.Data.filter(item => !existingIds.has(item.id));
                             
-                            console.log(`New unique news items: ${newItems.length}`);
+                            const newItems = data.Data.filter(item => !existingIds.has(item.id));
+                            console.log(`Found ${newItems.length} new unique articles`);
                             
                             if (newItems.length > 0) {
                                 this.newsItems = [...this.newsItems, ...newItems];
                             } else {
-                                console.log("All received news already loaded, continuing search for older news");
-                                this.newsPage++;
-                                setTimeout(() => {
-                                    this.newsLoading = false;
-                                    this.loadNews();
-                                }, 500);
-                                return;
+                                console.log("No new articles found, may need to look further back");
                             }
                         }
                     } else {
-                        console.log("No news found or end of news reached");
+                        console.log("No news found or end of available news reached");
                     }
                 } catch (error) {
                     console.error('Error loading news:', error);
