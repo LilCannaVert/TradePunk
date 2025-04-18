@@ -351,7 +351,7 @@
                     <button @click="shareMultipleTickers" 
                             :disabled="!selectedTickers.length"
                             :class="[
-                                'bg-[--color-primary-blue] text-white px-4 py-2 rounded',
+                                'modal-button relative overflow-hidden',
                                 !selectedTickers.length ? 'opacity-50 cursor-not-allowed' : ''
                             ]">
                         Share Selected
@@ -455,7 +455,7 @@
 
                         <div class="form-group flex items-end">
                             <button @click="addPortfolioPosition" 
-                                    class="bg-[--color-primary-blue] text-white px-3 py-1 rounded text-sm w-full">
+                                    class="modal-button relative overflow-hidden w-full">
                                 Add Position
                             </button>
                         </div>
@@ -2214,11 +2214,39 @@
         background-color: var(--color-primary-purple);
         border-radius: 3px;
     }
+
+    .modal-button {
+        transition: all 0.3s ease;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    .modal-button:hover {
+        transform: translateY(-2px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .modal-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
 </style>
 </body>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const navButtons = document.querySelectorAll('.nav-button');
+        const modalButtons = document.querySelectorAll('.modal-button');
         const bubbleIntervals = {};
         
         function createBubble(button) {
@@ -2236,17 +2264,18 @@
         }
         
         function startBubbleGeneration(button) {
-            const buttonId = button.textContent.trim();
+            const buttonId = button.textContent.trim() + (Math.random() * 1000).toFixed(0);
             if (!bubbleIntervals[buttonId]) {
+                button.setAttribute('data-bubble-id', buttonId);
                 bubbleIntervals[buttonId] = setInterval(() => createBubble(button), 200);
             }
         }
         
         function stopBubbleGeneration(button) {
-            const buttonId = button.textContent.trim();
-            if (bubbleIntervals[buttonId]) {
+            const buttonId = button.getAttribute('data-bubble-id');
+            if (buttonId && bubbleIntervals[buttonId]) {
                 clearInterval(bubbleIntervals[buttonId]);
-                bubbleIntervals[buttonId] = null;
+                delete bubbleIntervals[buttonId];
                 
                 const bubbles = button.querySelectorAll('.bubble');
                 bubbles.forEach(bubble => bubble.remove());
@@ -2264,6 +2293,42 @@
                 startBubbleGeneration(button);
             });
         });
+        
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList') {
+                    const modalButtons = document.querySelectorAll('.modal-button:not([data-bubble-initialized])');
+                    modalButtons.forEach(button => {
+                        button.setAttribute('data-bubble-initialized', 'true');
+                        startBubbleGeneration(button);
+                        
+                        button.addEventListener('mouseenter', () => {
+                            stopBubbleGeneration(button);
+                        });
+                        
+                        button.addEventListener('mouseleave', () => {
+                            startBubbleGeneration(button);
+                        });
+                    });
+                }
+            });
+        });
+        
+        observer.observe(document.body, { childList: true, subtree: true });
+        
+        document.querySelectorAll('.modal-button').forEach(button => {
+            button.setAttribute('data-bubble-initialized', 'true');
+            startBubbleGeneration(button);
+            
+            button.addEventListener('mouseenter', () => {
+                stopBubbleGeneration(button);
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                startBubbleGeneration(button);
+            });
+        });
     });
 </script>
 </html>
+
