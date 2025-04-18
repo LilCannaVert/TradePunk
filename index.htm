@@ -814,6 +814,88 @@
                   {{ addressError }}
                 </div>
               </div>
+
+              <!-- Transaction Lookup -->
+              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Transaction Lookup</h3>
+                <div class="flex">
+                  <input 
+                    v-model="txIdInput" 
+                    type="text" 
+                    placeholder="Enter Transaction ID (TXID)" 
+                    class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                  />
+                  <button 
+                    @click="lookupBtcTransaction" 
+                    class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
+                    :disabled="txLoading"
+                  >
+                    <span v-if="!txLoading">Lookup</span>
+                    <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </button>
+                </div>
+                
+                <!-- Transaction Details -->
+                <div v-if="txData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="text-sm text-[--color-primary-silver]">Transaction ID:</div>
+                    <div class="text-sm font-mono text-white truncate">{{ txData.txid }}</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Status:</div>
+                    <div class="text-sm font-mono text-white">
+                      <span v-if="txData.status && txData.status.confirmed" class="text-[--color-primary-green]">Confirmed</span>
+                      <span v-else class="text-[--color-primary--500]">Unconfirmed</span>
+                    </div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Block Height:</div>
+                    <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_height ? txData.status.block_height : 'Pending' }}</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Size:</div>
+                    <div class="text-sm font-mono text-white">{{ txData.size }} bytes</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Weight:</div>
+                    <div class="text-sm font-mono text-white">{{ txData.weight }} WU</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Fee:</div>
+                    <div class="text-sm font-mono text-white">{{ formatBtc(txData.fee) }} BTC</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Time:</div>
+                    <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_time ? new Date(txData.status.block_time * 1000).toLocaleString() : 'Pending' }}</div>
+                  </div>
+                  
+                  <div class="mt-3">
+                    <div class="text-sm text-[--color-primary-silver] mb-1">Inputs:</div>
+                    <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
+                      <div v-for="(vin, index) in txData.vin.slice(0, 3)" :key="index" class="mb-1">
+                        <span class="text-[--color-primary-green]">{{ formatBtc(vin.prevout ? vin.prevout.value : 0) }} BTC</span> 
+                        <span class="text-[--color-primary-silver]">from</span> 
+                        <span class="text-white truncate">{{ vin.prevout ? vin.prevout.scriptpubkey_address : 'Unknown' }}</span>
+                      </div>
+                      <div v-if="txData.vin.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vin.length - 3 }} more inputs</div>
+                    </div>
+                  </div>
+                  
+                  <div class="mt-3">
+                    <div class="text-sm text-[--color-primary-silver] mb-1">Outputs:</div>
+                    <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
+                      <div v-for="(vout, index) in txData.vout.slice(0, 3)" :key="index" class="mb-1">
+                        <span class="text-[--color-primary--500]">{{ formatBtc(vout.value) }} BTC</span> 
+                        <span class="text-[--color-primary-silver]">to</span> 
+                        <span class="text-white truncate">{{ vout.scriptpubkey_address || 'Unknown' }}</span>
+                      </div>
+                      <div v-if="txData.vout.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vout.length - 3 }} more outputs</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Transaction Lookup Error -->
+                <div v-if="txError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
+                  {{ txError }}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1336,6 +1418,10 @@
                 addressData: null,
                 addressLoading: false,
                 addressError: null,
+                txIdInput: '',
+                txLoading: false,
+                txData: null,
+                txError: null,
             }
         },
         methods: {
@@ -2349,18 +2435,30 @@
                 try {
                     // Fetch difficulty adjustment
                     const difficultyResponse = await fetch('https://mempool.space/api/v1/difficulty-adjustment');
+                    if (!difficultyResponse.ok) {
+                        throw new Error(`HTTP error! status: ${difficultyResponse.status}`);
+                    }
                     const difficultyData = await difficultyResponse.json();
                     this.mempoolData.difficultyAdjustment = difficultyData;
+                    console.log('Difficulty data loaded:', difficultyData);
                     
                     // Fetch prices
                     const pricesResponse = await fetch('https://mempool.space/api/v1/prices');
+                    if (!pricesResponse.ok) {
+                        throw new Error(`HTTP error! status: ${pricesResponse.status}`);
+                    }
                     const pricesData = await pricesResponse.json();
                     this.mempoolData.prices = pricesData;
+                    console.log('Prices data loaded:', pricesData);
                     
                     // Fetch blocks
                     const blocksResponse = await fetch('https://mempool.space/api/v1/blocks');
+                    if (!blocksResponse.ok) {
+                        throw new Error(`HTTP error! status: ${blocksResponse.status}`);
+                    }
                     const blocksData = await blocksResponse.json();
                     this.mempoolData.blocks = blocksData.slice(0, 5); // Get only the 5 latest blocks
+                    console.log('Blocks data loaded:', blocksData.slice(0, 5));
                     
                     // Fetch mining pools
                     await this.fetchMiningPools();
@@ -2374,13 +2472,24 @@
             async fetchMiningPools() {
                 try {
                     const poolsResponse = await fetch(`https://mempool.space/api/v1/mining/pools/${this.miningPoolsPeriod}`);
+                    if (!poolsResponse.ok) {
+                        throw new Error(`HTTP error! status: ${poolsResponse.status}`);
+                    }
                     const poolsData = await poolsResponse.json();
-                    this.mempoolData.miningPools = poolsData
-                        .sort((a, b) => b.blockCount - a.blockCount) // Sort by block count descending
-                        .map(pool => ({
-                            ...pool,
-                            share: pool.blockCount / poolsData.reduce((sum, p) => sum + p.blockCount, 0)
-                        }));
+                    
+                    // Проверка, является ли ответ массивом
+                    if (Array.isArray(poolsData)) {
+                        this.mempoolData.miningPools = poolsData
+                            .sort((a, b) => b.blockCount - a.blockCount) // Sort by block count descending
+                            .map(pool => ({
+                                ...pool,
+                                share: pool.blockCount / poolsData.reduce((sum, p) => sum + p.blockCount, 0)
+                            }));
+                        console.log('Mining pools data loaded:', this.mempoolData.miningPools.slice(0, 3)); // Log first 3 for debugging
+                    } else {
+                        console.error('Mining pools data is not an array:', poolsData);
+                        this.mempoolData.miningPools = [];
+                    }
                 } catch (error) {
                     console.error('Error fetching mining pools:', error);
                     this.mempoolData.miningPools = [];
@@ -2426,22 +2535,16 @@
                 this.addressData = null;
                 
                 try {
-                    // Validate address
-                    const validationResponse = await fetch(`https://mempool.space/api/v1/validate-address/${this.btcAddressInput}`);
-                    const validationData = await validationResponse.json();
-                    
-                    if (!validationData.isvalid) {
-                        this.addressError = 'Invalid Bitcoin address';
-                        return;
-                    }
-                    
                     // Fetch address data
-                    const addressResponse = await fetch(`https://mempool.space/api/address/${this.btcAddressInput}`);
+                    const addressResponse = await fetch(`https://mempool.space/api/address/${this.btcAddressInput.trim()}`);
+                    console.log('Address lookup response status:', addressResponse.status);
+                    
                     if (!addressResponse.ok) {
                         throw new Error(`HTTP error! status: ${addressResponse.status}`);
                     }
                     
                     const addressData = await addressResponse.json();
+                    console.log('Address data loaded:', addressData);
                     this.addressData = addressData;
                 } catch (error) {
                     console.error('Error looking up address:', error);
@@ -2485,6 +2588,35 @@
             getDifficultyClass(value) {
                 if (value === undefined || value === null) return '';
                 return value > 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]';
+            },
+            async lookupBtcTransaction() {
+                if (!this.txIdInput || this.txIdInput.trim() === '') {
+                    this.txError = 'Please enter a Transaction ID';
+                    return;
+                }
+                
+                this.txLoading = true;
+                this.txError = null;
+                this.txData = null;
+                
+                try {
+                    // Fetch transaction data
+                    const txResponse = await fetch(`https://mempool.space/api/tx/${this.txIdInput.trim()}`);
+                    console.log('Transaction lookup response status:', txResponse.status);
+                    
+                    if (!txResponse.ok) {
+                        throw new Error(`HTTP error! status: ${txResponse.status}`);
+                    }
+                    
+                    const txData = await txResponse.json();
+                    console.log('Transaction data loaded:', txData);
+                    this.txData = txData;
+                } catch (error) {
+                    console.error('Error looking up transaction:', error);
+                    this.txError = 'Error looking up transaction: ' + error.message;
+                } finally {
+                    this.txLoading = false;
+                }
             },
         },
         mounted() {
