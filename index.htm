@@ -14,9 +14,14 @@
         <div class="relative p-2">
           <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
             <div class="flex items-center">
-
             </div>
             
+            <div class="absolute top-0 right-0">
+              <button @click="toggleNewsScreen" class="news-button">
+                News
+              </button>
+            </div>
+
             <Transition>
               <div v-if="!tickers[ticker]" class="flex flex-grow justify-center absolute w-full">
                 <span class="animate-pulse">
@@ -493,6 +498,39 @@
                 </div>
             </div>
           </div>
+          
+          <!-- Добавляем модальное окно для отображения новостной ленты -->
+          <div v-if="showNewsScreen" class="news-screen-overlay">
+            <div class="news-screen-content">
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-[--color-primary-silver]">Crypto News</h2>
+                <button @click="toggleNewsScreen" class="bg-red-500 text-white px-3 py-1 rounded">Close</button>
+              </div>
+              
+              <div v-if="newsItems.length === 0" class="flex justify-center items-center h-[200px]">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="var(--color-primary-yellow)" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading news...</span>
+              </div>
+              
+              <div v-else>
+                <div v-for="(item, index) in newsItems" :key="index" class="news-item">
+                  <div class="news-item-title">{{ item.title }}</div>
+                  <div class="news-item-source">{{ item.source }} • {{ formatNewsDate(item.published_at) }}</div>
+                  <div class="news-item-content">{{ item.summary }}</div>
+                  <a :href="item.url" target="_blank" class="news-item-link">Read more</a>
+                </div>
+              </div>
+              
+              <div v-if="newsItems.length > 0" class="flex justify-center mt-4 mb-4">
+                <button @click="loadMoreNews" class="bg-[--color-primary-blue] text-white px-4 py-2 rounded">
+                  Load More
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
@@ -837,6 +875,9 @@
                 chartModalInstance: null,
                 showChartScreen: false,
                 fullscreenChartInstance: null,
+                showNewsScreen: false,
+                newsItems: [],
+                newsPage: 1,
             }
         },
         methods: {
@@ -1641,6 +1682,42 @@
                 // Для остальных пар показываем полное значение
                 return ticker.close;
             },
+            toggleNewsScreen() {
+                this.showNewsScreen = !this.showNewsScreen;
+                
+                if (this.showNewsScreen && this.newsItems.length === 0) {
+                    this.loadNews();
+                }
+            },
+            
+            async loadNews() {
+                try {
+                    // Используем CryptoCompare API для получения новостей
+                    const response = await fetch(`https://min-api.cryptocompare.com/data/v2/news/?lang=EN&page=${this.newsPage}`);
+                    const data = await response.json();
+                    
+                    if (data.Data && Array.isArray(data.Data)) {
+                        // Для первой загрузки заменяем массив, для подгрузки добавляем к существующему
+                        if (this.newsPage === 1) {
+                            this.newsItems = data.Data;
+                        } else {
+                            this.newsItems = [...this.newsItems, ...data.Data];
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading news:', error);
+                }
+            },
+            
+            loadMoreNews() {
+                this.newsPage++;
+                this.loadNews();
+            },
+            
+            formatNewsDate(timestamp) {
+                const date = new Date(timestamp * 1000);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            },
         },
         mounted() {
             this.sockInit();
@@ -2265,6 +2342,63 @@
     
     body.modal-open .fixed.bottom-0 {
         pointer-events: auto;
+    }
+
+    .news-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background-color: var(--color-primary-blue, #1e88e5);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .news-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--color-primary-black, #191b20);
+        z-index: 100;
+        overflow-y: auto;
+        padding-bottom: 60px;
+    }
+    
+    .news-screen-content {
+        padding: 20px;
+        height: calc(100% - 60px);
+    }
+    
+    .news-item {
+        background-color: var(--color-bg--300, #262932);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .news-item-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .news-item-source {
+        font-size: 0.8rem;
+        color: var(--color-primary-silver, #a0a0a0);
+        margin-bottom: 8px;
+    }
+    
+    .news-item-content {
+        margin-bottom: 10px;
+    }
+    
+    .news-item-link {
+        color: var(--color-primary-yellow, #eab308);
+        text-decoration: underline;
     }
 </style>
 </body>
