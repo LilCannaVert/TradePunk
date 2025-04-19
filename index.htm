@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;200;300;400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Loading screen styles -->
     <style id="loadingScreenStyles">
     #loadingScreen {
         position: fixed;
@@ -30,41 +29,10 @@
         display: block;
         filter: contrast(1.2) brightness(1.1);
     }
-    
-    /* Стили для кнопок в верхнем углу экрана */
-    .top-corner-button {
-        padding: 8px 15px;
-        border-radius: 6px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.2s ease-in-out;
-        display: inline-block;
-        text-align: center;
-        border: 2px solid rgba(128, 0, 128, 0.6);
-        z-index: 100;
-        position: relative;
-        font-size: 14px;
-        margin-top: 10px;
-        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
-        background: var(--color-primary-purple);
-        color: white;
-        text-shadow: var(--ui-glow-text);
-    }
-    .left-button {
-        margin-left: 10px;
-    }
-    .right-button {
-        margin-right: 10px;
-    }
-    .top-corner-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0 15px rgba(128, 0, 128, 0.9);
-        background-color: rgba(150, 0, 150, 0.9);
-    }
     </style>
 </head>
 <body>
-    <!-- Loading screen -->
+
     <div id="loadingScreen">
         <canvas id="matrixCanvas"></canvas>
     </div>
@@ -72,16 +40,18 @@
     <div id="app">
         <div class="relative p-2">
           <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
-            <div class="flex items-center absolute left-0 top-0 z-50">
-              <button @click="toggleMempoolModal" class="top-corner-button left-button">
-                Mempool
-              </button>
+            <div class="flex items-center">
             </div>
             
-            <div class="absolute top-0 right-0 z-50">
-              <button @click="toggleNewsScreen" class="top-corner-button right-button">
-                News
-              </button>
+            <div class="absolute top-0 right-0">
+              <div class="flex space-x-2">
+                <button @click="toggleMempoolScreen" class="news-button bg-[--color-primary-purple]">
+                  Mempool
+                </button>
+                <button @click="toggleNewsScreen" class="news-button">
+                  News
+                </button>
+              </div>
             </div>
 
             <Transition>
@@ -223,8 +193,7 @@
                   </div>
                 </div>
               </div>
-
-              
+    
               <div v-if="showOrderBookModal" 
                    id="orderBookModal" 
                    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
@@ -603,318 +572,121 @@
               </div>
             </div>
           </div>
+          
+          <div v-if="showMempoolScreen" class="mempool-screen-overlay">
+            <div class="mempool-screen-content">
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-[--color-primary-silver]">Bitcoin Mempool</h2>
+                <button @click="toggleMempoolScreen" class="bg-red-500 text-white px-3 py-1 rounded">Close</button>
+              </div>
+              
+              <div v-if="mempoolLoading" class="flex justify-center items-center h-[200px]">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="var(--color-primary-yellow)" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Загрузка данных...</span>
+              </div>
+              
+              <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Difficulty Adjustment -->
+                <div class="bg-[--color-bg--500] rounded-lg p-4">
+                  <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Корректировка сложности</h3>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="text-sm text-[--color-primary-silver]">Текущая сложность:</div>
+                    <div class="text-sm font-mono text-white">{{ mempoolData.difficultyAdjustment?.current_difficulty?.toLocaleString() || 'Нет данных' }}</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Примерное изменение:</div>
+                    <div class="text-sm font-mono" :class="getDifficultyClass(mempoolData.difficultyAdjustment?.estimated_adjustment)">
+                      {{ formatPercentage(mempoolData.difficultyAdjustment?.estimated_adjustment) }}
+                    </div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Следующий пересчет:</div>
+                    <div class="text-sm font-mono text-white">{{ formatTimeAgo(mempoolData.difficultyAdjustment?.next_retarget) }}</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Прогресс:</div>
+                    <div class="text-sm font-mono text-white">{{ mempoolData.difficultyAdjustment?.progressPercent?.toFixed(2) || '0.00' }}%</div>
+                  </div>
+                </div>
+                
+                <!-- Bitcoin Price -->
+                <div class="bg-[--color-bg--500] rounded-lg p-4">
+                  <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Цена Bitcoin</h3>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="text-sm text-[--color-primary-silver]">USD:</div>
+                    <div class="text-sm font-mono text-white">${{ mempoolData.prices?.USD?.toLocaleString() || 'Нет данных' }}</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">EUR:</div>
+                    <div class="text-sm font-mono text-white">€{{ mempoolData.prices?.EUR?.toLocaleString() || 'Нет данных' }}</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">GBP:</div>
+                    <div class="text-sm font-mono text-white">£{{ mempoolData.prices?.GBP?.toLocaleString() || 'Нет данных' }}</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">CAD:</div>
+                    <div class="text-sm font-mono text-white">C${{ mempoolData.prices?.CAD?.toLocaleString() || 'Нет данных' }}</div>
+                  </div>
+                </div>
+                
+                <!-- Network Stats -->
+                <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                  <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Статистика сети</h3>
+                  <div class="grid grid-cols-2 gap-4">
+                    <!-- Hashrate Card -->
+                    <div class="bg-[--color-bg--300] p-3 rounded">
+                      <div class="text-sm text-[--color-primary-silver] mb-1">Хешрейт (усреднённый за неделю)</div>
+                      <div class="flex items-end gap-2">
+                        <div class="text-3xl font-bold text-[--color-primary-green]">{{ formatHashrate(mempoolData.networkHashrate) }}</div>
+                      </div>
+                      <div class="text-xs text-[--color-primary-silver] mt-1">Вычислительная мощность сети</div>
+                    </div>
+                    
+                    <!-- Difficulty Card -->
+                    <div class="bg-[--color-bg--300] p-3 rounded">
+                      <div class="text-sm text-[--color-primary-silver] mb-1">Текущая сложность</div>
+                      <div class="flex items-end gap-2">
+                        <div class="text-3xl font-bold text-[--color-primary-purple]">{{ formatDifficulty(mempoolData.difficultyAdjustment?.current_difficulty) }}</div>
+                      </div>
+                      <div class="text-xs text-[--color-primary-silver] mt-1">Корректируется каждые 2016 блоков</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="mt-4 text-center text-xs text-gray-500">
+                Данные предоставлены <a href="https://mempool.space" target="_blank" class="text-orange-500 hover:underline">mempool.space</a>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
           <div class="container mx-auto flex justify-center">
-            <button v-if="!showChartScreen" @click="closeAllModals(); toggleChartScreen()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button v-if="!showChartScreen" @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Chart
             </button>
-            <button v-else @click="closeAllModals(); toggleChartScreen()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button v-else @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Tickers
             </button>
-            <button @click="closeAllModals(); toggleOrderBookModal()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button @click="toggleOrderBookModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Order Book
             </button>
-            <button @click="closeAllModals(); openShareModal()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button @click="openShareModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Share
             </button>
-            <button @click="closeAllModals(); toggleCalculator()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button @click="toggleCalculator" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Calculator
             </button>
-            <button @click="closeAllModals(); togglePortfolio()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+            <button @click="togglePortfolio" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
               Portfolio
             </button>
-          </div>
-        </div>
-
-        <div v-if="showMempoolModal" 
-             id="mempoolModal" 
-             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div class="bg-[--color-bg--300] rounded-lg p-4 max-h-[80vh] overflow-y-auto" style="width: 90%; max-width: 600px;" @click.stop>
-            <div class="flex justify-between items-center">
-              <h2 class="text-lg font-bold text-[--color-primary-silver]">Bitcoin Mempool</h2>
-              <button @click="toggleMempoolModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
-            </div>
-            
-            <!-- Loading indicator -->
-            <div v-if="mempoolLoading" class="flex justify-center items-center p-10">
-              <svg class="animate-spin h-10 w-10 text-[--color-primary-yellow]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </div>
-            
-            <!-- Mempool content -->
-            <div v-else class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Difficulty Adjustment -->
-              <div class="bg-[--color-bg--500] rounded-lg p-4">
-                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Difficulty Adjustment</h3>
-                <div class="grid grid-cols-2 gap-2">
-                  <div class="text-sm text-[--color-primary-silver]">Current Difficulty:</div>
-                  <div class="text-sm font-mono text-white">{{ mempoolData.difficultyAdjustment?.current_difficulty?.toLocaleString() || 'N/A' }}</div>
-                  
-                  <div class="text-sm text-[--color-primary-silver]">Estimated Adjustment:</div>
-                  <div class="text-sm font-mono" :class="getDifficultyClass(mempoolData.difficultyAdjustment?.estimated_adjustment)">
-                    {{ formatPercentage(mempoolData.difficultyAdjustment?.estimated_adjustment) }}
-                  </div>
-                  
-                  <div class="text-sm text-[--color-primary-silver]">Previous Retarget:</div>
-                  <div class="text-sm font-mono text-white">{{ formatTimeAgo(mempoolData.difficultyAdjustment?.previous_retarget) }}</div>
-                  
-                  <div class="text-sm text-[--color-primary-silver]">Next Retarget:</div>
-                  <div class="text-sm font-mono text-white">{{ formatTimeAgo(mempoolData.difficultyAdjustment?.next_retarget) }}</div>
-                  
-                  <div class="text-sm text-[--color-primary-silver]">Progress:</div>
-                  <div class="text-sm font-mono text-white">{{ mempoolData.difficultyAdjustment?.progress?.toFixed(2) }}%</div>
-                </div>
-              </div>
-              
-              <!-- Bitcoin Price -->
-              <div class="bg-[--color-bg--500] rounded-lg p-4">
-                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Bitcoin Price</h3>
-                <div class="grid grid-cols-2 gap-2">
-                  <div class="text-sm text-[--color-primary-silver]">USD:</div>
-                  <div class="text-sm font-mono text-white">${{ mempoolData.prices?.USD?.toLocaleString() || 'N/A' }}</div>
-                  
-                  <div class="text-sm text-[--color-primary-silver]">EUR:</div>
-                  <div class="text-sm font-mono text-white">€{{ mempoolData.prices?.EUR?.toLocaleString() || 'N/A' }}</div>
-                  
-                  <div class="text-sm text-[--color-primary-silver]">GBP:</div>
-                  <div class="text-sm font-mono text-white">£{{ mempoolData.prices?.GBP?.toLocaleString() || 'N/A' }}</div>
-                  
-                  <div class="text-sm text-[--color-primary-silver]">CAD:</div>
-                  <div class="text-sm font-mono text-white">C${{ mempoolData.prices?.CAD?.toLocaleString() || 'N/A' }}</div>
-                </div>
-              </div>
-              
-              <!-- Mining Pools -->
-              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
-                <div class="flex justify-between items-center mb-2">
-                  <h3 class="text-md font-bold text-[--color-primary-yellow]">Mining Pools (Last 7 Days)</h3>
-                  <div class="flex items-center gap-2">
-                    <button 
-                      v-for="period in ['24h', '1w', '1m', '3m']" 
-                      :key="period" 
-                      @click="changeMiningPoolsPeriod(period)"
-                      :class="[miningPoolsPeriod === period ? 'bg-[--color-primary-purple]' : 'bg-[--color-bg--300]']"
-                      class="text-xs px-2 py-1 rounded text-white"
-                    >
-                      {{ period }}
-                    </button>
-                  </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                  <table class="w-full">
-                    <thead>
-                      <tr class="text-[--color-primary-silver] text-left">
-                        <th class="px-2 py-1">Pool</th>
-                        <th class="px-2 py-1 text-right">Blocks</th>
-                        <th class="px-2 py-1 text-right">Share %</th>
-                        <th class="px-2 py-1 text-right">Estimated Hashrate</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-if="mempoolData.miningPools.length === 0" class="text-white">
-                        <td colspan="4" class="px-2 py-3 text-center">
-                          <div class="flex justify-center items-center">
-                            <svg class="animate-spin h-5 w-5 mr-2 text-[--color-primary-yellow]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Loading mining pools data...
-                          </div>
-                        </td>
-                      </tr>
-                      <tr 
-                        v-for="(pool, index) in mempoolData.miningPools.slice(0, 10)" 
-                        :key="pool.poolId" 
-                        class="text-white hover:bg-[--color-bg--300]"
-                        :class="{'bg-[--color-bg--300] bg-opacity-50': index % 2 === 0}"
-                      >
-                        <td class="px-2 py-1">
-                          <div class="flex items-center">
-                            <div class="w-3 h-3 rounded-full mr-2" :style="{ backgroundColor: getPoolColor(index) }"></div>
-                            {{ pool.name }}
-                          </div>
-                        </td>
-                        <td class="px-2 py-1 text-right font-mono">{{ pool.blockCount }}</td>
-                        <td class="px-2 py-1 text-right font-mono">{{ (pool.share * 100).toFixed(2) }}%</td>
-                        <td class="px-2 py-1 text-right font-mono">{{ formatHashrate(pool.estimatedHashrate) }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div v-if="mempoolData.miningPools.length > 10" class="text-center text-xs text-[--color-primary-silver] mt-2">
-                    Showing top 10 of {{ mempoolData.miningPools.length }} mining pools
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Latest Blocks -->
-              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
-                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Latest Blocks</h3>
-                <div class="overflow-x-auto">
-                  <table class="w-full">
-                    <thead>
-                      <tr class="text-[--color-primary-silver] text-left">
-                        <th class="px-2 py-1">Height</th>
-                        <th class="px-2 py-1">Hash</th>
-                        <th class="px-2 py-1">Time</th>
-                        <th class="px-2 py-1">Size</th>
-                        <th class="px-2 py-1">Tx Count</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="block in mempoolData.blocks" :key="block.id" class="text-white hover:bg-[--color-bg--300]">
-                        <td class="px-2 py-1 font-mono">{{ block.height }}</td>
-                        <td class="px-2 py-1 font-mono text-xs truncate max-w-[120px]">{{ block.id }}</td>
-                        <td class="px-2 py-1">{{ formatTimeAgo(block.timestamp) }}</td>
-                        <td class="px-2 py-1">{{ formatBytes(block.size) }}</td>
-                        <td class="px-2 py-1">{{ block.tx_count }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
-              <!-- Address Lookup -->
-              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
-                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Bitcoin Address Lookup</h3>
-                <div class="flex">
-                  <input 
-                    v-model="btcAddressInput" 
-                    type="text" 
-                    placeholder="Enter BTC address" 
-                    class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
-                  />
-                  <button 
-                    @click="lookupBtcAddress" 
-                    class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
-                    :disabled="addressLoading"
-                  >
-                    <span v-if="!addressLoading">Lookup</span>
-                    <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  </button>
-                </div>
-                
-                <!-- Address Details -->
-                <div v-if="addressData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
-                  <div class="grid grid-cols-2 gap-2">
-                    <div class="text-sm text-[--color-primary-silver]">Balance:</div>
-                    <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum - addressData.chain_stats?.spent_txo_sum) }} BTC</div>
-                    
-                    <div class="text-sm text-[--color-primary-silver]">Transactions:</div>
-                    <div class="text-sm font-mono text-white">{{ addressData.chain_stats?.tx_count || 0 }}</div>
-                    
-                    <div class="text-sm text-[--color-primary-silver]">Received:</div>
-                    <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum) }} BTC</div>
-                    
-                    <div class="text-sm text-[--color-primary-silver]">Spent:</div>
-                    <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.spent_txo_sum) }} BTC</div>
-                  </div>
-                </div>
-                
-                <!-- Address Lookup Error -->
-                <div v-if="addressError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
-                  {{ addressError }}
-                </div>
-              </div>
-
-              <!-- Transaction Lookup -->
-              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
-                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Transaction Lookup</h3>
-                <div class="flex">
-                  <input 
-                    v-model="txIdInput" 
-                    type="text" 
-                    placeholder="Enter Transaction ID (TXID)" 
-                    class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
-                  />
-                  <button 
-                    @click="lookupBtcTransaction" 
-                    class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
-                    :disabled="txLoading"
-                  >
-                    <span v-if="!txLoading">Lookup</span>
-                    <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  </button>
-                </div>
-                
-                <!-- Transaction Details -->
-                <div v-if="txData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
-                  <div class="grid grid-cols-2 gap-2">
-                    <div class="text-sm text-[--color-primary-silver]">Transaction ID:</div>
-                    <div class="text-sm font-mono text-white truncate">{{ txData.txid }}</div>
-                    
-                    <div class="text-sm text-[--color-primary-silver]">Status:</div>
-                    <div class="text-sm font-mono text-white">
-                      <span v-if="txData.status && txData.status.confirmed" class="text-[--color-primary-green]">Confirmed</span>
-                      <span v-else class="text-[--color-primary--500]">Unconfirmed</span>
-                    </div>
-                    
-                    <div class="text-sm text-[--color-primary-silver]">Block Height:</div>
-                    <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_height ? txData.status.block_height : 'Pending' }}</div>
-                    
-                    <div class="text-sm text-[--color-primary-silver]">Size:</div>
-                    <div class="text-sm font-mono text-white">{{ txData.size }} bytes</div>
-                    
-                    <div class="text-sm text-[--color-primary-silver]">Weight:</div>
-                    <div class="text-sm font-mono text-white">{{ txData.weight }} WU</div>
-                    
-                    <div class="text-sm text-[--color-primary-silver]">Fee:</div>
-                    <div class="text-sm font-mono text-white">{{ formatBtc(txData.fee) }} BTC</div>
-                    
-                    <div class="text-sm text-[--color-primary-silver]">Time:</div>
-                    <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_time ? new Date(txData.status.block_time * 1000).toLocaleString() : 'Pending' }}</div>
-                  </div>
-                  
-                  <div class="mt-3">
-                    <div class="text-sm text-[--color-primary-silver] mb-1">Inputs:</div>
-                    <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
-                      <div v-for="(vin, index) in txData.vin.slice(0, 3)" :key="index" class="mb-1">
-                        <span class="text-[--color-primary-green]">{{ formatBtc(vin.prevout ? vin.prevout.value : 0) }} BTC</span> 
-                        <span class="text-[--color-primary-silver]">from</span> 
-                        <span class="text-white truncate">{{ vin.prevout ? vin.prevout.scriptpubkey_address : 'Unknown' }}</span>
-                      </div>
-                      <div v-if="txData.vin.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vin.length - 3 }} more inputs</div>
-                    </div>
-                  </div>
-                  
-                  <div class="mt-3">
-                    <div class="text-sm text-[--color-primary-silver] mb-1">Outputs:</div>
-                    <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
-                      <div v-for="(vout, index) in txData.vout.slice(0, 3)" :key="index" class="mb-1">
-                        <span class="text-[--color-primary--500]">{{ formatBtc(vout.value) }} BTC</span> 
-                        <span class="text-[--color-primary-silver]">to</span> 
-                        <span class="text-white truncate">{{ vout.scriptpubkey_address || 'Unknown' }}</span>
-                      </div>
-                      <div v-if="txData.vout.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vout.length - 3 }} more outputs</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Transaction Lookup Error -->
-                <div v-if="txError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
-                  {{ txError }}
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
         <div class="pb-40"></div>
     </div>
 
-    <!-- Loading screen script -->
     <script>
-    // Matrix loading animation
+
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
     
@@ -1068,12 +840,10 @@
         drop.y = Math.random() * canvas.height;
     });
     
-    // Start animation
     const animationId = requestAnimationFrame(draw);
     
-    // Hide loading screen when app is loaded
     window.addEventListener('load', function() {
-        // Wait a bit to ensure the UI is rendered
+
         setTimeout(() => {
             const loadingScreen = document.getElementById('loadingScreen');
             if (loadingScreen) {
@@ -1412,25 +1182,9 @@
                 newsItems: [],
                 newsPage: 1,
                 newsLoading: false,
-                
-                // Mempool data
-                showMempoolModal: false,
-                mempoolLoading: false,
-                mempoolData: {
-                    difficultyAdjustment: null,
-                    prices: null,
-                    blocks: [],
-                    miningPools: []
-                },
-                miningPoolsPeriod: '1w',
-                btcAddressInput: '',
-                addressData: null,
-                addressLoading: false,
-                addressError: null,
-                txIdInput: '',
-                txLoading: false,
-                txData: null,
-                txError: null,
+                showMempoolScreen: false,
+                mempoolLoading: true,
+                mempoolData: {}
             }
         },
         methods: {
@@ -1462,14 +1216,13 @@
             sockMessage(e) {
                 let data = JSON.parse(e.data);
                 if (Array.isArray(data)) {
-                    // Log the number of ticker updates received
+
                     console.log(`Received ${data.length} ticker updates`);
                     
-                    // Track how many tickers were updated
                     let updatedCount = 0;
                     
                     data.forEach(ticker => {
-                        // Log a sample of the ticker data
+
                         if (ticker.s === 'BTCUSDT' || ticker.s === 'ETHUSDT') {
                             console.log(`${ticker.s} price: ${ticker.c}`);
                         }
@@ -1516,7 +1269,6 @@
                         }
                     });
                     
-                    // Log total number of tickers updated
                     console.log(`Updated ${updatedCount} tickers`);
 
                     if (Object.keys(this.tickers).length > 0) {
@@ -1637,12 +1389,11 @@
                 setTimeout(async () => { await this.prepareOrderBook() }, 500);
             },
             toggleOrderBookModal() {
-                // If we're opening the modal
+
                 if (!this.showOrderBookModal) {
-                    // Close all modals first
+
                     this.closeAllModals();
                     
-                    // Then open this modal
                     this.showOrderBookModal = true;
                     document.body.classList.add('no-scroll');
                     
@@ -1653,7 +1404,7 @@
                         }, 0);
                     }
                 } else {
-                    // Just close this modal
+
                     this.showOrderBookModal = false;
                     document.body.classList.remove('no-scroll');
                 }
@@ -1680,10 +1431,9 @@
                 }
             },
             openShareModal() {
-                // Always close all modals first
+
                 this.closeAllModals();
                 
-                // Then open share modal
                 this.showShareModal = true;
                 document.body.style.overflow = 'hidden';
                 
@@ -1719,14 +1469,13 @@
             formatTickerPrice(ticker) {
                 let price;
                 if (ticker.symbol.endsWith('USDT')) {
-                    // For USDT pairs, display 4 decimal places
+
                     price = parseFloat(ticker.close).toFixed(4);
                 } else {
-                    // For other pairs (like BTC), display as is
+
                     price = ticker.close;
                 }
                 
-                // Periodically log sample prices to verify they're correctly formatted
                 if (ticker.symbol === 'BTCUSDT' || ticker.symbol === 'ETHUSDT') {
                     console.log(`Formatted price for ${ticker.symbol}: ${price} (original: ${ticker.close})`);
                 }
@@ -1796,12 +1545,11 @@
                 }
             },
             toggleCalculator() {
-                // If we're opening the calculator
+
                 if (!this.showCalculator) {
-                    // Close all modals first
+
                     this.closeAllModals();
                     
-                    // Then open calculator
                     this.showCalculator = true;
                     document.body.style.overflow = 'hidden';
                     
@@ -1812,7 +1560,7 @@
                         }, 0);
                     }
                 } else {
-                    // Just close calculator
+
                     this.showCalculator = false;
                     document.body.style.overflow = 'auto';
                 }
@@ -1856,12 +1604,11 @@
                 }
             },
             togglePortfolio() {
-                // If we're opening the portfolio
+
                 if (!this.showPortfolio) {
-                    // Close all modals first
+
                     this.closeAllModals();
                     
-                    // Then open portfolio
                     this.showPortfolio = true;
                     document.body.style.overflow = 'hidden';
                     
@@ -1872,7 +1619,7 @@
                         }, 0);
                     }
                 } else {
-                    // Just close portfolio
+
                     this.showPortfolio = false;
                     document.body.style.overflow = 'auto';
                 }
@@ -2140,7 +1887,7 @@
             },
 
             toggleChartScreen() {
-                // Close all modals before toggling chart screen
+
                 this.closeAllModals();
                 
                 this.showChartScreen = !this.showChartScreen;
@@ -2239,30 +1986,25 @@
             },
 
             closeAllModals() {
-                // Check if Mempool modal is open, and if so, use its special closing method
-                if (this.showMempoolModal) {
-                    this.closeMempoolModal();
-                }
-                
                 this.showChartModal = false;
                 this.showOrderBookModal = false;
                 this.showShareModal = false;
                 this.showCalculator = false;
                 this.showPortfolio = false;
                 this.showNewsScreen = false;
+                this.showMempoolScreen = false;
                 document.body.style.overflow = 'auto';
             },
             formatDisplayPrice(ticker) {
                 let price;
                 if (ticker.symbol.endsWith('USDT')) {
-                    // For USDT pairs, display 4 decimal places
+
                     price = parseFloat(ticker.close).toFixed(4);
                 } else {
-                    // For other pairs (like BTC), display as is
+
                     price = ticker.close;
                 }
                 
-                // Periodically log sample prices to verify they're correctly formatted
                 if (ticker.symbol === 'BTCUSDT' || ticker.symbol === 'ETHUSDT') {
                     console.log(`Formatted display price for ${ticker.symbol}: ${price} (original: ${ticker.close})`);
                 }
@@ -2270,12 +2012,11 @@
                 return price;
             },
             toggleNewsScreen() {
-                // If we're opening news screen
+
                 if (!this.showNewsScreen) {
-                    // Close all modals first
+
                     this.closeAllModals();
                     
-                    // Then open news screen
                     this.showNewsScreen = true;
                     
                     if (this.newsItems.length === 0) {
@@ -2283,7 +2024,7 @@
                         this.loadNews();
                     }
                 } else {
-                    // Just close news screen
+
                     this.showNewsScreen = false;
                 }
             },
@@ -2295,23 +2036,16 @@
                     
                     console.log(`Loading news for page ${this.newsPage}`);
                     
-                    // Each request gets more news data by date
-                    // For page 1, we get latest news
-                    // For subsequent pages, we use the oldest timestamp as reference
-                    
-                    // Base URL for CryptoCompare news API
                     let apiUrl = 'https://min-api.cryptocompare.com/data/v2/news/?lang=EN';
                     
-                    // For page 1, get the latest news (no timestamp filtering)
                     if (this.newsPage === 1) {
                         apiUrl += '&sortOrder=latest';
                     } 
-                    // For subsequent pages, get news older than the oldest news we already have
+
                     else if (this.newsItems.length > 0) {
-                        // Find the oldest news item by published_on timestamp
+
                         const oldestItem = [...this.newsItems].sort((a, b) => a.published_on - b.published_on)[0];
                         
-                        // Use timestamp parameter to get news older than our oldest item
                         apiUrl += `&sortOrder=latest&toTs=${oldestItem.published_on - 1}`;
                         console.log(`Getting news older than ${new Date(oldestItem.published_on * 1000).toLocaleString()}`);
                     }
@@ -2324,27 +2058,23 @@
                     if (data.Data && Array.isArray(data.Data) && data.Data.length > 0) {
                         console.log(`Received ${data.Data.length} news items`);
                         
-                        // Log the date range of returned news
                         if (data.Data.length > 0) {
                             const firstDate = new Date(data.Data[0].published_on * 1000);
                             const lastDate = new Date(data.Data[data.Data.length-1].published_on * 1000);
                             console.log(`News date range: ${firstDate.toLocaleString()} - ${lastDate.toLocaleString()}`);
                         }
                         
-                        // For the first page, replace the existing news
                         if (this.newsPage === 1) {
                             this.newsItems = data.Data;
                         } 
-                        // For subsequent pages, append the new news if they're not already in our list
+
                         else {
-                            // Create a set of existing IDs to quickly check for duplicates
+
                             const existingIds = new Set(this.newsItems.map(item => item.id));
                             
-                            // Filter out duplicates
                             const newItems = data.Data.filter(item => !existingIds.has(item.id));
                             console.log(`Found ${newItems.length} new unique articles`);
                             
-                            // Add new items to our list
                             if (newItems.length > 0) {
                                 this.newsItems = [...this.newsItems, ...newItems];
                             } else {
@@ -2367,7 +2097,7 @@
             },
             
             formatNewsDate(timestamp) {
-                if (!timestamp) return "No date";
+                if (!timestamp) return "Дата не указана";
                 
                 try {
                     let date;
@@ -2380,253 +2110,48 @@
                     }
                     
                     if (isNaN(date.getTime())) {
-                        return "No date";
+                        return "Дата не указана";
                     }
                     
-                    return date.getDate() + '/' + (date.getMonth() + 1);
+                    // Форматируем дату в ДД.ММ
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    return day + '.' + month;
                     
                 } catch (error) {
-                    return "No date";
+                    return "Дата не указана";
                 }
             },
-            
-            toggleMempoolModal() {
-                // If we're opening the modal
-                if (!this.showMempoolModal) {
-                    // Close all modals first
-                    this.closeAllModals();
-                    
-                    // Then open this modal
-                    this.showMempoolModal = true;
-                    document.body.style.overflow = 'hidden';
-                    
-                    // Fetch mempool data
-                    this.fetchMempoolData();
-                    
-                    if (this.showChartScreen) {
-                        setTimeout(() => {
-                            const mempoolModal = document.getElementById('mempoolModal');
-                            if (mempoolModal) mempoolModal.classList.add('modal-on-chart');
-                        }, 0);
-                    }
-                    
-                    // Add event listener to the navigation buttons to close this modal
-                    const navButtons = document.querySelectorAll('.nav-button');
-                    navButtons.forEach(button => {
-                        button.addEventListener('click', this.closeMempoolOnNavClick);
-                    });
-                } else {
-                    // Just close this modal
-                    this.closeMempoolModal();
-                }
+            getDifficultyClass(estimatedAdjustment) {
+                if (estimatedAdjustment > 0) return 'text-[--color-primary-green]';
+                if (estimatedAdjustment < 0) return 'text-[--color-primary-red]';
+                return 'text-[--color-primary-silver]';
             },
-            
-            closeMempoolModal() {
-                this.showMempoolModal = false;
-                document.body.style.overflow = 'auto';
-                
-                // Remove event listeners
-                const navButtons = document.querySelectorAll('.nav-button');
-                navButtons.forEach(button => {
-                    button.removeEventListener('click', this.closeMempoolOnNavClick);
-                });
+            formatPercentage(percentage) {
+                return percentage.toFixed(2) + '%';
             },
-            
-            closeMempoolOnNavClick() {
-                if (this.showMempoolModal) {
-                    this.closeMempoolModal();
-                }
+            formatTimeAgo(timestamp) {
+                const now = new Date();
+                const then = new Date(timestamp);
+                const diff = Math.abs(now - then);
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor(diff / (1000 * 60 * 60) % 24);
+                const minutes = Math.floor(diff / (1000 * 60) % 60);
+                const seconds = Math.floor(diff / 1000 % 60);
+                return `${days}д ${hours}ч ${minutes}м ${seconds}с`;
             },
-            
-            async fetchMempoolData() {
-                this.mempoolLoading = true;
-                
-                try {
-                    // Fetch difficulty adjustment
-                    const difficultyResponse = await fetch('https://mempool.space/api/v1/difficulty-adjustment');
-                    if (!difficultyResponse.ok) {
-                        throw new Error(`HTTP error! status: ${difficultyResponse.status}`);
-                    }
-                    const difficultyData = await difficultyResponse.json();
-                    this.mempoolData.difficultyAdjustment = difficultyData;
-                    console.log('Difficulty data loaded:', difficultyData);
-                    
-                    // Fetch prices
-                    const pricesResponse = await fetch('https://mempool.space/api/v1/prices');
-                    if (!pricesResponse.ok) {
-                        throw new Error(`HTTP error! status: ${pricesResponse.status}`);
-                    }
-                    const pricesData = await pricesResponse.json();
-                    this.mempoolData.prices = pricesData;
-                    console.log('Prices data loaded:', pricesData);
-                    
-                    // Fetch blocks
-                    const blocksResponse = await fetch('https://mempool.space/api/v1/blocks');
-                    if (!blocksResponse.ok) {
-                        throw new Error(`HTTP error! status: ${blocksResponse.status}`);
-                    }
-                    const blocksData = await blocksResponse.json();
-                    this.mempoolData.blocks = blocksData.slice(0, 5); // Get only the 5 latest blocks
-                    console.log('Blocks data loaded:', blocksData.slice(0, 5));
-                    
-                    // Fetch mining pools
-                    await this.fetchMiningPools();
-                } catch (error) {
-                    console.error('Error fetching mempool data:', error);
-                } finally {
-                    this.mempoolLoading = false;
-                }
-            },
-            
-            async fetchMiningPools() {
-                try {
-                    const poolsResponse = await fetch(`https://mempool.space/api/v1/mining/pools/${this.miningPoolsPeriod}`);
-                    if (!poolsResponse.ok) {
-                        throw new Error(`HTTP error! status: ${poolsResponse.status}`);
-                    }
-                    const poolsData = await poolsResponse.json();
-                    
-                    // Проверка, является ли ответ массивом
-                    if (Array.isArray(poolsData)) {
-                        this.mempoolData.miningPools = poolsData
-                            .sort((a, b) => b.blockCount - a.blockCount) // Sort by block count descending
-                            .map(pool => ({
-                                ...pool,
-                                share: pool.blockCount / poolsData.reduce((sum, p) => sum + p.blockCount, 0)
-                            }));
-                        console.log('Mining pools data loaded:', this.mempoolData.miningPools.slice(0, 3)); // Log first 3 for debugging
-                    } else {
-                        console.error('Mining pools data is not an array:', poolsData);
-                        this.mempoolData.miningPools = [];
-                    }
-                } catch (error) {
-                    console.error('Error fetching mining pools:', error);
-                    this.mempoolData.miningPools = [];
-                }
-            },
-
-            changeMiningPoolsPeriod(period) {
-                this.miningPoolsPeriod = period;
-                this.fetchMiningPools();
-            },
-
             formatHashrate(hashrate) {
-                if (!hashrate) return 'N/A';
-                
-                const units = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s', 'PH/s', 'EH/s'];
+                const units = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s'];
                 let unitIndex = 0;
-                
                 while (hashrate >= 1000 && unitIndex < units.length - 1) {
                     hashrate /= 1000;
                     unitIndex++;
                 }
-                
                 return `${hashrate.toFixed(2)} ${units[unitIndex]}`;
             },
-
-            getPoolColor(index) {
-                // Generate colors for mining pools
-                const colors = [
-                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-                    '#FF9F40', '#8AC054', '#4D5360', '#E7E9ED', '#F7464A'
-                ];
-                return colors[index % colors.length];
-            },
-            
-            async lookupBtcAddress() {
-                if (!this.btcAddressInput || this.btcAddressInput.trim() === '') {
-                    this.addressError = 'Please enter a Bitcoin address';
-                    return;
-                }
-                
-                this.addressLoading = true;
-                this.addressError = null;
-                this.addressData = null;
-                
-                try {
-                    // Fetch address data
-                    const addressResponse = await fetch(`https://mempool.space/api/address/${this.btcAddressInput.trim()}`);
-                    console.log('Address lookup response status:', addressResponse.status);
-                    
-                    if (!addressResponse.ok) {
-                        throw new Error(`HTTP error! status: ${addressResponse.status}`);
-                    }
-                    
-                    const addressData = await addressResponse.json();
-                    console.log('Address data loaded:', addressData);
-                    this.addressData = addressData;
-                } catch (error) {
-                    console.error('Error looking up address:', error);
-                    this.addressError = 'Error looking up address: ' + error.message;
-                } finally {
-                    this.addressLoading = false;
-                }
-            },
-            
-            formatTimeAgo(timestamp) {
-                if (!timestamp) return 'N/A';
-                
-                const now = Date.now();
-                const date = new Date(timestamp * 1000);
-                const diff = Math.floor((now - date) / 1000);
-                
-                if (diff < 60) return `${diff} seconds ago`;
-                if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
-                if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-                return `${Math.floor(diff / 86400)} days ago`;
-            },
-            
-            formatBytes(bytes) {
-                if (!bytes) return 'N/A';
-                
-                const sizes = ['B', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(1024));
-                return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
-            },
-            
-            formatBtc(satoshis) {
-                if (satoshis === undefined || satoshis === null) return '0';
-                return (satoshis / 100000000).toFixed(8);
-            },
-            
-            formatPercentage(value) {
-                if (value === undefined || value === null) return 'N/A';
-                return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
-            },
-            
-            getDifficultyClass(value) {
-                if (value === undefined || value === null) return '';
-                return value > 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]';
-            },
-            async lookupBtcTransaction() {
-                if (!this.txIdInput || this.txIdInput.trim() === '') {
-                    this.txError = 'Please enter a Transaction ID';
-                    return;
-                }
-                
-                this.txLoading = true;
-                this.txError = null;
-                this.txData = null;
-                
-                try {
-                    // Fetch transaction data
-                    const txResponse = await fetch(`https://mempool.space/api/tx/${this.txIdInput.trim()}`);
-                    console.log('Transaction lookup response status:', txResponse.status);
-                    
-                    if (!txResponse.ok) {
-                        throw new Error(`HTTP error! status: ${txResponse.status}`);
-                    }
-                    
-                    const txData = await txResponse.json();
-                    console.log('Transaction data loaded:', txData);
-                    this.txData = txData;
-                } catch (error) {
-                    console.error('Error looking up transaction:', error);
-                    this.txError = 'Error looking up transaction: ' + error.message;
-                } finally {
-                    this.txLoading = false;
-                }
-            },
+            formatDifficulty(difficulty) {
+                return difficulty.toLocaleString();
+            }
         },
         mounted() {
             this.sockInit();
@@ -2660,6 +2185,8 @@
             axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
                 this.coins = response.data.data.coins;
             });
+
+            this.updateMempoolData();
         },
         beforeUnmount() {
             this.sockClose();
@@ -3346,13 +2873,4374 @@
         transform: translateY(1px);
     }
 
-    /* Style for disabled state */
     .load-more-news-button:disabled {
         opacity: 0.7;
         cursor: not-allowed;
         transform: translateY(0);
         box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
     }
+
+    .mempool-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary-black);
+        z-index: 100;
+        overflow: hidden;
+    }
+    
+    .mempool-screen-content {
+        height: 100%;
+        width: 100%;
+        padding: 1rem;
+        padding-bottom: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mempool-screen-content .cb {
+        background-color: var(--color-bg--300);
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9);
+        height: calc(100vh - 250px);
+    }
+    
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .mempool-screen-overlay {
+        pointer-events: auto;
+    }
+    
+    .modal-on-chart {
+        z-index: 200 !important;
+    }
+    
+    body.modal-open .modal-on-chart {
+        pointer-events: auto;
+    }
+    
+    .mempool-screen-overlay + .modal-on-chart > div {
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        border: 2px solid var(--color-primary-purple);
+    }
+
+    .font-rajdhani {
+        font-family: 'Rajdhani', sans-serif; 
+    }
+
+    select {
+        color: black; 
+    }
+
+    .grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .grid::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+    }
+
+    .grid::-webkit-scrollbar-thumb {
+        background: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .grid::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary-blue);
+    }
+
+    #shareModal .grid {
+        max-height: 40vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        -ms-overflow-style: none;
+        padding-right: 10px;
+    }
+
+    #shareModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 5vh;
+        padding-bottom: 120px;
+    }
+
+    #shareModal .bg-[--color-bg--300] {
+        max-height: 70vh;
+        overflow: hidden;
+        width: 90%;
+        max-width: 900px;
+    }
+
+    .selected-ticker {
+        background-color: var(--color-primary-purple) !important;
+        color: white !important;
+        box-shadow: 0 0 10px var(--color-primary-purple);
+    }
+
+    .transition-colors {
+        transition: all 0.3s ease;
+    }
+
+    .selected-ticker {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(122, 11, 122, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0);
+        }
+    }
+
+    .ticker-cell {
+        min-width: 120px; 
+        max-width: 200px; 
+    }
+
+    .cb2.active {
+        background-color: var(--color-primary-purple);
+        color: white;
+    }
+    
+    .fixed.bottom-0 {
+        background-color: var(--color-bg--300);
+        box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
+        padding: 18px 0;
+        pointer-events: auto !important;
+        z-index: 200 !important; 
+    }
+    
+    .nav-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        min-width: 90px;
+        max-width: 90px;
+        min-height: 60px;
+        padding: 1.25rem 0;
+        font-size: 1rem;
+        margin: 0 3px;
+        text-align: center;
+        line-height: 1.2;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    @keyframes lavaLamp {
+        0% { background-position: 0% 100%; }
+        50% { background-position: 100% 0%; }
+        100% { background-position: 0% 100%; }
+    }
+    
+    .nav-button:hover {
+        transform: translateY(-3px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .nav-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+    
+    .bubble {
+        position: absolute;
+        bottom: 0;
+        background-color: rgba(200, 0, 200, 0.6);
+        border-radius: 50%;
+        opacity: 1;
+    }
+    
+    @keyframes bubble {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .fixed.bottom-0 .container {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .nav-button {
+            min-width: 70px;
+            max-width: 70px;
+            min-height: 40px;
+            margin: 2px;
+            font-size: 0.75rem;
+            padding: 0.5rem 0;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .nav-button {
+            min-width: 60px;
+            max-width: 60px;
+            min-height: 36px;
+            font-size: 0.7rem;
+            padding: 0.45rem 0;
+        }
+    }
+
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .chart-screen-content {
+        margin-top: -9px;
+    }
+
+    #portfolioModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 2vh;
+        padding-bottom: 100px;
+        max-height: calc(100vh - 100px);
+    }
+
+    #portfolioModal .bg-[--color-bg--300] {
+        max-height: calc(100vh - 150px);
+        overflow: auto;
+        width: 90%;
+        max-width: 900px;
+    }
+    
+    #portfolioModal .mt-6 {
+        margin-bottom: 15px;
+    }
+    
+    .portfolio-positions-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+        border: 1px solid var(--color-primary-purple);
+        border-radius: 4px;
+        display: block;
+        height: 150px !important;
+        overflow-y: scroll !important;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 4px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 4px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\] {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 3px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .modal-button {
+        transition: all 0.3s ease;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    .modal-button:hover {
+        transform: translateY(-2px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .modal-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .chart-screen-overlay,
+    body.modal-open .modal-on-chart,
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+    
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .news-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background-color: var(--color-primary-purple, #800080);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .news-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 60px; 
+        background-color: var(--color-primary-black, #191b20);
+        z-index: 100;
+        overflow-y: auto;
+    }
+    
+    .news-screen-content {
+        padding: 20px;
+        padding-bottom: 80px; 
+    }
+    
+    .news-item {
+        background-color: var(--color-bg--300, #262932);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .news-item-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .news-item-source {
+        font-size: 0.8rem;
+        color: var(--color-primary-silver, #a0a0a0);
+        margin-bottom: 8px;
+    }
+    
+    .news-item-content {
+        margin-bottom: 10px;
+    }
+    
+    .news-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .news-item-date {
+        font-size: 0.8rem;
+        color: var(--color-primary-yellow, #eab308);
+    }
+    
+    .news-item-link {
+        color: var(--color-primary-yellow, #eab308);
+        text-decoration: underline;
+    }
+
+    .load-more-news-button {
+        display: block;
+        background-color: var(--color-primary-purple);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        margin: 20px auto;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 80%;
+        max-width: 300px;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .load-more-news-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+
+    .load-more-news-button:active {
+        transform: translateY(1px);
+    }
+
+    .load-more-news-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
+    }
+
+    .mempool-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary-black);
+        z-index: 100;
+        overflow: hidden;
+    }
+    
+    .mempool-screen-content {
+        height: 100%;
+        width: 100%;
+        padding: 1rem;
+        padding-bottom: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mempool-screen-content .cb {
+        background-color: var(--color-bg--300);
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9);
+        height: calc(100vh - 250px);
+    }
+    
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .mempool-screen-overlay {
+        pointer-events: auto;
+    }
+    
+    .modal-on-chart {
+        z-index: 200 !important;
+    }
+    
+    body.modal-open .modal-on-chart {
+        pointer-events: auto;
+    }
+    
+    .mempool-screen-overlay + .modal-on-chart > div {
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        border: 2px solid var(--color-primary-purple);
+    }
+
+    .font-rajdhani {
+        font-family: 'Rajdhani', sans-serif; 
+    }
+
+    select {
+        color: black; 
+    }
+
+    .grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .grid::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+    }
+
+    .grid::-webkit-scrollbar-thumb {
+        background: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .grid::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary-blue);
+    }
+
+    #shareModal .grid {
+        max-height: 40vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        -ms-overflow-style: none;
+        padding-right: 10px;
+    }
+
+    #shareModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 5vh;
+        padding-bottom: 120px;
+    }
+
+    #shareModal .bg-[--color-bg--300] {
+        max-height: 70vh;
+        overflow: hidden;
+        width: 90%;
+        max-width: 900px;
+    }
+
+    .selected-ticker {
+        background-color: var(--color-primary-purple) !important;
+        color: white !important;
+        box-shadow: 0 0 10px var(--color-primary-purple);
+    }
+
+    .transition-colors {
+        transition: all 0.3s ease;
+    }
+
+    .selected-ticker {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(122, 11, 122, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0);
+        }
+    }
+
+    .ticker-cell {
+        min-width: 120px; 
+        max-width: 200px; 
+    }
+
+    .cb2.active {
+        background-color: var(--color-primary-purple);
+        color: white;
+    }
+    
+    .fixed.bottom-0 {
+        background-color: var(--color-bg--300);
+        box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
+        padding: 18px 0;
+        pointer-events: auto !important;
+        z-index: 200 !important; 
+    }
+    
+    .nav-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        min-width: 90px;
+        max-width: 90px;
+        min-height: 60px;
+        padding: 1.25rem 0;
+        font-size: 1rem;
+        margin: 0 3px;
+        text-align: center;
+        line-height: 1.2;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    @keyframes lavaLamp {
+        0% { background-position: 0% 100%; }
+        50% { background-position: 100% 0%; }
+        100% { background-position: 0% 100%; }
+    }
+    
+    .nav-button:hover {
+        transform: translateY(-3px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .nav-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+    
+    .bubble {
+        position: absolute;
+        bottom: 0;
+        background-color: rgba(200, 0, 200, 0.6);
+        border-radius: 50%;
+        opacity: 1;
+    }
+    
+    @keyframes bubble {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .fixed.bottom-0 .container {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .nav-button {
+            min-width: 70px;
+            max-width: 70px;
+            min-height: 40px;
+            margin: 2px;
+            font-size: 0.75rem;
+            padding: 0.5rem 0;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .nav-button {
+            min-width: 60px;
+            max-width: 60px;
+            min-height: 36px;
+            font-size: 0.7rem;
+            padding: 0.45rem 0;
+        }
+    }
+
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .chart-screen-content {
+        margin-top: -9px;
+    }
+
+    #portfolioModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 2vh;
+        padding-bottom: 100px;
+        max-height: calc(100vh - 100px);
+    }
+
+    #portfolioModal .bg-[--color-bg--300] {
+        max-height: calc(100vh - 150px);
+        overflow: auto;
+        width: 90%;
+        max-width: 900px;
+    }
+    
+    #portfolioModal .mt-6 {
+        margin-bottom: 15px;
+    }
+    
+    .portfolio-positions-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+        border: 1px solid var(--color-primary-purple);
+        border-radius: 4px;
+        display: block;
+        height: 150px !important;
+        overflow-y: scroll !important;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 4px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 4px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\] {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 3px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .modal-button {
+        transition: all 0.3s ease;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    .modal-button:hover {
+        transform: translateY(-2px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .modal-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .chart-screen-overlay,
+    body.modal-open .modal-on-chart,
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+    
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .news-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background-color: var(--color-primary-purple, #800080);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .news-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 60px; 
+        background-color: var(--color-primary-black, #191b20);
+        z-index: 100;
+        overflow-y: auto;
+    }
+    
+    .news-screen-content {
+        padding: 20px;
+        padding-bottom: 80px; 
+    }
+    
+    .news-item {
+        background-color: var(--color-bg--300, #262932);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .news-item-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .news-item-source {
+        font-size: 0.8rem;
+        color: var(--color-primary-silver, #a0a0a0);
+        margin-bottom: 8px;
+    }
+    
+    .news-item-content {
+        margin-bottom: 10px;
+    }
+    
+    .news-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .news-item-date {
+        font-size: 0.8rem;
+        color: var(--color-primary-yellow, #eab308);
+    }
+    
+    .news-item-link {
+        color: var(--color-primary-yellow, #eab308);
+        text-decoration: underline;
+    }
+
+    .load-more-news-button {
+        display: block;
+        background-color: var(--color-primary-purple);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        margin: 20px auto;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 80%;
+        max-width: 300px;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .load-more-news-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+
+    .load-more-news-button:active {
+        transform: translateY(1px);
+    }
+
+    .load-more-news-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
+    }
+
+    .mempool-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary-black);
+        z-index: 100;
+        overflow: hidden;
+    }
+    
+    .mempool-screen-content {
+        height: 100%;
+        width: 100%;
+        padding: 1rem;
+        padding-bottom: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mempool-screen-content .cb {
+        background-color: var(--color-bg--300);
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9);
+        height: calc(100vh - 250px);
+    }
+    
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .mempool-screen-overlay {
+        pointer-events: auto;
+    }
+    
+    .modal-on-chart {
+        z-index: 200 !important;
+    }
+    
+    body.modal-open .modal-on-chart {
+        pointer-events: auto;
+    }
+    
+    .mempool-screen-overlay + .modal-on-chart > div {
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        border: 2px solid var(--color-primary-purple);
+    }
+
+    .font-rajdhani {
+        font-family: 'Rajdhani', sans-serif; 
+    }
+
+    select {
+        color: black; 
+    }
+
+    .grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .grid::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+    }
+
+    .grid::-webkit-scrollbar-thumb {
+        background: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .grid::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary-blue);
+    }
+
+    #shareModal .grid {
+        max-height: 40vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        -ms-overflow-style: none;
+        padding-right: 10px;
+    }
+
+    #shareModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 5vh;
+        padding-bottom: 120px;
+    }
+
+    #shareModal .bg-[--color-bg--300] {
+        max-height: 70vh;
+        overflow: hidden;
+        width: 90%;
+        max-width: 900px;
+    }
+
+    .selected-ticker {
+        background-color: var(--color-primary-purple) !important;
+        color: white !important;
+        box-shadow: 0 0 10px var(--color-primary-purple);
+    }
+
+    .transition-colors {
+        transition: all 0.3s ease;
+    }
+
+    .selected-ticker {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(122, 11, 122, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0);
+        }
+    }
+
+    .ticker-cell {
+        min-width: 120px; 
+        max-width: 200px; 
+    }
+
+    .cb2.active {
+        background-color: var(--color-primary-purple);
+        color: white;
+    }
+    
+    .fixed.bottom-0 {
+        background-color: var(--color-bg--300);
+        box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
+        padding: 18px 0;
+        pointer-events: auto !important;
+        z-index: 200 !important; 
+    }
+    
+    .nav-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        min-width: 90px;
+        max-width: 90px;
+        min-height: 60px;
+        padding: 1.25rem 0;
+        font-size: 1rem;
+        margin: 0 3px;
+        text-align: center;
+        line-height: 1.2;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    @keyframes lavaLamp {
+        0% { background-position: 0% 100%; }
+        50% { background-position: 100% 0%; }
+        100% { background-position: 0% 100%; }
+    }
+    
+    .nav-button:hover {
+        transform: translateY(-3px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .nav-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+    
+    .bubble {
+        position: absolute;
+        bottom: 0;
+        background-color: rgba(200, 0, 200, 0.6);
+        border-radius: 50%;
+        opacity: 1;
+    }
+    
+    @keyframes bubble {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .fixed.bottom-0 .container {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .nav-button {
+            min-width: 70px;
+            max-width: 70px;
+            min-height: 40px;
+            margin: 2px;
+            font-size: 0.75rem;
+            padding: 0.5rem 0;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .nav-button {
+            min-width: 60px;
+            max-width: 60px;
+            min-height: 36px;
+            font-size: 0.7rem;
+            padding: 0.45rem 0;
+        }
+    }
+
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .chart-screen-content {
+        margin-top: -9px;
+    }
+
+    #portfolioModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 2vh;
+        padding-bottom: 100px;
+        max-height: calc(100vh - 100px);
+    }
+
+    #portfolioModal .bg-[--color-bg--300] {
+        max-height: calc(100vh - 150px);
+        overflow: auto;
+        width: 90%;
+        max-width: 900px;
+    }
+    
+    #portfolioModal .mt-6 {
+        margin-bottom: 15px;
+    }
+    
+    .portfolio-positions-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+        border: 1px solid var(--color-primary-purple);
+        border-radius: 4px;
+        display: block;
+        height: 150px !important;
+        overflow-y: scroll !important;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 4px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 4px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\] {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 3px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .modal-button {
+        transition: all 0.3s ease;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    .modal-button:hover {
+        transform: translateY(-2px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .modal-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .chart-screen-overlay,
+    body.modal-open .modal-on-chart,
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+    
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .news-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background-color: var(--color-primary-purple, #800080);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .news-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 60px; 
+        background-color: var(--color-primary-black, #191b20);
+        z-index: 100;
+        overflow-y: auto;
+    }
+    
+    .news-screen-content {
+        padding: 20px;
+        padding-bottom: 80px; 
+    }
+    
+    .news-item {
+        background-color: var(--color-bg--300, #262932);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .news-item-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .news-item-source {
+        font-size: 0.8rem;
+        color: var(--color-primary-silver, #a0a0a0);
+        margin-bottom: 8px;
+    }
+    
+    .news-item-content {
+        margin-bottom: 10px;
+    }
+    
+    .news-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .news-item-date {
+        font-size: 0.8rem;
+        color: var(--color-primary-yellow, #eab308);
+    }
+    
+    .news-item-link {
+        color: var(--color-primary-yellow, #eab308);
+        text-decoration: underline;
+    }
+
+    .load-more-news-button {
+        display: block;
+        background-color: var(--color-primary-purple);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        margin: 20px auto;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 80%;
+        max-width: 300px;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .load-more-news-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+
+    .load-more-news-button:active {
+        transform: translateY(1px);
+    }
+
+    .load-more-news-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
+    }
+
+    .mempool-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary-black);
+        z-index: 100;
+        overflow: hidden;
+    }
+    
+    .mempool-screen-content {
+        height: 100%;
+        width: 100%;
+        padding: 1rem;
+        padding-bottom: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mempool-screen-content .cb {
+        background-color: var(--color-bg--300);
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9);
+        height: calc(100vh - 250px);
+    }
+    
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .mempool-screen-overlay {
+        pointer-events: auto;
+    }
+    
+    .modal-on-chart {
+        z-index: 200 !important;
+    }
+    
+    body.modal-open .modal-on-chart {
+        pointer-events: auto;
+    }
+    
+    .mempool-screen-overlay + .modal-on-chart > div {
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        border: 2px solid var(--color-primary-purple);
+    }
+
+    .font-rajdhani {
+        font-family: 'Rajdhani', sans-serif; 
+    }
+
+    select {
+        color: black; 
+    }
+
+    .grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .grid::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+    }
+
+    .grid::-webkit-scrollbar-thumb {
+        background: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .grid::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary-blue);
+    }
+
+    #shareModal .grid {
+        max-height: 40vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        -ms-overflow-style: none;
+        padding-right: 10px;
+    }
+
+    #shareModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 5vh;
+        padding-bottom: 120px;
+    }
+
+    #shareModal .bg-[--color-bg--300] {
+        max-height: 70vh;
+        overflow: hidden;
+        width: 90%;
+        max-width: 900px;
+    }
+
+    .selected-ticker {
+        background-color: var(--color-primary-purple) !important;
+        color: white !important;
+        box-shadow: 0 0 10px var(--color-primary-purple);
+    }
+
+    .transition-colors {
+        transition: all 0.3s ease;
+    }
+
+    .selected-ticker {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(122, 11, 122, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0);
+        }
+    }
+
+    .ticker-cell {
+        min-width: 120px; 
+        max-width: 200px; 
+    }
+
+    .cb2.active {
+        background-color: var(--color-primary-purple);
+        color: white;
+    }
+    
+    .fixed.bottom-0 {
+        background-color: var(--color-bg--300);
+        box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
+        padding: 18px 0;
+        pointer-events: auto !important;
+        z-index: 200 !important; 
+    }
+    
+    .nav-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        min-width: 90px;
+        max-width: 90px;
+        min-height: 60px;
+        padding: 1.25rem 0;
+        font-size: 1rem;
+        margin: 0 3px;
+        text-align: center;
+        line-height: 1.2;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    @keyframes lavaLamp {
+        0% { background-position: 0% 100%; }
+        50% { background-position: 100% 0%; }
+        100% { background-position: 0% 100%; }
+    }
+    
+    .nav-button:hover {
+        transform: translateY(-3px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .nav-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+    
+    .bubble {
+        position: absolute;
+        bottom: 0;
+        background-color: rgba(200, 0, 200, 0.6);
+        border-radius: 50%;
+        opacity: 1;
+    }
+    
+    @keyframes bubble {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .fixed.bottom-0 .container {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .nav-button {
+            min-width: 70px;
+            max-width: 70px;
+            min-height: 40px;
+            margin: 2px;
+            font-size: 0.75rem;
+            padding: 0.5rem 0;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .nav-button {
+            min-width: 60px;
+            max-width: 60px;
+            min-height: 36px;
+            font-size: 0.7rem;
+            padding: 0.45rem 0;
+        }
+    }
+
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .chart-screen-content {
+        margin-top: -9px;
+    }
+
+    #portfolioModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 2vh;
+        padding-bottom: 100px;
+        max-height: calc(100vh - 100px);
+    }
+
+    #portfolioModal .bg-[--color-bg--300] {
+        max-height: calc(100vh - 150px);
+        overflow: auto;
+        width: 90%;
+        max-width: 900px;
+    }
+    
+    #portfolioModal .mt-6 {
+        margin-bottom: 15px;
+    }
+    
+    .portfolio-positions-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+        border: 1px solid var(--color-primary-purple);
+        border-radius: 4px;
+        display: block;
+        height: 150px !important;
+        overflow-y: scroll !important;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 4px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 4px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\] {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 3px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .modal-button {
+        transition: all 0.3s ease;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    .modal-button:hover {
+        transform: translateY(-2px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .modal-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .chart-screen-overlay,
+    body.modal-open .modal-on-chart,
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+    
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .news-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background-color: var(--color-primary-purple, #800080);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .news-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 60px; 
+        background-color: var(--color-primary-black, #191b20);
+        z-index: 100;
+        overflow-y: auto;
+    }
+    
+    .news-screen-content {
+        padding: 20px;
+        padding-bottom: 80px; 
+    }
+    
+    .news-item {
+        background-color: var(--color-bg--300, #262932);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .news-item-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .news-item-source {
+        font-size: 0.8rem;
+        color: var(--color-primary-silver, #a0a0a0);
+        margin-bottom: 8px;
+    }
+    
+    .news-item-content {
+        margin-bottom: 10px;
+    }
+    
+    .news-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .news-item-date {
+        font-size: 0.8rem;
+        color: var(--color-primary-yellow, #eab308);
+    }
+    
+    .news-item-link {
+        color: var(--color-primary-yellow, #eab308);
+        text-decoration: underline;
+    }
+
+    .load-more-news-button {
+        display: block;
+        background-color: var(--color-primary-purple);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        margin: 20px auto;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 80%;
+        max-width: 300px;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .load-more-news-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+
+    .load-more-news-button:active {
+        transform: translateY(1px);
+    }
+
+    .load-more-news-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
+    }
+
+    .mempool-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary-black);
+        z-index: 100;
+        overflow: hidden;
+    }
+    
+    .mempool-screen-content {
+        height: 100%;
+        width: 100%;
+        padding: 1rem;
+        padding-bottom: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mempool-screen-content .cb {
+        background-color: var(--color-bg--300);
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9);
+        height: calc(100vh - 250px);
+    }
+    
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .mempool-screen-overlay {
+        pointer-events: auto;
+    }
+    
+    .modal-on-chart {
+        z-index: 200 !important;
+    }
+    
+    body.modal-open .modal-on-chart {
+        pointer-events: auto;
+    }
+    
+    .mempool-screen-overlay + .modal-on-chart > div {
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        border: 2px solid var(--color-primary-purple);
+    }
+
+    .font-rajdhani {
+        font-family: 'Rajdhani', sans-serif; 
+    }
+
+    select {
+        color: black; 
+    }
+
+    .grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .grid::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+    }
+
+    .grid::-webkit-scrollbar-thumb {
+        background: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .grid::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary-blue);
+    }
+
+    #shareModal .grid {
+        max-height: 40vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        -ms-overflow-style: none;
+        padding-right: 10px;
+    }
+
+    #shareModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 5vh;
+        padding-bottom: 120px;
+    }
+
+    #shareModal .bg-[--color-bg--300] {
+        max-height: 70vh;
+        overflow: hidden;
+        width: 90%;
+        max-width: 900px;
+    }
+
+    .selected-ticker {
+        background-color: var(--color-primary-purple) !important;
+        color: white !important;
+        box-shadow: 0 0 10px var(--color-primary-purple);
+    }
+
+    .transition-colors {
+        transition: all 0.3s ease;
+    }
+
+    .selected-ticker {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(122, 11, 122, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0);
+        }
+    }
+
+    .ticker-cell {
+        min-width: 120px; 
+        max-width: 200px; 
+    }
+
+    .cb2.active {
+        background-color: var(--color-primary-purple);
+        color: white;
+    }
+    
+    .fixed.bottom-0 {
+        background-color: var(--color-bg--300);
+        box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
+        padding: 18px 0;
+        pointer-events: auto !important;
+        z-index: 200 !important; 
+    }
+    
+    .nav-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        min-width: 90px;
+        max-width: 90px;
+        min-height: 60px;
+        padding: 1.25rem 0;
+        font-size: 1rem;
+        margin: 0 3px;
+        text-align: center;
+        line-height: 1.2;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    @keyframes lavaLamp {
+        0% { background-position: 0% 100%; }
+        50% { background-position: 100% 0%; }
+        100% { background-position: 0% 100%; }
+    }
+    
+    .nav-button:hover {
+        transform: translateY(-3px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .nav-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+    
+    .bubble {
+        position: absolute;
+        bottom: 0;
+        background-color: rgba(200, 0, 200, 0.6);
+        border-radius: 50%;
+        opacity: 1;
+    }
+    
+    @keyframes bubble {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .fixed.bottom-0 .container {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .nav-button {
+            min-width: 70px;
+            max-width: 70px;
+            min-height: 40px;
+            margin: 2px;
+            font-size: 0.75rem;
+            padding: 0.5rem 0;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .nav-button {
+            min-width: 60px;
+            max-width: 60px;
+            min-height: 36px;
+            font-size: 0.7rem;
+            padding: 0.45rem 0;
+        }
+    }
+
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .chart-screen-content {
+        margin-top: -9px;
+    }
+
+    #portfolioModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 2vh;
+        padding-bottom: 100px;
+        max-height: calc(100vh - 100px);
+    }
+
+    #portfolioModal .bg-[--color-bg--300] {
+        max-height: calc(100vh - 150px);
+        overflow: auto;
+        width: 90%;
+        max-width: 900px;
+    }
+    
+    #portfolioModal .mt-6 {
+        margin-bottom: 15px;
+    }
+    
+    .portfolio-positions-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+        border: 1px solid var(--color-primary-purple);
+        border-radius: 4px;
+        display: block;
+        height: 150px !important;
+        overflow-y: scroll !important;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 4px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 4px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\] {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 3px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .modal-button {
+        transition: all 0.3s ease;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    .modal-button:hover {
+        transform: translateY(-2px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .modal-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .chart-screen-overlay,
+    body.modal-open .modal-on-chart,
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+    
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .news-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background-color: var(--color-primary-purple, #800080);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .news-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 60px; 
+        background-color: var(--color-primary-black, #191b20);
+        z-index: 100;
+        overflow-y: auto;
+    }
+    
+    .news-screen-content {
+        padding: 20px;
+        padding-bottom: 80px; 
+    }
+    
+    .news-item {
+        background-color: var(--color-bg--300, #262932);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .news-item-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .news-item-source {
+        font-size: 0.8rem;
+        color: var(--color-primary-silver, #a0a0a0);
+        margin-bottom: 8px;
+    }
+    
+    .news-item-content {
+        margin-bottom: 10px;
+    }
+    
+    .news-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .news-item-date {
+        font-size: 0.8rem;
+        color: var(--color-primary-yellow, #eab308);
+    }
+    
+    .news-item-link {
+        color: var(--color-primary-yellow, #eab308);
+        text-decoration: underline;
+    }
+
+    .load-more-news-button {
+        display: block;
+        background-color: var(--color-primary-purple);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        margin: 20px auto;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 80%;
+        max-width: 300px;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .load-more-news-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+
+    .load-more-news-button:active {
+        transform: translateY(1px);
+    }
+
+    .load-more-news-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
+    }
+
+    .mempool-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary-black);
+        z-index: 100;
+        overflow: hidden;
+    }
+    
+    .mempool-screen-content {
+        height: 100%;
+        width: 100%;
+        padding: 1rem;
+        padding-bottom: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mempool-screen-content .cb {
+        background-color: var(--color-bg--300);
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9);
+        height: calc(100vh - 250px);
+    }
+    
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .mempool-screen-overlay {
+        pointer-events: auto;
+    }
+    
+    .modal-on-chart {
+        z-index: 200 !important;
+    }
+    
+    body.modal-open .modal-on-chart {
+        pointer-events: auto;
+    }
+    
+    .mempool-screen-overlay + .modal-on-chart > div {
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        border: 2px solid var(--color-primary-purple);
+    }
+
+    .font-rajdhani {
+        font-family: 'Rajdhani', sans-serif; 
+    }
+
+    select {
+        color: black; 
+    }
+
+    .grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .grid::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+    }
+
+    .grid::-webkit-scrollbar-thumb {
+        background: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .grid::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary-blue);
+    }
+
+    #shareModal .grid {
+        max-height: 40vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        -ms-overflow-style: none;
+        padding-right: 10px;
+    }
+
+    #shareModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 5vh;
+        padding-bottom: 120px;
+    }
+
+    #shareModal .bg-[--color-bg--300] {
+        max-height: 70vh;
+        overflow: hidden;
+        width: 90%;
+        max-width: 900px;
+    }
+
+    .selected-ticker {
+        background-color: var(--color-primary-purple) !important;
+        color: white !important;
+        box-shadow: 0 0 10px var(--color-primary-purple);
+    }
+
+    .transition-colors {
+        transition: all 0.3s ease;
+    }
+
+    .selected-ticker {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(122, 11, 122, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0);
+        }
+    }
+
+    .ticker-cell {
+        min-width: 120px; 
+        max-width: 200px; 
+    }
+
+    .cb2.active {
+        background-color: var(--color-primary-purple);
+        color: white;
+    }
+    
+    .fixed.bottom-0 {
+        background-color: var(--color-bg--300);
+        box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
+        padding: 18px 0;
+        pointer-events: auto !important;
+        z-index: 200 !important; 
+    }
+    
+    .nav-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        min-width: 90px;
+        max-width: 90px;
+        min-height: 60px;
+        padding: 1.25rem 0;
+        font-size: 1rem;
+        margin: 0 3px;
+        text-align: center;
+        line-height: 1.2;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    @keyframes lavaLamp {
+        0% { background-position: 0% 100%; }
+        50% { background-position: 100% 0%; }
+        100% { background-position: 0% 100%; }
+    }
+    
+    .nav-button:hover {
+        transform: translateY(-3px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .nav-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+    
+    .bubble {
+        position: absolute;
+        bottom: 0;
+        background-color: rgba(200, 0, 200, 0.6);
+        border-radius: 50%;
+        opacity: 1;
+    }
+    
+    @keyframes bubble {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .fixed.bottom-0 .container {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .nav-button {
+            min-width: 70px;
+            max-width: 70px;
+            min-height: 40px;
+            margin: 2px;
+            font-size: 0.75rem;
+            padding: 0.5rem 0;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .nav-button {
+            min-width: 60px;
+            max-width: 60px;
+            min-height: 36px;
+            font-size: 0.7rem;
+            padding: 0.45rem 0;
+        }
+    }
+
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .chart-screen-content {
+        margin-top: -9px;
+    }
+
+    #portfolioModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 2vh;
+        padding-bottom: 100px;
+        max-height: calc(100vh - 100px);
+    }
+
+    #portfolioModal .bg-[--color-bg--300] {
+        max-height: calc(100vh - 150px);
+        overflow: auto;
+        width: 90%;
+        max-width: 900px;
+    }
+    
+    #portfolioModal .mt-6 {
+        margin-bottom: 15px;
+    }
+    
+    .portfolio-positions-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+        border: 1px solid var(--color-primary-purple);
+        border-radius: 4px;
+        display: block;
+        height: 150px !important;
+        overflow-y: scroll !important;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 4px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 4px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\] {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 3px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .modal-button {
+        transition: all 0.3s ease;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    .modal-button:hover {
+        transform: translateY(-2px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .modal-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .chart-screen-overlay,
+    body.modal-open .modal-on-chart,
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+    
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .news-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background-color: var(--color-primary-purple, #800080);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .news-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 60px; 
+        background-color: var(--color-primary-black, #191b20);
+        z-index: 100;
+        overflow-y: auto;
+    }
+    
+    .news-screen-content {
+        padding: 20px;
+        padding-bottom: 80px; 
+    }
+    
+    .news-item {
+        background-color: var(--color-bg--300, #262932);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .news-item-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .news-item-source {
+        font-size: 0.8rem;
+        color: var(--color-primary-silver, #a0a0a0);
+        margin-bottom: 8px;
+    }
+    
+    .news-item-content {
+        margin-bottom: 10px;
+    }
+    
+    .news-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .news-item-date {
+        font-size: 0.8rem;
+        color: var(--color-primary-yellow, #eab308);
+    }
+    
+    .news-item-link {
+        color: var(--color-primary-yellow, #eab308);
+        text-decoration: underline;
+    }
+
+    .load-more-news-button {
+        display: block;
+        background-color: var(--color-primary-purple);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        margin: 20px auto;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 80%;
+        max-width: 300px;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .load-more-news-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+
+    .load-more-news-button:active {
+        transform: translateY(1px);
+    }
+
+    .load-more-news-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
+    }
+
+    .mempool-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary-black);
+        z-index: 100;
+        overflow: hidden;
+    }
+    
+    .mempool-screen-content {
+        height: 100%;
+        width: 100%;
+        padding: 1rem;
+        padding-bottom: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mempool-screen-content .cb {
+        background-color: var(--color-bg--300);
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9);
+        height: calc(100vh - 250px);
+    }
+    
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .mempool-screen-overlay {
+        pointer-events: auto;
+    }
+    
+    .modal-on-chart {
+        z-index: 200 !important;
+    }
+    
+    body.modal-open .modal-on-chart {
+        pointer-events: auto;
+    }
+    
+    .mempool-screen-overlay + .modal-on-chart > div {
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        border: 2px solid var(--color-primary-purple);
+    }
+
+    .font-rajdhani {
+        font-family: 'Rajdhani', sans-serif; 
+    }
+
+    select {
+        color: black; 
+    }
+
+    .grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .grid::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+    }
+
+    .grid::-webkit-scrollbar-thumb {
+        background: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .grid::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary-blue);
+    }
+
+    #shareModal .grid {
+        max-height: 40vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        -ms-overflow-style: none;
+        padding-right: 10px;
+    }
+
+    #shareModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 5vh;
+        padding-bottom: 120px;
+    }
+
+    #shareModal .bg-[--color-bg--300] {
+        max-height: 70vh;
+        overflow: hidden;
+        width: 90%;
+        max-width: 900px;
+    }
+
+    .selected-ticker {
+        background-color: var(--color-primary-purple) !important;
+        color: white !important;
+        box-shadow: 0 0 10px var(--color-primary-purple);
+    }
+
+    .transition-colors {
+        transition: all 0.3s ease;
+    }
+
+    .selected-ticker {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(122, 11, 122, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0);
+        }
+    }
+
+    .ticker-cell {
+        min-width: 120px; 
+        max-width: 200px; 
+    }
+
+    .cb2.active {
+        background-color: var(--color-primary-purple);
+        color: white;
+    }
+    
+    .fixed.bottom-0 {
+        background-color: var(--color-bg--300);
+        box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
+        padding: 18px 0;
+        pointer-events: auto !important;
+        z-index: 200 !important; 
+    }
+    
+    .nav-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        min-width: 90px;
+        max-width: 90px;
+        min-height: 60px;
+        padding: 1.25rem 0;
+        font-size: 1rem;
+        margin: 0 3px;
+        text-align: center;
+        line-height: 1.2;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    @keyframes lavaLamp {
+        0% { background-position: 0% 100%; }
+        50% { background-position: 100% 0%; }
+        100% { background-position: 0% 100%; }
+    }
+    
+    .nav-button:hover {
+        transform: translateY(-3px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .nav-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+    
+    .bubble {
+        position: absolute;
+        bottom: 0;
+        background-color: rgba(200, 0, 200, 0.6);
+        border-radius: 50%;
+        opacity: 1;
+    }
+    
+    @keyframes bubble {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .fixed.bottom-0 .container {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .nav-button {
+            min-width: 70px;
+            max-width: 70px;
+            min-height: 40px;
+            margin: 2px;
+            font-size: 0.75rem;
+            padding: 0.5rem 0;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .nav-button {
+            min-width: 60px;
+            max-width: 60px;
+            min-height: 36px;
+            font-size: 0.7rem;
+            padding: 0.45rem 0;
+        }
+    }
+
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .chart-screen-content {
+        margin-top: -9px;
+    }
+
+    #portfolioModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 2vh;
+        padding-bottom: 100px;
+        max-height: calc(100vh - 100px);
+    }
+
+    #portfolioModal .bg-[--color-bg--300] {
+        max-height: calc(100vh - 150px);
+        overflow: auto;
+        width: 90%;
+        max-width: 900px;
+    }
+    
+    #portfolioModal .mt-6 {
+        margin-bottom: 15px;
+    }
+    
+    .portfolio-positions-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+        border: 1px solid var(--color-primary-purple);
+        border-radius: 4px;
+        display: block;
+        height: 150px !important;
+        overflow-y: scroll !important;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 4px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 4px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\] {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 3px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .modal-button {
+        transition: all 0.3s ease;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    .modal-button:hover {
+        transform: translateY(-2px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .modal-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .chart-screen-overlay,
+    body.modal-open .modal-on-chart,
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+    
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .news-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background-color: var(--color-primary-purple, #800080);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .news-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 60px; 
+        background-color: var(--color-primary-black, #191b20);
+        z-index: 100;
+        overflow-y: auto;
+    }
+    
+    .news-screen-content {
+        padding: 20px;
+        padding-bottom: 80px; 
+    }
+    
+    .news-item {
+        background-color: var(--color-bg--300, #262932);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .news-item-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .news-item-source {
+        font-size: 0.8rem;
+        color: var(--color-primary-silver, #a0a0a0);
+        margin-bottom: 8px;
+    }
+    
+    .news-item-content {
+        margin-bottom: 10px;
+    }
+    
+    .news-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .news-item-date {
+        font-size: 0.8rem;
+        color: var(--color-primary-yellow, #eab308);
+    }
+    
+    .news-item-link {
+        color: var(--color-primary-yellow, #eab308);
+        text-decoration: underline;
+    }
+
+    .load-more-news-button {
+        display: block;
+        background-color: var(--color-primary-purple);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        margin: 20px auto;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 80%;
+        max-width: 300px;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .load-more-news-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+
+    .load-more-news-button:active {
+        transform: translateY(1px);
+    }
+
+    .load-more-news-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
+    }
+
+    .mempool-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary-black);
+        z-index: 100;
+        overflow: hidden;
+    }
+    
+    .mempool-screen-content {
+        height: 100%;
+        width: 100%;
+        padding: 1rem;
+        padding-bottom: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mempool-screen-content .cb {
+        background-color: var(--color-bg--300);
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9);
+        height: calc(100vh - 250px);
+    }
+    
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .mempool-screen-overlay {
+        pointer-events: auto;
+    }
+    
+    .modal-on-chart {
+        z-index: 200 !important;
+    }
+    
+    body.modal-open .modal-on-chart {
+        pointer-events: auto;
+    }
+    
+    .mempool-screen-overlay + .modal-on-chart > div {
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        border: 2px solid var(--color-primary-purple);
+    }
+
+    .font-rajdhani {
+        font-family: 'Rajdhani', sans-serif; 
+    }
+
+    select {
+        color: black; 
+    }
+
+    .grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .grid::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+    }
+
+    .grid::-webkit-scrollbar-thumb {
+        background: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .grid::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary-blue);
+    }
+
+    #shareModal .grid {
+        max-height: 40vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        -ms-overflow-style: none;
+        padding-right: 10px;
+    }
+
+    #shareModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 5vh;
+        padding-bottom: 120px;
+    }
+
+    #shareModal .bg-[--color-bg--300] {
+        max-height: 70vh;
+        overflow: hidden;
+        width: 90%;
+        max-width: 900px;
+    }
+
+    .selected-ticker {
+        background-color: var(--color-primary-purple) !important;
+        color: white !important;
+        box-shadow: 0 0 10px var(--color-primary-purple);
+    }
+
+    .transition-colors {
+        transition: all 0.3s ease;
+    }
+
+    .selected-ticker {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(122, 11, 122, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0);
+        }
+    }
+
+    .ticker-cell {
+        min-width: 120px; 
+        max-width: 200px; 
+    }
+
+    .cb2.active {
+        background-color: var(--color-primary-purple);
+        color: white;
+    }
+    
+    .fixed.bottom-0 {
+        background-color: var(--color-bg--300);
+        box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
+        padding: 18px 0;
+        pointer-events: auto !important;
+        z-index: 200 !important; 
+    }
+    
+    .nav-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        min-width: 90px;
+        max-width: 90px;
+        min-height: 60px;
+        padding: 1.25rem 0;
+        font-size: 1rem;
+        margin: 0 3px;
+        text-align: center;
+        line-height: 1.2;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    @keyframes lavaLamp {
+        0% { background-position: 0% 100%; }
+        50% { background-position: 100% 0%; }
+        100% { background-position: 0% 100%; }
+    }
+    
+    .nav-button:hover {
+        transform: translateY(-3px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .nav-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+    
+    .bubble {
+        position: absolute;
+        bottom: 0;
+        background-color: rgba(200, 0, 200, 0.6);
+        border-radius: 50%;
+        opacity: 1;
+    }
+    
+    @keyframes bubble {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .fixed.bottom-0 .container {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .nav-button {
+            min-width: 70px;
+            max-width: 70px;
+            min-height: 40px;
+            margin: 2px;
+            font-size: 0.75rem;
+            padding: 0.5rem 0;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .nav-button {
+            min-width: 60px;
+            max-width: 60px;
+            min-height: 36px;
+            font-size: 0.7rem;
+            padding: 0.45rem 0;
+        }
+    }
+
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .chart-screen-content {
+        margin-top: -9px;
+    }
+
+    #portfolioModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 2vh;
+        padding-bottom: 100px;
+        max-height: calc(100vh - 100px);
+    }
+
+    #portfolioModal .bg-[--color-bg--300] {
+        max-height: calc(100vh - 150px);
+        overflow: auto;
+        width: 90%;
+        max-width: 900px;
+    }
+    
+    #portfolioModal .mt-6 {
+        margin-bottom: 15px;
+    }
+    
+    .portfolio-positions-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+        border: 1px solid var(--color-primary-purple);
+        border-radius: 4px;
+        display: block;
+        height: 150px !important;
+        overflow-y: scroll !important;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 4px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 4px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\] {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 3px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .modal-button {
+        transition: all 0.3s ease;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    .modal-button:hover {
+        transform: translateY(-2px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .modal-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .chart-screen-overlay,
+    body.modal-open .modal-on-chart,
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+    
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .news-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background-color: var(--color-primary-purple, #800080);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .news-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 60px; 
+        background-color: var(--color-primary-black, #191b20);
+        z-index: 100;
+        overflow-y: auto;
+    }
+    
+    .news-screen-content {
+        padding: 20px;
+        padding-bottom: 80px; 
+    }
+    
+    .news-item {
+        background-color: var(--color-bg--300, #262932);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .news-item-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .news-item-source {
+        font-size: 0.8rem;
+        color: var(--color-primary-silver, #a0a0a0);
+        margin-bottom: 8px;
+    }
+    
+    .news-item-content {
+        margin-bottom: 10px;
+    }
+    
+    .news-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .news-item-date {
+        font-size: 0.8rem;
+        color: var(--color-primary-yellow, #eab308);
+    }
+    
+    .news-item-link {
+        color: var(--color-primary-yellow, #eab308);
+        text-decoration: underline;
+    }
+
+    .load-more-news-button {
+        display: block;
+        background-color: var(--color-primary-purple);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        margin: 20px auto;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 80%;
+        max-width: 300px;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .load-more-news-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+
+    .load-more-news-button:active {
+        transform: translateY(1px);
+    }
+
+    .load-more-news-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
+    }
+
+    .mempool-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary-black);
+        z-index: 100;
+        overflow: hidden;
+    }
+    
+    .mempool-screen-content {
+        height: 100%;
+        width: 100%;
+        padding: 1rem;
+        padding-bottom: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mempool-screen-content .cb {
+        background-color: var(--color-bg--300);
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9);
+        height: calc(100vh - 250px);
+    }
+    
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .mempool-screen-overlay {
+        pointer-events: auto;
+    }
+    
+    .modal-on-chart {
+        z-index: 200 !important;
+    }
+    
+    body.modal-open .modal-on-chart {
+        pointer-events: auto;
+    }
+    
+    .mempool-screen-overlay + .modal-on-chart > div {
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        border: 2px solid var(--color-primary-purple);
+    }
+
+    .font-rajdhani {
+        font-family: 'Rajdhani', sans-serif; 
+    }
+
+    select {
+        color: black; 
+    }
+
+    .grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .grid::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+    }
+
+    .grid::-webkit-scrollbar-thumb {
+        background: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .grid::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary-blue);
+    }
+
+    #shareModal .grid {
+        max-height: 40vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        -ms-overflow-style: none;
+        padding-right: 10px;
+    }
+
+    #shareModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 5vh;
+        padding-bottom: 120px;
+    }
+
+    #shareModal .bg-[--color-bg--300] {
+        max-height: 70vh;
+        overflow: hidden;
+        width: 90%;
+        max-width: 900px;
+    }
+
+    .selected-ticker {
+        background-color: var(--color-primary-purple) !important;
+        color: white !important;
+        box-shadow: 0 0 10px var(--color-primary-purple);
+    }
+
+    .transition-colors {
+        transition: all 0.3s ease;
+    }
+
+    .selected-ticker {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(122, 11, 122, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0);
+        }
+    }
+
+    .ticker-cell {
+        min-width: 120px; 
+        max-width: 200px; 
+    }
+
+    .cb2.active {
+        background-color: var(--color-primary-purple);
+        color: white;
+    }
+    
+    .fixed.bottom-0 {
+        background-color: var(--color-bg--300);
+        box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
+        padding: 18px 0;
+        pointer-events: auto !important;
+        z-index: 200 !important; 
+    }
+    
+    .nav-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        min-width: 90px;
+        max-width: 90px;
+        min-height: 60px;
+        padding: 1.25rem 0;
+        font-size: 1rem;
+        margin: 0 3px;
+        text-align: center;
+        line-height: 1.2;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    @keyframes lavaLamp {
+        0% { background-position: 0% 100%; }
+        50% { background-position: 100% 0%; }
+        100% { background-position: 0% 100%; }
+    }
+    
+    .nav-button:hover {
+        transform: translateY(-3px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .nav-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+    
+    .bubble {
+        position: absolute;
+        bottom: 0;
+        background-color: rgba(200, 0, 200, 0.6);
+        border-radius: 50%;
+        opacity: 1;
+    }
+    
+    @keyframes bubble {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .fixed.bottom-0 .container {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .nav-button {
+            min-width: 70px;
+            max-width: 70px;
+            min-height: 40px;
+            margin: 2px;
+            font-size: 0.75rem;
+            padding: 0.5rem 0;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .nav-button {
+            min-width: 60px;
+            max-width: 60px;
+            min-height: 36px;
+            font-size: 0.7rem;
+            padding: 0.45rem 0;
+        }
+    }
+
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .chart-screen-content {
+        margin-top: -9px;
+    }
+
+    #portfolioModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 2vh;
+        padding-bottom: 100px;
+        max-height: calc(100vh - 100px);
+    }
+
+    #portfolioModal .bg-[--color-bg--300] {
+        max-height: calc(100vh - 150px);
+        overflow: auto;
+        width: 90%;
+        max-width: 900px;
+    }
+    
+    #portfolioModal .mt-6 {
+        margin-bottom: 15px;
+    }
+    
+    .portfolio-positions-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+        border: 1px solid var(--color-primary-purple);
+        border-radius: 4px;
+        display: block;
+        height: 150px !important;
+        overflow-y: scroll !important;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 4px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 4px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\] {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 3px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .modal-button {
+        transition: all 0.3s ease;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    .modal-button:hover {
+        transform: translateY(-2px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .modal-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .chart-screen-overlay,
+    body.modal-open .modal-on-chart,
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+    
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .news-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background-color: var(--color-primary-purple, #800080);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .news-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 60px; 
+        background-color: var(--color-primary-black, #191b20);
+        z-index: 100;
+        overflow-y: auto;
+    }
+    
+    .news-screen-content {
+        padding: 20px;
+        padding-bottom: 80px; 
+    }
+    
+    .news-item {
+        background-color: var(--color-bg--300, #262932);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .news-item-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .news-item-source {
+        font-size: 0.8rem;
+        color: var(--color-primary-silver, #a0a0a0);
+        margin-bottom: 8px;
+    }
+    
+    .news-item-content {
+        margin-bottom: 10px;
+    }
+    
+    .news-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .news-item-date {
+        font-size: 0.8rem;
+        color: var(--color-primary-yellow, #eab308);
+    }
+    
+    .news-item-link {
+        color: var(--color-primary-yellow, #eab308);
+        text-decoration: underline;
+    }
+
+    .load-more-news-button {
+        display: block;
+        background-color: var(--color-primary-purple);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        margin: 20px auto;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 80%;
+        max-width: 300px;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .load-more-news-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+
+    .load-more-news-button:active {
+        transform: translateY(1px);
+    }
+
+    .load-more-news-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
+    }
+
+    .mempool-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary-black);
+        z-index: 100;
+        overflow: hidden;
+    }
+    
+    .mempool-screen-content {
+        height: 100%;
+        width: 100%;
+        padding: 1rem;
+        padding-bottom: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mempool-screen-content .cb {
+        background-color: var(--color-bg--300);
+        border: 2px solid var(--color-primary-purple);
+        box-shadow: 0 0 10px 4px rgba(128, 0, 128, 0.9);
+        height: calc(100vh - 250px);
+    }
+    
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .mempool-screen-overlay {
+        pointer-events: auto;
+    }
+    
+    .modal-on-chart {
+        z-index: 200 !important;
+    }
+    
+    body.modal-open .modal-on-chart {
+        pointer-events: auto;
+    }
+    
+    .mempool-screen-overlay + .modal-on-chart > div {
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        border: 2px solid var(--color-primary-purple);
+    }
+
+    .font-rajdhani {
+        font-family: 'Rajdhani', sans-serif; 
+    }
+
+    select {
+        color: black; 
+    }
+
+    .grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .grid::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+    }
+
+    .grid::-webkit-scrollbar-thumb {
+        background: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .grid::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary-blue);
+    }
+
+    #shareModal .grid {
+        max-height: 40vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        -ms-overflow-style: none;
+        padding-right: 10px;
+    }
+
+    #shareModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 5vh;
+        padding-bottom: 120px;
+    }
+
+    #shareModal .bg-[--color-bg--300] {
+        max-height: 70vh;
+        overflow: hidden;
+        width: 90%;
+        max-width: 900px;
+    }
+
+    .selected-ticker {
+        background-color: var(--color-primary-purple) !important;
+        color: white !important;
+        box-shadow: 0 0 10px var(--color-primary-purple);
+    }
+
+    .transition-colors {
+        transition: all 0.3s ease;
+    }
+
+    .selected-ticker {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(122, 11, 122, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(122, 11, 122, 0);
+        }
+    }
+
+    .ticker-cell {
+        min-width: 120px; 
+        max-width: 200px; 
+    }
+
+    .cb2.active {
+        background-color: var(--color-primary-purple);
+        color: white;
+    }
+    
+    .fixed.bottom-0 {
+        background-color: var(--color-bg--300);
+        box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5);
+        padding: 18px 0;
+        pointer-events: auto !important;
+        z-index: 200 !important; 
+    }
+    
+    .nav-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        min-width: 90px;
+        max-width: 90px;
+        min-height: 60px;
+        padding: 1.25rem 0;
+        font-size: 1rem;
+        margin: 0 3px;
+        text-align: center;
+        line-height: 1.2;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    @keyframes lavaLamp {
+        0% { background-position: 0% 100%; }
+        50% { background-position: 100% 0%; }
+        100% { background-position: 0% 100%; }
+    }
+    
+    .nav-button:hover {
+        transform: translateY(-3px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .nav-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
+    }
+    
+    .bubble {
+        position: absolute;
+        bottom: 0;
+        background-color: rgba(200, 0, 200, 0.6);
+        border-radius: 50%;
+        opacity: 1;
+    }
+    
+    @keyframes bubble {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .fixed.bottom-0 .container {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .nav-button {
+            min-width: 70px;
+            max-width: 70px;
+            min-height: 40px;
+            margin: 2px;
+            font-size: 0.75rem;
+            padding: 0.5rem 0;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .nav-button {
+            min-width: 60px;
+            max-width: 60px;
+            min-height: 36px;
+            font-size: 0.7rem;
+            padding: 0.45rem 0;
+        }
+    }
+
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .chart-screen-content {
+        margin-top: -9px;
+    }
+
+    #portfolioModal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 2vh;
+        padding-bottom: 100px;
+        max-height: calc(100vh - 100px);
+    }
+
+    #portfolioModal .bg-[--color-bg--300] {
+        max-height: calc(100vh - 150px);
+        overflow: auto;
+        width: 90%;
+        max-width: 900px;
+    }
+    
+    #portfolioModal .mt-6 {
+        margin-bottom: 15px;
+    }
+    
+    .portfolio-positions-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+        border: 1px solid var(--color-primary-purple);
+        border-radius: 4px;
+        display: block;
+        height: 150px !important;
+        overflow-y: scroll !important;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 4px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 4px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\] {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 3px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 3px;
+    }
+
+    .modal-button {
+        transition: all 0.3s ease;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
 </style>
 </body>
 <script>
