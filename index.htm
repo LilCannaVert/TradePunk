@@ -29,10 +29,41 @@
         display: block;
         filter: contrast(1.2) brightness(1.1);
     }
+    
+    .top-corner-button {
+        padding: 8px 15px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        display: inline-block;
+        text-align: center;
+        border: 2px solid;
+        z-index: 100;
+        position: relative;
+        font-size: 14px;
+        margin-top: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .left-button {
+        background-color: var(--color-primary-purple);
+        color: white;
+        margin-left: 10px;
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+    .right-button {
+        background-color: var(--color-primary-blue);
+        color: white;
+        margin-right: 10px;
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+    .top-corner-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
     </style>
 </head>
 <body>
-
     <div id="loadingScreen">
         <canvas id="matrixCanvas"></canvas>
     </div>
@@ -40,12 +71,24 @@
     <div id="app">
         <div class="relative p-2">
           <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
-            <div class="absolute top-0 left-0 ml-32">
-                <button @click="toggleMempoolScreen" class="news-button">
-                    Mempool
-                </button>
+            <div class="flex items-center absolute left-0 top-0 z-50">
+                <button 
+                @click="toggleMempoolModal" 
+                class="nav-button"
+            >
+                Mempool
+            </button>
             </div>
             
+            <div class="absolute top-0 right-0 z-50">
+                <button 
+                @click="toggleNewsScreen" 
+                class="nav-button"
+            >
+                News
+            </button>
+            </div>
+
             <Transition>
               <div v-if="!tickers[ticker]" class="flex flex-grow justify-center absolute w-full">
                 <span class="animate-pulse">
@@ -53,15 +96,9 @@
                 </span>
               </div>
             </Transition>
-
-            <div class="absolute top-0 right-0 mr-2">
-                <button @click="toggleNewsScreen" class="news-button">
-                  News
-                </button>
-            </div>
            
             <Transition>
-              <div v-if="tickers[ticker]" class="flex gap-1 flex-grow items-center justify-between delay-200 mx-20">
+              <div v-if="tickers[ticker]" class="flex gap-1 flex-grow items-center justify-between delay-200">
                 <div class="w-1/2">
                   <div class="flex gap-1">
                     <small>{{tickers[ticker]['pair']}}</small>
@@ -150,25 +187,25 @@
                     </div>
                   </div>
                 </div>
-              </div>
+            </div>
 
-              <div v-if="showChartModal" 
-                   id="chartModal" 
-                   class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-                   @click="handleChartModalClick">
+            <div v-if="showChartModal" 
+                id="chartModal" 
+                class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+                @click="handleChartModalClick">
                 <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
-                  <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center">
                     <h2 class="text-lg font-bold text-[--color-primary-silver]">Chart for {{ currentTicker }}</h2>
                     <button @click="toggleChartModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
-                  </div>
-                  
-                  <div class="mt-4 mb-4">
-                    <div class="cb relative" style="height: 500px; width: 100%;">
-                      <div :id="'chart_container_modal'" style="height: 100%; width: 100%;"></div>
-                    </div>
-                  </div>
+                </div>
 
-                  <div class="mt-4 flex flex-wrap gap-2">
+                <div class="mt-4 mb-4">
+                    <div class="cb relative" style="height: 500px; width: 100%;">
+                    <div :id="'chart_container_modal'" style="height: 100%; width: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex flex-wrap gap-2">
                     <button @click="setTimeframe('1m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1m</button>
                     <button @click="setTimeframe('5m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">5m</button>
                     <button @click="setTimeframe('15m')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">15m</button>
@@ -176,33 +213,32 @@
                     <button @click="setTimeframe('4h')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">4h</button>
                     <button @click="setTimeframe('1d')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1d</button>
                     <button @click="setTimeframe('1w')" class="bg-[--color-primary-blue] text-white px-3 py-1 rounded">1w</button>
-                  </div>
                 </div>
-              </div>
+                </div>
+            </div>
 
-              <div v-if="showChartScreen" class="chart-screen-overlay">
+            <div v-if="showChartScreen" class="chart-screen-overlay">
                 <div class="chart-screen-content">
-                  <div class="flex justify-between items-center mb-4">
+                <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-[--color-primary-silver]">{{ currentTicker }}</h2>
-                  </div>
-                  
-                  <div class="cb relative flex-grow" style="width: 100%;">
-                    <div id="chart_container_fullscreen" style="height: 100%; width: 100%;"></div>
-                  </div>
                 </div>
-              </div>
-    
-              <div v-if="showOrderBookModal" 
-                   id="orderBookModal" 
-                   class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-                   @click="handleOrderBookModalClick">
+                <div class="cb relative flex-grow" style="width: 100%;">
+                    <div id="chart_container_fullscreen" style="height: 100%; width: 100%;"></div>
+                </div>
+                </div>
+            </div>
+
+            <div v-if="showOrderBookModal" 
+                id="orderBookModal" 
+                class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+                @click="handleOrderBookModalClick">
                 <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
-                  <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center">
                     <h2 class="text-lg font-bold text-[--color-primary-silver]">Order Book for {{ currentTicker }}</h2>
                     <button @click="toggleOrderBookModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
-                  </div>
-                  
-                  <div class="mt-4 mb-4">
+                </div>
+
+                <div class="mt-4 mb-4">
                     <div class="form-group relative">
                         <div class="flex-grow relative">
                             <input
@@ -214,17 +250,17 @@
                                 placeholder="Search ticker..." />
                             
                             <div v-if="showOrderBookDropdown && filteredOrderBookCoins.length > 0" 
-                                 class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-48 overflow-y-auto">
                                 <div v-for="ticker in filteredOrderBookCoins" 
-                                     :key="ticker.symbol"
-                                     @click="selectOrderBookCoin(ticker)"
-                                     class="p-2 hover:bg-[--color-primary-purple] cursor-pointer text-sm">
+                                    :key="ticker.symbol"
+                                    @click="selectOrderBookCoin(ticker)"
+                                    class="p-2 hover:bg-[--color-primary-purple] cursor-pointer text-sm">
                                     {{ ticker.pair }} ({{ formatTickerPrice(ticker) }})
                                 </div>
                             </div>
                         </div>
                     </div>
-                  </div>
+                </div>
 
                   <div class="mt-4">
                     <div class="flex flex-col lg:flex-row gap-4">
@@ -327,10 +363,10 @@
             </div>
           </div>
 
-          <div v-if="showShareModal" 
-               id="shareModal" 
-               class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-               @click="handleShareModalClick">
+        <div v-if="showShareModal" 
+            id="shareModal" 
+            class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+            @click="handleShareModalClick">
             <div class="bg-[--color-bg--300] rounded-lg p-4 w-5/6 max-w-4xl" @click.stop>
                 <div class="flex justify-between items-center">
                     <h2 class="text-lg font-bold text-[--color-primary-silver]">Share Tickers</h2>
@@ -355,19 +391,19 @@
                     </div>
                     
                     <input v-model="tickerSearch" 
-                           ref="tickerSearchInput"
-                           placeholder="Search tickers..." 
-                           class="w-full p-2 mb-4 border rounded bg-[--color-bg--500] text-white">
+                        ref="tickerSearchInput"
+                        placeholder="Search tickers..." 
+                        class="w-full p-2 mb-4 border rounded bg-[--color-bg--500] text-white">
                     <div class="grid grid-cols-4 gap-2 max-h-[250px] overflow-y-auto overflow-x-hidden">
                         <div v-for="ticker in filteredShareTickers" 
-                             :key="ticker.symbol" 
-                             @click="toggleSelectedTicker(ticker.symbol)"
-                             :class="[
-                                 'p-2 rounded cursor-pointer transition-colors text-sm',
-                                 selectedTickers.includes(ticker.symbol) 
-                                     ? 'bg-[--color-primary-purple] text-white' 
-                                     : 'bg-[--color-bg--500] hover:bg-[--color-primary-purple] hover:bg-opacity-50'
-                             ]">
+                            :key="ticker.symbol" 
+                            @click="toggleSelectedTicker(ticker.symbol)"
+                            :class="[
+                                'p-2 rounded cursor-pointer transition-colors text-sm',
+                                selectedTickers.includes(ticker.symbol) 
+                                    ? 'bg-[--color-primary-purple] text-white' 
+                                    : 'bg-[--color-bg--500] hover:bg-[--color-primary-purple] hover:bg-opacity-50'
+                            ]">
                             <div class="text-xs font-bold">{{ ticker.pair }}</div>
                             <div :class="[
                                 ticker.style,
@@ -392,9 +428,9 @@
                     </button>
                 </div>
             </div>
-          </div>
+        </div>
 
-          <div v-if="showCalculator" id="calculatorModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div v-if="showCalculator" id="calculatorModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-sm mx-4" @click.stop>
                 <div class="flex justify-between items-center mb-2 sticky top-0 bg-[--color-bg--300] z-10">
                     <h2 class="text-base font-bold text-[--color-primary-silver]">Calculator</h2>
@@ -409,9 +445,9 @@
                     </calculator-component>
                 </div>
             </div>
-          </div>
+        </div>
 
-          <div v-if="showPortfolio" id="portfolioModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div v-if="showPortfolio" id="portfolioModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-xl mx-4" @click.stop>
                 <div class="flex justify-between items-center mb-2">
                     <h2 class="text-base font-bold text-[--color-primary-silver]">Portfolio</h2>
@@ -427,7 +463,7 @@
                         <div>
                             <div class="text-xs text-white">Current Value:</div>
                             <div class="text-base font-bold" 
-                                 :class="totalProfit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                                :class="totalProfit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
                                 ${{ currentValue.toFixed(2) }}
                                 <span class="text-xs ml-2">
                                     ({{ totalProfit >= 0 ? '+' : '' }}{{ totalProfitPercent.toFixed(2) }}%)
@@ -438,7 +474,7 @@
                     <div class="mt-2 text-center">
                         <div class="text-xs text-white">Total Profit/Loss:</div>
                         <div class="text-lg font-bold" 
-                             :class="totalProfit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                            :class="totalProfit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
                             {{ totalProfit >= 0 ? '+' : '' }}${{ totalProfit.toFixed(2) }}
                         </div>
                     </div>
@@ -457,11 +493,11 @@
                                 placeholder="Search coin..." />
                             
                             <div v-if="showPortfolioDropdown && filteredPortfolioCoins.length > 0" 
-                                 class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                                class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-36 overflow-y-auto">
                                 <div v-for="ticker in filteredPortfolioCoins" 
-                                     :key="ticker.symbol"
-                                     @click="selectPortfolioCoin(ticker)"
-                                     class="p-1 hover:bg-[--color-primary-purple] cursor-pointer text-xs">
+                                    :key="ticker.symbol"
+                                    @click="selectPortfolioCoin(ticker)"
+                                    class="p-1 hover:bg-[--color-primary-purple] cursor-pointer text-xs">
                                     {{ ticker.pair }} ({{ formatTickerPrice(ticker) }})
                                 </div>
                             </div>
@@ -499,8 +535,8 @@
                 <div class="bg-[--color-bg--500] rounded-lg p-3">
                     <div style="height: 150px; overflow-y: scroll; padding-right: 4px;" class="portfolio-positions-container">
                         <div v-for="(position, index) in portfolioPositions" 
-                             :key="index"
-                             class="bg-[--color-bg--300] p-2 rounded-lg mb-2">
+                            :key="index"
+                            class="bg-[--color-bg--300] p-2 rounded-lg mb-2">
                             <div class="flex justify-between items-center">
                                 <div class="flex-1">
                                     <div class="font-bold text-sm">{{ position.pair }}</div>
@@ -572,51 +608,196 @@
           </div>
         </div>
 
-        <div v-if="showMempoolScreen" class="news-screen-overlay">
-            <div class="news-screen-content">
-              <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-[--color-primary-silver]">Mempool Transactions</h2>
-                <button @click="toggleMempoolScreen" class="bg-red-500 text-white px-3 py-1 rounded">Close</button>
+        <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
+          <div class="container mx-auto flex justify-center">
+            <button v-if="!showChartScreen" @click="closeAllModals(); toggleChartScreen()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+              Chart
+            </button>
+            <button v-else @click="closeAllModals(); toggleChartScreen()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+              Tickers
+            </button>
+            <button @click="closeAllModals(); toggleOrderBookModal()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+              Order Book
+            </button>
+            <button @click="closeAllModals(); openShareModal()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+              Share
+            </button>
+            <button @click="closeAllModals(); toggleCalculator()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+              Calculator
+            </button>
+            <button @click="closeAllModals(); togglePortfolio()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
+              Portfolio
+            </button>
+          </div>
+        </div>
+
+        <div v-if="showMempoolModal" 
+             id="mempoolModal" 
+             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div class="bg-[--color-bg--300] rounded-lg p-4 max-h-[80vh] overflow-y-auto" style="width: 90%; max-width: 600px;" @click.stop>
+            <div class="flex justify-between items-center">
+              <h2 class="text-lg font-bold text-[--color-primary-silver]">Bitcoin Mempool</h2>
+              <button @click="toggleMempoolModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
+            </div>
+            
+            <div v-if="mempoolLoading" class="flex justify-center items-center p-10">
+              <svg class="animate-spin h-10 w-10 text-[--color-primary-yellow]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            
+            
+            <div v-else class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Latest Blocks</h3>
+                <div class="overflow-x-auto">
+                  <table class="w-full">
+                    <thead>
+                      <tr class="text-[--color-primary-silver] text-left">
+                        <th class="px-2 py-1">Height</th>
+                        <th class="px-2 py-1">Hash</th>
+                        <th class="px-2 py-1">Time</th>
+                        <th class="px-2 py-1">Size</th>
+                        <th class="px-2 py-1">Tx Count</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="block in mempoolData.blocks" :key="block.id" class="text-white hover:bg-[--color-bg--300]">
+                        <td class="px-2 py-1 font-mono">{{ block.height }}</td>
+                        <td class="px-2 py-1 font-mono text-xs truncate max-w-[120px]">{{ block.id }}</td>
+                        <td class="px-2 py-1">{{ formatTimeAgo(block.timestamp) }}</td>
+                        <td class="px-2 py-1">{{ formatBytes(block.size) }}</td>
+                        <td class="px-2 py-1">{{ block.tx_count }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
               
-              <div class="mb-6 overflow-x-auto">
-                <div class="flex space-x-2 min-w-max">
-                  <button class="bg-[--color-primary-purple] text-white py-2 px-4 rounded hover:bg-opacity-80">Hashrate</button>
-                  <button class="bg-[--color-primary-purple] text-white py-2 px-4 rounded hover:bg-opacity-80">Pools Rating</button>
-                  <button class="bg-[--color-primary-purple] text-white py-2 px-4 rounded hover:bg-opacity-80">Block Rewards</button>
-                  <button class="bg-[--color-primary-purple] text-white py-2 px-4 rounded hover:bg-opacity-80">Transaction Fees</button>
-                  <button class="bg-[--color-primary-purple] text-white py-2 px-4 rounded hover:bg-opacity-80">Lightning Network</button>
-                  <button class="bg-[--color-primary-purple] text-white py-2 px-4 rounded hover:bg-opacity-80">Lightning Map</button>
+              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Bitcoin Address Lookup</h3>
+                <div class="flex">
+                  <input 
+                    v-model="btcAddressInput" 
+                    type="text" 
+                    placeholder="Enter BTC address" 
+                    class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                  />
+                  <button 
+                    @click="lookupBtcAddress" 
+                    class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
+                    :disabled="addressLoading"
+                  >
+                    <span v-if="!addressLoading">Lookup</span>
+                    <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </button>
+                </div>
+                
+                <div v-if="addressData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="text-sm text-[--color-primary-silver]">Balance:</div>
+                    <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum - addressData.chain_stats?.spent_txo_sum) }} BTC</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Transactions:</div>
+                    <div class="text-sm font-mono text-white">{{ addressData.chain_stats?.tx_count || 0 }}</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Received:</div>
+                    <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum) }} BTC</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Spent:</div>
+                    <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.spent_txo_sum) }} BTC</div>
+                  </div>
+                </div>
+                
+                <div v-if="addressError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
+                  {{ addressError }}
                 </div>
               </div>
 
-              <div class="bg-[--color-bg--300] rounded-lg p-4">
-                <p class="text-center">Mempool data will be displayed here</p>
-                <!-- Здесь можно добавить таблицу или другую визуализацию данных мемпула -->
+              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Transaction Lookup</h3>
+                <div class="flex">
+                  <input 
+                    v-model="txIdInput" 
+                    type="text" 
+                    placeholder="Enter Transaction ID (TXID)" 
+                    class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                  />
+                  <button 
+                    @click="lookupBtcTransaction" 
+                    class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
+                    :disabled="txLoading"
+                  >
+                    <span v-if="!txLoading">Lookup</span>
+                    <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </button>
+                </div>
+                
+                <div v-if="txData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="text-sm text-[--color-primary-silver]">Transaction ID:</div>
+                    <div class="text-sm font-mono text-white truncate">{{ txData.txid }}</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Status:</div>
+                    <div class="text-sm font-mono text-white">
+                      <span v-if="txData.status && txData.status.confirmed" class="text-[--color-primary-green]">Confirmed</span>
+                      <span v-else class="text-[--color-primary--500]">Unconfirmed</span>
+                    </div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Block Height:</div>
+                    <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_height ? txData.status.block_height : 'Pending' }}</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Size:</div>
+                    <div class="text-sm font-mono text-white">{{ txData.size }} bytes</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Weight:</div>
+                    <div class="text-sm font-mono text-white">{{ txData.weight }} WU</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Fee:</div>
+                    <div class="text-sm font-mono text-white">{{ formatBtc(txData.fee) }} BTC</div>
+                    
+                    <div class="text-sm text-[--color-primary-silver]">Time:</div>
+                    <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_time ? new Date(txData.status.block_time * 1000).toLocaleString() : 'Pending' }}</div>
+                  </div>
+                  
+                  <div class="mt-3">
+                    <div class="text-sm text-[--color-primary-silver] mb-1">Inputs:</div>
+                    <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
+                      <div v-for="(vin, index) in txData.vin.slice(0, 3)" :key="index" class="mb-1">
+                        <span class="text-[--color-primary-green]">{{ formatBtc(vin.prevout ? vin.prevout.value : 0) }} BTC</span> 
+                        <span class="text-[--color-primary-silver]">from</span> 
+                        <span class="text-white truncate">{{ vin.prevout ? vin.prevout.scriptpubkey_address : 'Unknown' }}</span>
+                      </div>
+                      <div v-if="txData.vin.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vin.length - 3 }} more inputs</div>
+                    </div>
+                  </div>
+                  
+                  <div class="mt-3">
+                    <div class="text-sm text-[--color-primary-silver] mb-1">Outputs:</div>
+                    <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
+                      <div v-for="(vout, index) in txData.vout.slice(0, 3)" :key="index" class="mb-1">
+                        <span class="text-[--color-primary--500]">{{ formatBtc(vout.value) }} BTC</span> 
+                        <span class="text-[--color-primary-silver]">to</span> 
+                        <span class="text-white truncate">{{ vout.scriptpubkey_address || 'Unknown' }}</span>
+                      </div>
+                      <div v-if="txData.vout.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vout.length - 3 }} more outputs</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div v-if="txError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
+                  {{ txError }}
+                </div>
               </div>
             </div>
-          </div>
-
-        <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
-          <div class="container mx-auto flex justify-center">
-            <button v-if="!showChartScreen" @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-              Chart
-            </button>
-            <button v-else @click="toggleChartScreen" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-              Tickers
-            </button>
-            <button @click="toggleOrderBookModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-              Order Book
-            </button>
-            <button @click="openShareModal" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-              Share
-            </button>
-            <button @click="toggleCalculator" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-              Calculator
-            </button>
-            <button @click="togglePortfolio" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-              Portfolio
-            </button>
           </div>
         </div>
 
@@ -781,7 +962,7 @@
     const animationId = requestAnimationFrame(draw);
     
     window.addEventListener('load', function() {
-
+        
         setTimeout(() => {
             const loadingScreen = document.getElementById('loadingScreen');
             if (loadingScreen) {
@@ -822,11 +1003,11 @@
                         
                         <!-- Dropdown for filtered results -->
                         <div v-if="showDropdown && filteredCoins.length > 0" 
-                             class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                            class="absolute z-50 w-full mt-1 bg-[--color-bg--300] rounded-lg shadow-lg max-h-48 overflow-y-auto">
                             <div v-for="ticker in filteredCoins" 
-                                 :key="ticker.symbol"
-                                 @click="selectCoin(ticker)"
-                                 class="p-2 hover:bg-[--color-primary-purple] cursor-pointer text-sm">
+                                :key="ticker.symbol"
+                                @click="selectCoin(ticker)"
+                                class="p-2 hover:bg-[--color-primary-purple] cursor-pointer text-sm">
                                 {{ ticker.pair }} ({{ formatPrice(ticker.close) }})
                             </div>
                         </div>
@@ -944,7 +1125,7 @@
                         const symbol = ticker.symbol.toLowerCase();
                         const pair = ticker.pair.toLowerCase();
                         return (symbol.includes(query) || pair.includes(query)) && 
-                               ticker.symbol.endsWith('USDT');
+                            ticker.symbol.endsWith('USDT');
                     })
                     .slice(0, 5) 
                     .sort((a, b) => {
@@ -958,8 +1139,8 @@
             },
             hasValidInputs() {
                 return this.settings.investment > 0 && 
-                       this.settings.initialPrice > 0 && 
-                       this.settings.projectedPrice > 0;
+                    this.settings.initialPrice > 0 && 
+                    this.settings.projectedPrice > 0;
             },
             totalCoins() {
                 return this.settings.investment / this.settings.initialPrice;
@@ -1039,7 +1220,6 @@
                 bids: [],
                 maxAsk: 0,
                 bgImageUrl: null,
-                showMempoolScreen: false,
                 showSettings: false,
                 showLatestTrades: true,
                 inputSearch: '',
@@ -1121,20 +1301,27 @@
                 newsItems: [],
                 newsPage: 1,
                 newsLoading: false,
+                
+                showMempoolModal: false,
+                mempoolLoading: false,
+                mempoolData: {
+                    difficultyAdjustment: null,
+                    prices: null,
+                    blocks: [],
+                    miningPools: []
+                },
+                miningPoolsPeriod: '1w',
+                btcAddressInput: '',
+                addressData: null,
+                addressLoading: false,
+                addressError: null,
+                txIdInput: '',
+                txLoading: false,
+                txData: null,
+                txError: null,
             }
         },
         methods: {
-
-            toggleMempoolScreen() {
-                if (!this.showMempoolScreen) {
-                    this.closeAllModals();
-                    this.showMempoolScreen = true;
-     
-                } else {
-                    this.showMempoolScreen = false;
-                }
-            },
-
             toggleSettings() {
                 this.showSettings = !this.showSettings;
             },
@@ -1163,13 +1350,13 @@
             sockMessage(e) {
                 let data = JSON.parse(e.data);
                 if (Array.isArray(data)) {
-
+                    
                     console.log(`Received ${data.length} ticker updates`);
                     
                     let updatedCount = 0;
                     
                     data.forEach(ticker => {
-
+                        
                         if (ticker.s === 'BTCUSDT' || ticker.s === 'ETHUSDT') {
                             console.log(`${ticker.s} price: ${ticker.c}`);
                         }
@@ -1338,7 +1525,6 @@
             toggleOrderBookModal() {
 
                 if (!this.showOrderBookModal) {
-
                     this.closeAllModals();
                     
                     this.showOrderBookModal = true;
@@ -1351,7 +1537,6 @@
                         }, 0);
                     }
                 } else {
-
                     this.showOrderBookModal = false;
                     document.body.classList.remove('no-scroll');
                 }
@@ -1416,10 +1601,9 @@
             formatTickerPrice(ticker) {
                 let price;
                 if (ticker.symbol.endsWith('USDT')) {
-
+                    
                     price = parseFloat(ticker.close).toFixed(4);
                 } else {
-
                     price = ticker.close;
                 }
                 
@@ -1455,7 +1639,7 @@
                 this.toggleShareModal();
             },
             handleShareModalClick(event) {
-              
+
                 if (this.$refs.tickerSearchInput) {
                     this.$refs.tickerSearchInput.blur();
                 }
@@ -1492,9 +1676,9 @@
                 }
             },
             toggleCalculator() {
-
+                
                 if (!this.showCalculator) {
-
+                    
                     this.closeAllModals();
                     
                     this.showCalculator = true;
@@ -1523,7 +1707,7 @@
                         const symbol = ticker.symbol.toLowerCase();
                         const pair = ticker.pair.toLowerCase();
                         return (symbol.includes(query) || pair.includes(query)) && 
-                               ticker.symbol.endsWith('USDT');
+                            ticker.symbol.endsWith('USDT');
                     })
                     .slice(0, 5)
                     .sort((a, b) => {
@@ -1551,9 +1735,8 @@
                 }
             },
             togglePortfolio() {
-
                 if (!this.showPortfolio) {
-
+                    
                     this.closeAllModals();
                     
                     this.showPortfolio = true;
@@ -1566,7 +1749,6 @@
                         }, 0);
                     }
                 } else {
-
                     this.showPortfolio = false;
                     document.body.style.overflow = 'auto';
                 }
@@ -1578,7 +1760,7 @@
                         const symbol = ticker.symbol.toLowerCase();
                         const pair = ticker.pair.toLowerCase();
                         return (symbol.includes(query) || pair.includes(query)) && 
-                               ticker.symbol.endsWith('USDT');
+                            ticker.symbol.endsWith('USDT');
                     })
                     .slice(0, 5)
                     .sort((a, b) => {
@@ -1834,7 +2016,6 @@
             },
 
             toggleChartScreen() {
-
                 this.closeAllModals();
                 
                 this.showChartScreen = !this.showChartScreen;
@@ -1849,7 +2030,6 @@
             
             updateModalZIndexes(isChartOpen) {
                 setTimeout(() => {
-
                     if (this.showOrderBookModal) {
                         const orderBookModal = document.getElementById('orderBookModal');
                         if (orderBookModal) {
@@ -1933,22 +2113,24 @@
             },
 
             closeAllModals() {
+                if (this.showMempoolModal) {
+                    this.closeMempoolModal();
+                }
+                
                 this.showChartModal = false;
                 this.showOrderBookModal = false;
                 this.showShareModal = false;
                 this.showCalculator = false;
                 this.showPortfolio = false;
                 this.showNewsScreen = false;
-                this.showMempoolScreen = false; 
                 document.body.style.overflow = 'auto';
             },
             formatDisplayPrice(ticker) {
                 let price;
                 if (ticker.symbol.endsWith('USDT')) {
-
                     price = parseFloat(ticker.close).toFixed(4);
                 } else {
-
+                    
                     price = ticker.close;
                 }
                 
@@ -1959,9 +2141,9 @@
                 return price;
             },
             toggleNewsScreen() {
-
+                
                 if (!this.showNewsScreen) {
-
+                    
                     this.closeAllModals();
                     
                     this.showNewsScreen = true;
@@ -1971,7 +2153,6 @@
                         this.loadNews();
                     }
                 } else {
-
                     this.showNewsScreen = false;
                 }
             },
@@ -1988,9 +2169,8 @@
                     if (this.newsPage === 1) {
                         apiUrl += '&sortOrder=latest';
                     } 
-
                     else if (this.newsItems.length > 0) {
-
+                        
                         const oldestItem = [...this.newsItems].sort((a, b) => a.published_on - b.published_on)[0];
                         
                         apiUrl += `&sortOrder=latest&toTs=${oldestItem.published_on - 1}`;
@@ -2014,10 +2194,10 @@
                         if (this.newsPage === 1) {
                             this.newsItems = data.Data;
                         } 
-
+                        
                         else {
-
                             const existingIds = new Set(this.newsItems.map(item => item.id));
+                            
                             
                             const newItems = data.Data.filter(item => !existingIds.has(item.id));
                             console.log(`Found ${newItems.length} new unique articles`);
@@ -2064,6 +2244,240 @@
                     
                 } catch (error) {
                     return "No date";
+                }
+            },
+            
+            toggleMempoolModal() {
+                
+                if (!this.showMempoolModal) {
+                    
+                    this.closeAllModals();
+                    
+                    this.showMempoolModal = true;
+                    document.body.style.overflow = 'hidden';
+                    
+                    this.fetchMempoolData();
+                    
+                    if (this.showChartScreen) {
+                        setTimeout(() => {
+                            const mempoolModal = document.getElementById('mempoolModal');
+                            if (mempoolModal) mempoolModal.classList.add('modal-on-chart');
+                        }, 0);
+                    }
+                    
+                    const navButtons = document.querySelectorAll('.nav-button');
+                    navButtons.forEach(button => {
+                        button.addEventListener('click', this.closeMempoolOnNavClick);
+                    });
+                } else {
+                    
+                    this.closeMempoolModal();
+                }
+            },
+            
+            closeMempoolModal() {
+                this.showMempoolModal = false;
+                document.body.style.overflow = 'auto';
+                
+                // Remove event listeners
+                const navButtons = document.querySelectorAll('.nav-button');
+                navButtons.forEach(button => {
+                    button.removeEventListener('click', this.closeMempoolOnNavClick);
+                });
+            },
+            
+            closeMempoolOnNavClick() {
+                if (this.showMempoolModal) {
+                    this.closeMempoolModal();
+                }
+            },
+            
+            async fetchMempoolData() {
+                this.mempoolLoading = true;
+                
+                try {
+                    // Fetch difficulty adjustment
+                    const difficultyResponse = await fetch('https://mempool.space/api/v1/difficulty-adjustment');
+                    if (!difficultyResponse.ok) {
+                        throw new Error(`HTTP error! status: ${difficultyResponse.status}`);
+                    }
+                    const difficultyData = await difficultyResponse.json();
+                    this.mempoolData.difficultyAdjustment = difficultyData;
+                    console.log('Difficulty data loaded:', difficultyData);
+                    
+                    // Fetch prices
+                    const pricesResponse = await fetch('https://mempool.space/api/v1/prices');
+                    if (!pricesResponse.ok) {
+                        throw new Error(`HTTP error! status: ${pricesResponse.status}`);
+                    }
+                    const pricesData = await pricesResponse.json();
+                    this.mempoolData.prices = pricesData;
+                    console.log('Prices data loaded:', pricesData);
+                    
+                    // Fetch blocks
+                    const blocksResponse = await fetch('https://mempool.space/api/v1/blocks');
+                    if (!blocksResponse.ok) {
+                        throw new Error(`HTTP error! status: ${blocksResponse.status}`);
+                    }
+                    const blocksData = await blocksResponse.json();
+                    this.mempoolData.blocks = blocksData.slice(0, 5); // Get only the 5 latest blocks
+                    console.log('Blocks data loaded:', blocksData.slice(0, 5));
+                    
+                    // Fetch mining pools
+                    await this.fetchMiningPools();
+                } catch (error) {
+                    console.error('Error fetching mempool data:', error);
+                } finally {
+                    this.mempoolLoading = false;
+                }
+            },
+            
+            async fetchMiningPools() {
+                try {
+                    const poolsResponse = await fetch(`https://mempool.space/api/v1/mining/pools/${this.miningPoolsPeriod}`);
+                    if (!poolsResponse.ok) {
+                        throw new Error(`HTTP error! status: ${poolsResponse.status}`);
+                    }
+                    const poolsData = await poolsResponse.json();
+                    
+                    if (Array.isArray(poolsData)) {
+                        this.mempoolData.miningPools = poolsData
+                            .sort((a, b) => b.blockCount - a.blockCount) // Sort by block count descending
+                            .map(pool => ({
+                                ...pool,
+                                share: pool.blockCount / poolsData.reduce((sum, p) => sum + p.blockCount, 0)
+                            }));
+                        console.log('Mining pools data loaded:', this.mempoolData.miningPools.slice(0, 3)); // Log first 3 for debugging
+                    } else {
+                        console.error('Mining pools data is not an array:', poolsData);
+                        this.mempoolData.miningPools = [];
+                    }
+                } catch (error) {
+                    console.error('Error fetching mining pools:', error);
+                    this.mempoolData.miningPools = [];
+                }
+            },
+
+            changeMiningPoolsPeriod(period) {
+                this.miningPoolsPeriod = period;
+                this.fetchMiningPools();
+            },
+
+            formatHashrate(hashrate) {
+                if (!hashrate) return 'N/A';
+                
+                const units = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s', 'PH/s', 'EH/s'];
+                let unitIndex = 0;
+                
+                while (hashrate >= 1000 && unitIndex < units.length - 1) {
+                    hashrate /= 1000;
+                    unitIndex++;
+                }
+                
+                return `${hashrate.toFixed(2)} ${units[unitIndex]}`;
+            },
+
+            getPoolColor(index) {
+                // Generate colors for mining pools
+                const colors = [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                    '#FF9F40', '#8AC054', '#4D5360', '#E7E9ED', '#F7464A'
+                ];
+                return colors[index % colors.length];
+            },
+            
+            async lookupBtcAddress() {
+                if (!this.btcAddressInput || this.btcAddressInput.trim() === '') {
+                    this.addressError = 'Please enter a Bitcoin address';
+                    return;
+                }
+                
+                this.addressLoading = true;
+                this.addressError = null;
+                this.addressData = null;
+                
+                try {
+                    // Fetch address data
+                    const addressResponse = await fetch(`https://mempool.space/api/address/${this.btcAddressInput.trim()}`);
+                    console.log('Address lookup response status:', addressResponse.status);
+                    
+                    if (!addressResponse.ok) {
+                        throw new Error(`HTTP error! status: ${addressResponse.status}`);
+                    }
+                    
+                    const addressData = await addressResponse.json();
+                    console.log('Address data loaded:', addressData);
+                    this.addressData = addressData;
+                } catch (error) {
+                    console.error('Error looking up address:', error);
+                    this.addressError = 'Error looking up address: ' + error.message;
+                } finally {
+                    this.addressLoading = false;
+                }
+            },
+            
+            formatTimeAgo(timestamp) {
+                if (!timestamp) return 'N/A';
+                
+                const now = Date.now();
+                const date = new Date(timestamp * 1000);
+                const diff = Math.floor((now - date) / 1000);
+                
+                if (diff < 60) return `${diff} seconds ago`;
+                if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+                if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+                return `${Math.floor(diff / 86400)} days ago`;
+            },
+            
+            formatBytes(bytes) {
+                if (!bytes) return 'N/A';
+                
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+            },
+            
+            formatBtc(satoshis) {
+                if (satoshis === undefined || satoshis === null) return '0';
+                return (satoshis / 100000000).toFixed(8);
+            },
+            
+            formatPercentage(value) {
+                if (value === undefined || value === null) return 'N/A';
+                return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
+            },
+            
+            getDifficultyClass(value) {
+                if (value === undefined || value === null) return '';
+                return value > 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]';
+            },
+            async lookupBtcTransaction() {
+                if (!this.txIdInput || this.txIdInput.trim() === '') {
+                    this.txError = 'Please enter a Transaction ID';
+                    return;
+                }
+                
+                this.txLoading = true;
+                this.txError = null;
+                this.txData = null;
+                
+                try {
+                    // Fetch transaction data
+                    const txResponse = await fetch(`https://mempool.space/api/tx/${this.txIdInput.trim()}`);
+                    console.log('Transaction lookup response status:', txResponse.status);
+                    
+                    if (!txResponse.ok) {
+                        throw new Error(`HTTP error! status: ${txResponse.status}`);
+                    }
+                    
+                    const txData = await txResponse.json();
+                    console.log('Transaction data loaded:', txData);
+                    this.txData = txData;
+                } catch (error) {
+                    console.error('Error looking up transaction:', error);
+                    this.txError = 'Error looking up transaction: ' + error.message;
+                } finally {
+                    this.txLoading = false;
                 }
             },
         },
@@ -2304,11 +2718,11 @@
         background: transparent;
         width: 5px;
     }
-     
+
     .overflow-y-scroll::-webkit-scrollbar-thumb {
         background-color: var(--color-primary--500);
     }
-      
+
     .v-enter-active,
     .v-leave-active {
         opacity: 0;  
