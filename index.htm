@@ -647,35 +647,8 @@
               </svg>
             </div>
             
-            
             <div v-else class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
-                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Latest Blocks</h3>
-                <div class="overflow-x-auto">
-                  <table class="w-full">
-                    <thead>
-                      <tr class="text-[--color-primary-silver] text-left">
-                        <th class="px-2 py-1">Height</th>
-                        <th class="px-2 py-1">Hash</th>
-                        <th class="px-2 py-1">Time</th>
-                        <th class="px-2 py-1">Size</th>
-                        <th class="px-2 py-1">Tx Count</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="block in mempoolData.blocks" :key="block.id" class="text-white hover:bg-[--color-bg--300]">
-                        <td class="px-2 py-1 font-mono">{{ block.height }}</td>
-                        <td class="px-2 py-1 font-mono text-xs truncate max-w-[120px]">{{ block.id }}</td>
-                        <td class="px-2 py-1">{{ formatTimeAgo(block.timestamp) }}</td>
-                        <td class="px-2 py-1">{{ formatBytes(block.size) }}</td>
-                        <td class="px-2 py-1">{{ block.tx_count }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
               <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
                 <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Bitcoin Address Lookup</h3>
                 <div class="flex">
@@ -796,6 +769,31 @@
                 <div v-if="txError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
                   {{ txError }}
                 </div>
+                <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                    <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Latest Blocks</h3>
+                    <div class="overflow-x-auto">
+                      <table class="w-full">
+                        <thead>
+                          <tr class="text-[--color-primary-silver] text-left">
+                            <th class="px-2 py-1">Height</th>
+                            <th class="px-2 py-1">Hash</th>
+                            <th class="px-2 py-1">Time</th>
+                            <th class="px-2 py-1">Size</th>
+                            <th class="px-2 py-1">Tx Count</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="block in mempoolData.blocks" :key="block.id" class="text-white hover:bg-[--color-bg--300]">
+                            <td class="px-2 py-1 font-mono">{{ block.height }}</td>
+                            <td class="px-2 py-1 font-mono text-xs truncate max-w-[120px]">{{ block.id }}</td>
+                            <td class="px-2 py-1">{{ formatTimeAgo(block.timestamp) }}</td>
+                            <td class="px-2 py-1">{{ formatBytes(block.size) }}</td>
+                            <td class="px-2 py-1">{{ block.tx_count }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
               </div>
             </div>
           </div>
@@ -2279,7 +2277,6 @@
                 this.showMempoolModal = false;
                 document.body.style.overflow = 'auto';
                 
-                // Remove event listeners
                 const navButtons = document.querySelectorAll('.nav-button');
                 navButtons.forEach(button => {
                     button.removeEventListener('click', this.closeMempoolOnNavClick);
