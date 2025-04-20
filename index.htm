@@ -70,7 +70,7 @@
     
     <div id="app">
         <div class="relative p-2">
-          <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
+        <header class="flex relative h-10 gap-2 items-center justify-between px-1 text-sm lg:text-xl">
             <div class="flex items-center absolute left-0 top-0 z-50">
                 <button 
                 @click="toggleMempoolModal" 
@@ -90,62 +90,62 @@
             </div>
 
             <Transition>
-              <div v-if="!tickers[ticker]" class="flex flex-grow justify-center absolute w-full">
+            <div v-if="!tickers[ticker]" class="flex flex-grow justify-center absolute w-full">
                 <span class="animate-pulse">
-                  {{statusMsg}}
+                {{statusMsg}}
                 </span>
-              </div>
+            </div>
             </Transition>
-           
+
             <Transition>
-              <div v-if="tickers[ticker]" class="flex gap-1 flex-grow items-center justify-between delay-200">
+            <div v-if="tickers[ticker]" class="flex gap-1 flex-grow items-center justify-between delay-200">
                 <div class="w-1/2">
-                  <div class="flex gap-1">
+                <div class="flex gap-1">
                     <small>{{tickers[ticker]['pair']}}</small>
                     <span :class="tickers[ticker]['style']">
-                      <span class="mr-1">{{tickers[ticker]['arrow']}}</span>
-                      <span>{{tickers[ticker]['percent'].toFixed(2)}}%</span>
+                    <span class="mr-1">{{tickers[ticker]['arrow']}}</span>
+                    <span>{{tickers[ticker]['percent'].toFixed(2)}}%</span>
                     </span>
-                  </div>
-                  <div>
+                </div>
+                <div>
                     <span :class="tickers[ticker]['style']">{{parseNumber(tickers[ticker]['close'], tickers[ticker]['asset'])}}</span>
-                  </div>
+                </div>
                 </div>
                 <div class="w-1/2">
-                  <small class="block">24H Highest</small>
-                  <span>{{parseNumber(tickers[ticker]['high'], tickers[ticker]['asset'])}}</span>
+                <small class="block">24H Highest</small>
+                <span>{{parseNumber(tickers[ticker]['high'], tickers[ticker]['asset'])}}</span>
                 </div>
                 <div class="w-1/2">
-                  <small class="block">24H Lowest</small>
-                  <span>{{parseNumber(tickers[ticker]['low'], tickers[ticker]['asset'])}}</span>
+                <small class="block">24H Lowest</small>
+                <span>{{parseNumber(tickers[ticker]['low'], tickers[ticker]['asset'])}}</span>
                 </div>
                 <div class="w-1/2 hidden">
-                  <small class="block">24H Volume</small>
-                  <span>{{parseNumber(tickers[ticker]['tokenVolume'], tickers[ticker]['token'])}} {{tickers[ticker]['token']}}</span>
+                <small class="block">24H Volume</small>
+                <span>{{parseNumber(tickers[ticker]['tokenVolume'], tickers[ticker]['token'])}} {{tickers[ticker]['token']}}</span>
                 </div>
                 <div class="w-1/2 hidden">
-                  <small class="block">24H Value</small>
-                  <span>{{parseNumber(tickers[ticker]['assetVolume'], tickers[ticker]['asset'])}} {{tickers[ticker]['asset']}}</span>
+                <small class="block">24H Value</small>
+                <span>{{parseNumber(tickers[ticker]['assetVolume'], tickers[ticker]['asset'])}} {{tickers[ticker]['asset']}}</span>
                 </div>
-              </div>
+            </div>
             </Transition>
-          </header>
+        </header>
             <div class="delimiter my-2"></div>
-          
-          <section class="mb-2">
+
+        <section class="mb-2">
             <div class="flex gap-2 flex-col lg:flex-row">
-              <div class="tickers w-full max-w-[500px] mx-auto"> 
+            <div class="tickers w-full max-w-[500px] mx-auto"> 
                 <div class="mb-1">
-                  <div class="flex items-center">
+                <div class="flex items-center">
                     <h2 class="text-glow font-bold text-xl ml-2"></h2>
-                  </div>
-                  <div class="delimiter2 my-2"></div>
-                  <div class="cb flex items-center" style="max-height: 80px;">
+                </div>
+                <div class="delimiter2 my-2"></div>
+                <div class="cb flex items-center" style="max-height: 80px;">
                     <div class="h-5 w-5 ml-3 mr-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.172 24l-7.387-7.387c-1.388.874-3.024 1.387-4.785 1.387-4.971 0-9-4.029-9-9s4.029-9 9-9 9 4.029 9 9c0 1.761-.514 3.398-1.387 4.785l7.387 7.387-2.828 2.828zm-12.172-8c3.859 0 7-3.14 7-7s-3.141-7-7-7-7 3.14-7 7 3.141 7 7 7z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.172 24l-7.387-7.387c-1.388.874-3.024 1.387-4.785 1.387-4.971 0-9-4.029-9-9s4.029-9 9-9 9 4.029 9 9c0 1.761-.514 3.398-1.387 4.785l7.387 7.387-2.828 2.828zm-12.172-8c3.859 0 7-3.14 7-7s-3.141-7-7-7-7 3.14-7 7 3.141 7 7 7z"></path></svg>
                     </div>
                     <input v-model="inputSearch" ref="searchInput" class="w-full h-8 bg-transparent focus:outline-none" name="query" placeholder="Search..." type="text" @keypress="handleKeyPress">
-                  </div>
+                </div>
                 </div>
                 <div class="mb-1">
                     <ul class="flex gap-2 justify-between h-8 flex-wrap"> 
@@ -158,34 +158,34 @@
                     </ul>
                 </div>
                 <div class="cb pr-4 pb-4">
-                  <div class="header flex items-center h-8 px-2 cursor-pointer">
+                <div class="header flex items-center h-8 px-2 cursor-pointer">
                     <div @click="sortBy('token', 'desc')" :class="[sort === 'token' ? 'font-bold' : '']" class="w-1/4">Pair</div>
                     <div @click="sortBy('close', 'desc')" :class="[sort === 'close' ? 'font-bold' : '']" class="w-1/4 text-center">Price</div>
                     <div @click="sortBy('percent', 'desc')" :class="[sort === 'percent' ? 'font-bold' : '']" class="w-1/4 text-end pr-2">Change%</div>
                     <div @click="sortBy('assetVolume', 'desc')" :class="[sort === 'assetVolume' ? 'font-bold' : 'font-normal']" class="w-1/4 text-end pl-2 pr-8">Volume</div>
-                  </div>
-      
-                  <div class="body h-[490px] relative overflow-y-scroll px-2">
+                </div>
+
+                <div class="body h-[490px] relative overflow-y-scroll px-2">
                     <div v-if="Object.keys(tickers).length < 200" class="h-full flex items-center justify-center">
-                      <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="var(--color-primary-yellow)" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                    </svg>
                     </div>
                     <div v-else>
-                      <div v-for="ticker in filterTickers" :key="ticker.symbol" class="flex hover:bg-[#eab30840] cursor-pointer" style="font-family: 'Roboto Mono', monospace;">
+                    <div v-for="ticker in filterTickers" :key="ticker.symbol" class="flex hover:bg-[#eab30840] cursor-pointer" style="font-family: 'Roboto Mono', monospace;">
                         <div @click="changeTicker(ticker.symbol)" class="w-1/4 dotdotdot silver">{{ticker.pair}}</div>
                         <div @click="changeTicker(ticker.symbol)" :class="ticker.style" class="w-1/4 dotdotdot text-end">{{formatDisplayPrice(ticker)}}</div>
                         <div @click="changeTicker(ticker.symbol)" :class="ticker.style" class="w-1/4 dotdotdot text-center">{{ticker.arrow}} {{ticker.percent.toFixed(2)}}</div>
                         <div class="w-1/4 dotdotdot silver text-end flex gap-2 justify-end">
-                          <span @click="changeTicker(ticker.symbol)" class="text-sm">{{ticker.assetVolume}}</span>
-                          <span @click="setFavorite(ticker.symbol)">
+                        <span @click="changeTicker(ticker.symbol)" class="text-sm">{{ticker.assetVolume}}</span>
+                        <span @click="setFavorite(ticker.symbol)">
                             <svg :class="favorites.includes(ticker.symbol) ? 'fill-[--color-primary-yellow]' : 'fill-gray-400'" class="hover:fill-[--color-primary-yellow]" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279-7.416-3.967-7.417 3.967 1.481-8.279-6.064-5.828 8.332-1.151z"/></svg>
-                          </span>
+                        </span>
                         </div>
-                      </div>
                     </div>
-                  </div>
+                    </div>
+                </div>
                 </div>
             </div>
 
@@ -262,106 +262,105 @@
                     </div>
                 </div>
 
-                  <div class="mt-4">
+                <div class="mt-4">
                     <div class="flex flex-col lg:flex-row gap-4">
-                      
-                      <div class="cb pr-4 pb-0 flex-1 overflow-hidden">
+
+                    <div class="cb pr-4 pb-0 flex-1 overflow-hidden">
                         <h3 class="text-glow font-bold text-lg">Order Book Sale</h3>
                         <div class="flex gap-2 items-center h-8 px-2">
-                          <div class="flex flex-1 text-[--color-primary-green]">
+                        <div class="flex flex-1 text-[--color-primary-green]">
                             <div class="w-1/3">Total</div>
                             <div class="w-1/3 text-center">Size</div>
                             <div class="w-1/3 text-end">Price</div>
-                          </div>
+                        </div>
                         </div>
                         <div class="relative overflow-y-scroll px-2 h-[150px]">
-                          <div class="flex gap-2 flex-row">
+                        <div class="flex gap-2 flex-row">
                             <div class="flex-1">
                               <div v-for="order in asks" :key="order[0]" class="flex gap-2" :style="`background: linear-gradient(to right, #ff000030 0 ${(order[2] / maxAsk) * 100}%, #ffffff00 ${(order[2] / maxAsk) * 100}% 100%)`">
                                 <div class="w-1/3 flex-1 text-left">{{ parseNumber((order[0] * order[1]), asset) }}</div>
                                 <div class="w-1/3 flex-1 text-center text-[--color-primary-silver]">{{ parseFloat(order[1]).toFixed(4) }}</div>
                                 <div class="w-1/3 flex-1 text-end text-[--color-primary-silver]">{{ parseFloat(order[0]).toFixed(2) }}</div>
-                              </div>
                             </div>
-                          </div>
+                            </div>
                         </div>
-                      </div>
+                        </div>
+                    </div>
 
-                      
-                      <div class="cb pr-4 pb-0 flex-1 overflow-hidden">
+                    <div class="cb pr-4 pb-0 flex-1 overflow-hidden">
                         <h3 class="text-glow font-bold text-lg">Order Book Buy</h3>
                         <div class="flex gap-2 items-center h-8 px-2">
-                          <div class="flex flex-1 text-[--color-primary-green]">
+                        <div class="flex flex-1 text-[--color-primary-green]">
                             <div class="w-1/3">Total</div>
                             <div class="w-1/3 text-center">Size</div>
                             <div class="w-1/3 text-end">Price</div>
-                          </div>
+                        </div>
                         </div>
                         <div class="relative overflow-y-scroll px-2 h-[150px]">
-                          <div class="flex gap-2 flex-row">
+                        <div class="flex gap-2 flex-row">
                             <div class="flex-1">
                               <div v-for="order in bids" :key="order[0]" class="flex gap-2" :style="`background: linear-gradient(to left, #00ff0030 0 ${(order[2] / maxAsk) * 100}%, #ffffff00 ${(order[2] / maxAsk) * 100}% 100%)`">
                                 <div class="w-1/3 flex-1 text-[--color-primary-silver]">{{parseNumber((order[0] * order[1]), asset)}}</div>
                                 <div class="w-1/3 flex-1 text-center text-[--color-primary-silver]">{{parseFloat((order[1]))}}</div>
                                 <div class="w-1/3 flex-1 text-end text-[--color-primary-green]">{{parseFloat(order[0])}}</div>
-                              </div>
                             </div>
-                          </div>
+                            </div>
                         </div>
-                      </div>
+                        </div>
                     </div>
-                  </div>
+                    </div>
                 </div>
-              </div>
+                </div>
             </div>
-          </section>
+            </div>
+        </section>
 
-          <div v-if="showSettings" id="staticModal" class="bg-[#00000080] fixed flex items-center justify-center top-0 left-0 right-0 z-50 w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div v-if="showSettings" id="staticModal" class="bg-[#00000080] fixed flex items-center justify-center top-0 left-0 right-0 z-50 w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
 
             <div class="relative w-full max-w-2xl max-h-full">
-              <div class="relative">
+            <div class="relative">
                 <div class="flex">
-                  <div class="cb-left mr-[1px]">
+                <div class="cb-left mr-[1px]">
                     <div></div>
-                  </div>
-                  <div class="cb !bg-[--color-primary-black] px-6 py-2 w-full">
+                </div>
+                <div class="cb !bg-[--color-primary-black] px-6 py-2 w-full">
                     <p class="uppercase text-xl border-b-[1px] border-[#441618] pb-1 mb-2">Settings</p>
                     <p class="uppercase text-xl text-[--color-primary-blue]">Enable trading</p>
                     <p class="mb-2">Toggle ON or OFF the ability to trade on this terminal.</p>
                     <label class="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" value="" class="sr-only peer">
-                      <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                      <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Enable trading</span>
+                    <input type="checkbox" value="" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Enable trading</span>
                     </label>
                     <p class="uppercase text-xl text-[--color-primary-blue]">API KEY</p>
                     <p class="mb-2">Enter your API KEY from Exchange Test and allow IP address <span class="text-[--color-primary-yellow]">127.0.0.1</span>.</p>
                     <div class="cb w-96">
-                      <input class="h-10 w-full px-4 bg-transparent focus:outline-none" placeholder="Do not enter any live API KEY!">
+                    <input class="h-10 w-full px-4 bg-transparent focus:outline-none" placeholder="Do not enter any live API KEY!">
                     </div>
-                  </div>
+                </div>
                 </div>
                 
                 <div class="mt-10 flex gap-1 justify-center">
-                  <div class="cb-style3">
+                <div class="cb-style3">
                     <div data-modal-hide="staticModal" type="button" class="relative flex gap-2 items-center justify-center">
-                      <span class="bg-[--color-primary-blue] rounded-full w-5 h-5 block border-1 border-[--color-primary-black]">
+                    <span class="bg-[--color-primary-blue] rounded-full w-5 h-5 block border-1 border-[--color-primary-black]">
                         <svg class="scale-75 fill-[--color-primary-black]" clip-rule="evenodd" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m9.831 16.198.002-.003-1.113-.996-.004.004-2.468-2.202c-.144-.128-.322-.191-.5-.191-.417 0-.749.337-.749.75 0 .206.084.412.249.56l2.478 2.21-.767.873-4.71-4.202c-.144-.128-.322-.191-.5-.191-.416 0-.749.337-.749.75 0 .206.084.412.25.56l5.268 4.7c.143.128.321.191.499.191.206 0 .41-.084.559-.25l1.264-1.437 1.677 1.496c.143.128.321.191.499.191.206 0 .409-.084.558-.25l11.234-12.499c.129-.143.192-.322.192-.501 0-.419-.338-.75-.748-.75-.206 0-.411.084-.559.249l-10.735 11.943zm-.451-1.75 1.114.996 8.316-9.182c.128-.143.191-.322.191-.501 0-.419-.337-.75-.748-.75-.206 0-.411.084-.559.249z" fill-rule="nonzero"/></svg>
-                      </span>
-                      <span class="font-semibold">Confirm</span>
+                    </span>
+                    <span class="font-semibold">Confirm</span>
                     </div>
-                  </div>
-                  <div @click="toggleSettings" class="cb-style3">
-                    <div data-modal-hide="staticModal" type="button" class="relative flex gap-2 items-center justify-center">
-                      <span class="bg-[--color-primary-blue] rounded-full w-5 h-5 block border-1 border-[--color-primary-black] flex items-center justify-center">
-                        <svg class="fill-[--color-primary-black]" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24"><path d="M24 3.752l-4.423-3.752-7.771 9.039-7.647-9.008-4.159 4.278c2.285 2.885 5.284 5.903 8.362 8.708l-8.165 9.447 1.343 1.487c1.978-1.335 5.981-4.373 10.205-7.958 4.304 3.67 8.306 6.663 10.229 8.006l1.449-1.278-8.254-9.724c3.287-2.973 6.584-6.354 8.831-9.245z"/></svg>
-                      </span>
-                      <span class="font-semibold">Cancel</span>
-                    </div>
-                  </div>
                 </div>
-              </div>
+                <div @click="toggleSettings" class="cb-style3">
+                    <div data-modal-hide="staticModal" type="button" class="relative flex gap-2 items-center justify-center">
+                    <span class="bg-[--color-primary-blue] rounded-full w-5 h-5 block border-1 border-[--color-primary-black] flex items-center justify-center">
+                        <svg class="fill-[--color-primary-black]" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24"><path d="M24 3.752l-4.423-3.752-7.771 9.039-7.647-9.008-4.159 4.278c2.285 2.885 5.284 5.903 8.362 8.708l-8.165 9.447 1.343 1.487c1.978-1.335 5.981-4.373 10.205-7.958 4.304 3.67 8.306 6.663 10.229 8.006l1.449-1.278-8.254-9.724c3.287-2.973 6.584-6.354 8.831-9.245z"/></svg>
+                    </span>
+                    <span class="font-semibold">Cancel</span>
+                    </div>
+                </div>
+                </div>
             </div>
-          </div>
+            </div>
+        </div>
 
         <div v-if="showShareModal" 
             id="shareModal" 
@@ -562,117 +561,117 @@
                     </div>
                 </div>
             </div>
-          </div>
-          
-          <div v-if="showNewsScreen" class="news-screen-overlay">
+        </div>
+
+        <div v-if="showNewsScreen" class="news-screen-overlay">
             <div class="news-screen-content">
-              <div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-[--color-primary-silver]">Crypto News</h2>
                 <button @click="toggleNewsScreen" class="bg-red-500 text-white px-3 py-1 rounded">Close</button>
-              </div>
-              
-              <div v-if="newsItems.length === 0" class="flex justify-center items-center h-[200px]">
+            </div>
+
+            <div v-if="newsItems.length === 0" class="flex justify-center items-center h-[200px]">
                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="var(--color-primary-yellow)" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="var(--color-primary-yellow)" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 <span>Loading news...</span>
-              </div>
-              
-              <div v-else>
+            </div>
+
+            <div v-else>
                 <div v-for="(item, index) in newsItems" :key="index" class="news-item">
-                  <div class="news-item-title">{{ item.title }}</div>
-                  <div class="news-item-source">{{ item.source }}</div>
-                  <div class="news-item-content">{{ item.summary }}</div>
-                  <div class="news-item-footer">
+                <div class="news-item-title">{{ item.title }}</div>
+                <div class="news-item-source">{{ item.source }}</div>
+                <div class="news-item-content">{{ item.summary }}</div>
+                <div class="news-item-footer">
                     <a :href="item.url" target="_blank" class="news-item-link">Read more</a>
                     <span class="news-item-date" v-if="item.published_on">{{ formatNewsDate(item.published_on) }}</span>
                     <span class="news-item-date" v-else>New</span>
-                  </div>
                 </div>
-              </div>
-              
-              <div v-if="newsItems.length > 0" class="flex justify-center mt-4 mb-4">
+                </div>
+            </div>
+
+            <div v-if="newsItems.length > 0" class="flex justify-center mt-4 mb-4">
                 <button @click="loadMoreNews" class="load-more-news-button" :disabled="newsLoading">
-                  <span v-if="!newsLoading">Load More</span>
-                  <span v-else class="flex items-center justify-center">
+                <span v-if="!newsLoading">Load More</span>
+                <span v-else class="flex items-center justify-center">
                     <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     Loading...
-                  </span>
+                </span>
                 </button>
-              </div>
             </div>
-          </div>
+            </div>
+        </div>
         </div>
 
         <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
-          <div class="container mx-auto flex justify-center">
+        <div class="container mx-auto flex justify-center">
             <button v-if="!showChartScreen" @click="closeAllModals(); toggleChartScreen()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-              Chart
+            Chart
             </button>
             <button v-else @click="closeAllModals(); toggleChartScreen()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-              Tickers
+            Tickers
             </button>
             <button @click="closeAllModals(); toggleOrderBookModal()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-              Order Book
+            Order Book
             </button>
             <button @click="closeAllModals(); openShareModal()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-              Share
+            Share
             </button>
             <button @click="closeAllModals(); toggleCalculator()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-              Calculator
+            Calculator
             </button>
             <button @click="closeAllModals(); togglePortfolio()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
-              Portfolio
+            Portfolio
             </button>
-          </div>
+        </div>
         </div>
 
         <div v-if="showMempoolModal" 
-             id="mempoolModal" 
-             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div class="bg-[--color-bg--300] rounded-lg p-4 max-h-[80vh] overflow-y-auto" style="width: 90%; max-width: 600px;" @click.stop>
+            id="mempoolModal" 
+            class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div class="bg-[--color-bg--300] rounded-lg p-4 max-h-[80vh] overflow-y-auto" style="width: 90%; max-width: 600px;" @click.stop>
             <div class="flex justify-between items-center">
-              <h2 class="text-lg font-bold text-[--color-primary-silver]">Bitcoin Mempool</h2>
-              <button @click="toggleMempoolModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
+            <h2 class="text-lg font-bold text-[--color-primary-silver]">Bitcoin Mempool</h2>
+            <button @click="toggleMempoolModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
             </div>
             
             <div v-if="mempoolLoading" class="flex justify-center items-center p-10">
-              <svg class="animate-spin h-10 w-10 text-[--color-primary-yellow]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin h-10 w-10 text-[--color-primary-yellow]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+            </svg>
             </div>
             
             <div v-else class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+            <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
                 <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Bitcoin Address Lookup</h3>
                 <div class="flex">
-                  <input 
+                <input 
                     v-model="btcAddressInput" 
                     type="text" 
                     placeholder="Enter BTC address" 
                     class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
-                  />
-                  <button 
+                />
+                <button 
                     @click="lookupBtcAddress" 
                     class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
                     :disabled="addressLoading"
-                  >
+                >
                     <span v-if="!addressLoading">Lookup</span>
                     <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                  </button>
+                </button>
                 </div>
                 
                 <div v-if="addressData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
-                  <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-2">
                     <div class="text-sm text-[--color-primary-silver]">Balance:</div>
                     <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum - addressData.chain_stats?.spent_txo_sum) }} BTC</div>
                     
@@ -684,45 +683,45 @@
                     
                     <div class="text-sm text-[--color-primary-silver]">Spent:</div>
                     <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.spent_txo_sum) }} BTC</div>
-                  </div>
+                </div>
                 </div>
                 
                 <div v-if="addressError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
-                  {{ addressError }}
+                {{ addressError }}
                 </div>
-              </div>
+            </div>
 
-              <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+            <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
                 <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Transaction Lookup</h3>
                 <div class="flex">
-                  <input 
+                <input 
                     v-model="txIdInput" 
                     type="text" 
                     placeholder="Enter Transaction ID (TXID)" 
                     class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
-                  />
-                  <button 
+                />
+                <button 
                     @click="lookupBtcTransaction" 
                     class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
                     :disabled="txLoading"
-                  >
+                >
                     <span v-if="!txLoading">Lookup</span>
                     <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                  </button>
+                </button>
                 </div>
                 
                 <div v-if="txData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
-                  <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-2">
                     <div class="text-sm text-[--color-primary-silver]">Transaction ID:</div>
                     <div class="text-sm font-mono text-white truncate">{{ txData.txid }}</div>
                     
                     <div class="text-sm text-[--color-primary-silver]">Status:</div>
                     <div class="text-sm font-mono text-white">
-                      <span v-if="txData.status && txData.status.confirmed" class="text-[--color-primary-green]">Confirmed</span>
-                      <span v-else class="text-[--color-primary--500]">Unconfirmed</span>
+                    <span v-if="txData.status && txData.status.confirmed" class="text-[--color-primary-green]">Confirmed</span>
+                    <span v-else class="text-[--color-primary--500]">Unconfirmed</span>
                     </div>
                     
                     <div class="text-sm text-[--color-primary-silver]">Block Height:</div>
@@ -739,64 +738,77 @@
                     
                     <div class="text-sm text-[--color-primary-silver]">Time:</div>
                     <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_time ? new Date(txData.status.block_time * 1000).toLocaleString() : 'Pending' }}</div>
-                  </div>
-                  
-                  <div class="mt-3">
+                </div>
+
+                <div class="mt-3">
                     <div class="text-sm text-[--color-primary-silver] mb-1">Inputs:</div>
                     <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
-                      <div v-for="(vin, index) in txData.vin.slice(0, 3)" :key="index" class="mb-1">
+                    <div v-for="(vin, index) in txData.vin.slice(0, 3)" :key="index" class="mb-1">
                         <span class="text-[--color-primary-green]">{{ formatBtc(vin.prevout ? vin.prevout.value : 0) }} BTC</span> 
                         <span class="text-[--color-primary-silver]">from</span> 
                         <span class="text-white truncate">{{ vin.prevout ? vin.prevout.scriptpubkey_address : 'Unknown' }}</span>
-                      </div>
-                      <div v-if="txData.vin.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vin.length - 3 }} more inputs</div>
                     </div>
-                  </div>
-                  
-                  <div class="mt-3">
+                    <div v-if="txData.vin.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vin.length - 3 }} more inputs</div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
                     <div class="text-sm text-[--color-primary-silver] mb-1">Outputs:</div>
                     <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
-                      <div v-for="(vout, index) in txData.vout.slice(0, 3)" :key="index" class="mb-1">
+                    <div v-for="(vout, index) in txData.vout.slice(0, 3)" :key="index" class="mb-1">
                         <span class="text-[--color-primary--500]">{{ formatBtc(vout.value) }} BTC</span> 
                         <span class="text-[--color-primary-silver]">to</span> 
                         <span class="text-white truncate">{{ vout.scriptpubkey_address || 'Unknown' }}</span>
-                      </div>
-                      <div v-if="txData.vout.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vout.length - 3 }} more outputs</div>
                     </div>
-                  </div>
+                    <div v-if="txData.vout.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vout.length - 3 }} more outputs</div>
+                    </div>
+                </div>
                 </div>
                 
                 <div v-if="txError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
-                  {{ txError }}
+                {{ txError }}
+                </div>
+                
+                <!-- Current Hashrate Section -->
+                <div class="bg-[--color-bg--500] rounded-lg p-4">
+                    <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Current Hashrate</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="text-sm text-[--color-primary-silver]">Current Hashrate:</div>
+                        <div class="text-sm font-mono text-white">{{ hashrateData.currentHashrate }}</div>
+                        <!-- <div class="text-sm text-[--color-primary-silver]">Average Hashrate:</div>
+                        <div class="text-sm font-mono text-white">{{ hashrateData.averageHashrate }}</div>  Removed Average Hashrate -->
+                        <div class="text-sm text-[--color-primary-silver]">Current Difficulty:</div>
+                        <div class="text-sm font-mono text-white">{{ hashrateData.currentDifficulty }}</div>
+                    </div>
                 </div>
                 <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
                     <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Latest Blocks</h3>
                     <div class="overflow-x-auto">
-                      <table class="w-full">
+                        <table class="w-full latest-blocks-table">
                         <thead>
-                          <tr class="text-[--color-primary-silver] text-left">
+                        <tr class="text-[--color-primary-silver] text-left">
                             <th class="px-2 py-1">Height</th>
-                            <th class="px-2 py-1">Hash</th>
+                            <!-- <th class="px-2 py-1">Hash</th> --> <!-- Removed Hash column -->
                             <th class="px-2 py-1">Time</th>
                             <th class="px-2 py-1">Size</th>
                             <th class="px-2 py-1">Tx Count</th>
-                          </tr>
+                        </tr>
                         </thead>
                         <tbody>
-                          <tr v-for="block in mempoolData.blocks" :key="block.id" class="text-white hover:bg-[--color-bg--300]">
+                        <tr v-for="block in mempoolData.blocks" :key="block.id" class="text-white hover:bg-[--color-bg--300]">
                             <td class="px-2 py-1 font-mono">{{ block.height }}</td>
-                            <td class="px-2 py-1 font-mono text-xs truncate max-w-[120px]">{{ block.id }}</td>
+                            <!--<td class="px-2 py-1 font-mono text-xs truncate max-w-[120px]">{{ block.id }}</td> --> <!-- Removed Hash column -->
                             <td class="px-2 py-1">{{ formatTimeAgo(block.timestamp) }}</td>
                             <td class="px-2 py-1">{{ formatBytes(block.size) }}</td>
                             <td class="px-2 py-1">{{ block.tx_count }}</td>
-                          </tr>
+                        </tr>
                         </tbody>
-                      </table>
+                    </table>
                     </div>
-                  </div>
-              </div>
+                </div>
             </div>
-          </div>
+            </div>
+        </div>
         </div>
 
         <div class="pb-40"></div>
@@ -1317,6 +1329,13 @@
                 txLoading: false,
                 txData: null,
                 txError: null,
+
+                hashrateData: {
+                    currentHashrate: 'N/A',
+                    averageHashrate: 'N/A',
+                    currentDifficulty: 'N/A'
+                },
+                mempoolLoading: false
             }
         },
         methods: {
@@ -2322,6 +2341,24 @@
                     
                     // Fetch mining pools
                     await this.fetchMiningPools();
+
+                    const hashrateResponse = await fetch('https://mempool.space/api/v1/mining/hashrate/1m');
+                    if (!hashrateResponse.ok) {
+                        throw new Error(`HTTP error! status: ${hashrateResponse.status}`);
+                    }
+                    const hashrateData = await hashrateResponse.json();
+                    console.log('Hashrate data loaded:', hashrateData);
+
+                    // Process hashrate data
+                    const currentHashrateEH = (hashrateData.currentHashrate / 1e18).toFixed(2);
+                    const avgHashrateEH = (hashrateData.averageHashrate / 1e18).toFixed(2);
+                    const difficultyT = (hashrateData.currentDifficulty / 1e12).toFixed(2);
+
+                    this.hashrateData = {
+                        currentHashrate: `${currentHashrateEH} EH/s`,
+                        averageHashrate: `${avgHashrateEH} EH/s`,
+                        currentDifficulty: `${difficultyT} T`
+                    };
                 } catch (error) {
                     console.error('Error fetching mempool data:', error);
                 } finally {
@@ -2344,7 +2381,7 @@
                                 ...pool,
                                 share: pool.blockCount / poolsData.reduce((sum, p) => sum + p.blockCount, 0)
                             }));
-                        console.log('Mining pools data loaded:', this.mempoolData.miningPools.slice(0, 3)); // Log first 3 for debugging
+                        console.log('Mining pools data loaded:', this.mempoolData.miningPools.slice(0, 3)); 
                     } else {
                         console.error('Mining pools data is not an array:', poolsData);
                         this.mempoolData.miningPools = [];
@@ -3210,6 +3247,22 @@
         transform: translateY(0);
         box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
     }
+
+    .latest-blocks-table td,
+    .latest-blocks-table th {
+        font-size: 0.9rem; /* Размер по умолчанию */
+        padding: 0.5rem; /* Уменьшенные отступы */
+    }
+
+     /* Для мобильных устройств */
+    @media (max-width: 768px) {
+        .latest-blocks-table td,
+        .latest-blocks-table th {
+            font-size: 0.75rem; /* Меньший размер шрифта */
+            padding: 0.3rem; /* Уменьшенные отступы */
+        }
+    }
+
 </style>
 </body>
 <script>
