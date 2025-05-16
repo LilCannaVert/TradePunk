@@ -181,7 +181,7 @@
                     <div v-for="ticker in filterTickers" :key="ticker.symbol" class="flex hover:bg-[#eab30840] cursor-pointer" style="font-family: 'Roboto Mono', monospace;">
                         <div @click="changeTicker(ticker.symbol)" class="w-1/4 dotdotdot silver">{{ticker.pair}}</div>
                         <div @click="changeTicker(ticker.symbol)" :class="ticker.style" class="w-1/4 dotdotdot text-end">{{formatDisplayPrice(ticker)}}</div>
-                        <div @click="changeTicker(ticker.symbol)" :class="ticker.style" class="w-1/5 dotdotdot text-center">{{ticker.arrow}} {{ticker.percent.toFixed(2)}}</div>
+                        <div @click="changeTicker(ticker.symbol)" :class="ticker.style" class="w-1/5 dotdotdot text-center">{{ticker.arrow}} {{Math.abs(ticker.percent).toFixed(2)}}</div>
                         <div class="w-[30%] dotdotdot silver text-end flex gap-2 justify-end">
                         <span @click="changeTicker(ticker.symbol)" class="text-sm whitespace-nowrap">{{ticker.assetVolume}}</span>
                         <span @click="setFavorite(ticker.symbol)">
@@ -1651,16 +1651,18 @@
                 }
             },
             formatTickerPrice(ticker) {
+                const specialPriceTokens = ['PEPE', 'BONK', 'SHIB', '1000SATS', 'BTTC'];
+                const twoDecimalTokens = ['BTC', 'ETH', 'SOL', 'TRUMP', 'AVAX', 'TAO', 'PAXG', 'BCH', 'WBTC', 'ETC', 'ENS', 'INJ', 'MKR', 'LINK', 'COMP', 'QNT', 'EGLD', 'TRB', 'BNB', 'YFI', 'KSM', 'TAO', 'WBETH', 'DASH', 'GMX', 'ALCX', 'GNO', 'BIFI', 'EGLD', 'TRB', 'METIS', 'AUCTION', 'BANANA', 'ZEC', 'DEXE', 'ILV', 'BAR', 'BNSOL', 'ALCX', 'DCR', 'FARM'];
+            
                 let price;
-                if (ticker.symbol.endsWith('USDT')) {
-                    
-                    price = parseFloat(ticker.close).toFixed(4);
-                } else {
-                    price = ticker.close;
-                }
+                const token = ticker.symbol.split('USDT')[0];
                 
-                if (ticker.symbol === 'BTCUSDT' || ticker.symbol === 'ETHUSDT') {
-                    console.log(`Formatted price for ${ticker.symbol}: ${price} (original: ${ticker.close})`);
+                if (specialPriceTokens.includes(token)) {
+                    price = parseFloat(ticker.close).toFixed(5);
+                } else if (twoDecimalTokens.includes(token)) {
+                    price = parseFloat(ticker.close).toFixed(2);
+                } else {
+                    price = parseFloat(ticker.close).toFixed(4);
                 }
                 
                 return price;
@@ -2168,16 +2170,18 @@
                 document.body.style.overflow = 'auto';
             },
             formatDisplayPrice(ticker) {
+                const specialPriceTokens = ['PEPE', 'BONK', 'SHIB', '1000SATS', 'BTTC'];
+                const twoDecimalTokens = ['BTC', 'ETH', 'SOL', 'TRUMP', 'AVAX', 'TAO', 'PAXG', 'BCH', 'WBTC', 'ETC', 'ENS', 'INJ', 'MKR', 'LINK', 'COMP', 'QNT', 'EGLD', 'TRB', 'BNB', 'YFI', 'KSM', 'TAO', 'WBETH', 'DASH', 'GMX', 'ALCX', 'GNO', 'BIFI', 'EGLD', 'TRB', 'METIS', 'AUCTION', 'BANANA', 'ZEC', 'DEXE', 'ILV', 'BAR', 'BNSOL', 'ALCX', 'DCR', 'FARM'];
+            
                 let price;
-                if (ticker.symbol.endsWith('USDT')) {
-                    price = parseFloat(ticker.close).toFixed(4);
-                } else {
-                    
-                    price = ticker.close;
-                }
+                const token = ticker.symbol.split('USDT')[0];
                 
-                if (ticker.symbol === 'BTCUSDT' || ticker.symbol === 'ETHUSDT') {
-                    console.log(`Formatted display price for ${ticker.symbol}: ${price} (original: ${ticker.close})`);
+                if (specialPriceTokens.includes(token)) {
+                    price = parseFloat(ticker.close).toFixed(5);
+                } else if (twoDecimalTokens.includes(token)) {
+                    price = parseFloat(ticker.close).toFixed(2);
+                } else {
+                    price = parseFloat(ticker.close).toFixed(4);
                 }
                 
                 return price;
