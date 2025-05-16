@@ -2572,10 +2572,7 @@
                     if (!this.selectedNewsCategory) return true;
                     return item.categories && item.categories.toLowerCase().includes(this.selectedNewsCategory.toLowerCase());
                 }).sort((a, b) => {
-                    // Сначала избранные новости
-                    if (this.favoriteNews.includes(a.id) && !this.favoriteNews.includes(b.id)) return -1;
-                    if (!this.favoriteNews.includes(a.id) && this.favoriteNews.includes(b.id)) return 1;
-                    // Затем по дате публикации (новые сверху)
+                    // Сортировка только по дате публикации (новые сверху)
                     return b.published_on - a.published_on;
                 });
             },
@@ -2815,10 +2812,7 @@
                     if (!this.selectedNewsCategory) return true;
                     return item.categories && item.categories.toLowerCase().includes(this.selectedNewsCategory.toLowerCase());
                 }).sort((a, b) => {
-                    // Сначала избранные новости
-                    if (this.favoriteNews.includes(a.id) && !this.favoriteNews.includes(b.id)) return -1;
-                    if (!this.favoriteNews.includes(a.id) && this.favoriteNews.includes(b.id)) return 1;
-                    // Затем по дате публикации (новые сверху)
+                    // Сортировка только по дате публикации (новые сверху)
                     return b.published_on - a.published_on;
                 });
             },
