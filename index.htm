@@ -11,7 +11,12 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         // Инициализация Telegram WebApp
-        window.Telegram.WebApp.ready();
+        if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.ready();
+            console.log('Telegram WebApp is ready.');
+        } else {
+            console.log('Telegram WebApp not available.');
+        }
     </script>
     
     <style id="loadingScreenStyles">
@@ -2763,18 +2768,33 @@
             },
         },
         mounted() {
+            console.log('App mounted.');
+            // Инициализация сокета
             this.sockInit();
-            this.appendScript(this.initWidget);
+            
+            // Загрузка скрипта TradingView и инициализация виджета после загрузки
+            console.log('Appending TradingView script.');
+            this.appendScript(() => {
+                console.log('TradingView script loaded. Initializing widget.');
+                // Устанавливаем currentTimeframe из загруженных настроек перед инициализацией виджета
+                this.currentTimeframe = this.chartSettings.interval;
+                this.initWidget();
+                
+                // Если полноэкранный график активен при загрузке (например, из сохраненного состояния)
+                // Инициализируем его тоже после загрузки скрипта
+                if (this.showChartScreen) {
+                    this.$nextTick(() => {
+                         console.log('showChartScreen is true, initializing fullscreen chart.');
+                         this.initFullscreenChart();
+                    });
+                }
+            });
+            
+            // Подготовка стакана
             this.prepareOrderBook();
             
-            // Устанавливаем currentTimeframe из загруженных настроек
-            this.currentTimeframe = this.chartSettings.interval;
-            
-            this.initWidget(); 
-            this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
-            
+            // Загрузка состояния портфолио
             this.loadState();
-            
             setTimeout(() => {
                 if (this.portfolioPositions.length === 0) {
                     console.log('Trying to load portfolio state again after delay');
@@ -2782,28 +2802,34 @@
                 }
             }, 2000);
 
+            // Обновление портфолио по таймеру
             setInterval(() => {
                 if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
                     this.updatePortfolioTotals();
                 }
             }, 1000);
 
+            // Обработка кликов вне инпута поиска
             window.addEventListener('click', this.handleClick);
 
+            // Загрузка настроек калькулятора
             const savedSettings = localStorage.getItem('calcSettings');
             if (savedSettings) {
                 this.calcSettings = JSON.parse(savedSettings);
             }
             
-            axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
-                this.coins = response.data.data.coins;
-            });
-
-            // Инициализируем Telegram WebApp при монтировании компонента
-            if (window.Telegram?.WebApp) {
-                this.tg = window.Telegram.WebApp;
-                console.log('Telegram WebApp initialized:', this.tg);
+            // Загрузка списка монет для калькулятора
+            // Убедитесь, что axios подключен (в данном файле его нет, возможно он глобально доступен или нужно добавить скрипт)
+            if (typeof axios !== 'undefined') {
+                axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
+                    this.coins = response.data.data.coins;
+                });
+            } else {
+                console.error('Axios is not defined. Cannot fetch coins for calculator.');
             }
+            
+            // Инициализация Telegram WebApp перенесена в отдельный скрипт выше
+
         },
         beforeUnmount() {
             this.sockClose();
