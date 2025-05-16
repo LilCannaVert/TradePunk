@@ -9,6 +9,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;200;300;400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        // Инициализация Telegram WebApp
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Telegram?.WebApp) {
+                console.log('Telegram WebApp available on page load');
+                window.Telegram.WebApp.ready();
+            } else {
+                console.log('Telegram WebApp not available on page load');
+            }
+        });
+    </script>
     
     <style id="loadingScreenStyles">
     #loadingScreen {
@@ -589,16 +600,6 @@
                         <div class="relative">
                             <img :src="item.imageurl" :alt="item.title" 
                                 class="w-full h-48 object-cover rounded-lg mb-4">
-                            <button @click="toggleFavoriteNews(item.id)"
-                                class="absolute top-2 right-2 p-2 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70">
-                                <svg :class="favoriteNews.includes(item.id) ? 'text-yellow-400' : 'text-white'" 
-                                    xmlns="http://www.w3.org/2000/svg" 
-                                    class="h-6 w-6" 
-                                    fill="currentColor" 
-                                    viewBox="0 0 24 24">
-                                    <path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279-7.416-3.967-7.417 3.967 1.481-8.279-6.064-5.828 8.332-1.151z"/>
-                                </svg>
-                            </button>
                         </div>
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-sm text-[--color-primary-yellow]">{{item.categories}}</span>
@@ -1263,7 +1264,6 @@
                 newsPage: 1,
                 noMoreNews: false,
                 selectedNewsCategory: '',
-                favoriteNews: JSON.parse(localStorage.getItem('favoriteNews')) || [],
                 
                 // Добавляем переменные для калькулятора
                 calcSettings: {
@@ -1372,7 +1372,7 @@
                     bing: ''
                 },
                 showApiSettings: false,
-                tg: window.Telegram.WebApp,
+                tg: window.Telegram?.WebApp || null,
             }
         },
         methods: {
@@ -2559,15 +2559,6 @@
                     this.txLoading = false;
                 }
             },
-            toggleFavoriteNews(id) {
-                const index = this.favoriteNews.indexOf(id);
-                if (index === -1) {
-                    this.favoriteNews.push(id);
-                } else {
-                    this.favoriteNews.splice(index, 1);
-                }
-                localStorage.setItem('favoriteNews', JSON.stringify(this.favoriteNews));
-            },
             filteredNewsItems() {
                 if (!this.newsItems || !Array.isArray(this.newsItems)) {
                     console.log('newsItems is not an array:', this.newsItems);
@@ -2735,10 +2726,18 @@
                 return intervalMap[timeframe] || '60'; // По умолчанию 1h
             },
             openInTelegramWebApp(url) {
-                if (this.tg && this.tg.openLink) {
+                console.log('Opening URL in Telegram WebApp:', url);
+                console.log('Telegram WebApp object:', this.tg);
+                
+                // Проверяем наличие объекта Telegram WebApp
+                if (window.Telegram?.WebApp) {
+                    console.log('Using window.Telegram.WebApp');
+                    window.Telegram.WebApp.openLink(url);
+                } else if (this.tg) {
+                    console.log('Using this.tg');
                     this.tg.openLink(url);
                 } else {
-                    // Fallback для случаев, когда приложение открыто не в Telegram
+                    console.log('Telegram WebApp not available, opening in new tab');
                     window.open(url, '_blank');
                 }
             },
@@ -2775,6 +2774,12 @@
             axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
                 this.coins = response.data.data.coins;
             });
+
+            // Инициализируем Telegram WebApp при монтировании компонента
+            if (window.Telegram?.WebApp) {
+                this.tg = window.Telegram.WebApp;
+                console.log('Telegram WebApp initialized:', this.tg);
+            }
         },
         beforeUnmount() {
             this.sockClose();
