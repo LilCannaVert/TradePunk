@@ -166,8 +166,8 @@
                 <div class="header flex items-center h-8 px-2 cursor-pointer">
                     <div @click="sortBy('token', 'desc')" :class="[sort === 'token' ? 'font-bold' : '']" class="w-1/4">Pair</div>
                     <div @click="sortBy('close', 'desc')" :class="[sort === 'close' ? 'font-bold' : '']" class="w-1/4 text-center">Price</div>
-                    <div @click="sortBy('percent', 'desc')" :class="[sort === 'percent' ? 'font-bold' : '']" class="w-1/4 text-end pr-2">Change%</div>
-                    <div @click="sortBy('assetVolume', 'desc')" :class="[sort === 'assetVolume' ? 'font-bold' : 'font-normal']" class="w-1/4 text-end pl-2 pr-8">Volume</div>
+                    <div @click="sortBy('percent', 'desc')" :class="[sort === 'percent' ? 'font-bold' : '']" class="w-1/5 text-end pr-2">Change%</div>
+                    <div @click="sortBy('assetVolume', 'desc')" :class="[sort === 'assetVolume' ? 'font-bold' : 'font-normal']" class="w-[30%] text-end pl-2">Volume</div>
                 </div>
 
                 <div class="body h-[490px] relative overflow-y-scroll px-2">
@@ -181,9 +181,9 @@
                     <div v-for="ticker in filterTickers" :key="ticker.symbol" class="flex hover:bg-[#eab30840] cursor-pointer" style="font-family: 'Roboto Mono', monospace;">
                         <div @click="changeTicker(ticker.symbol)" class="w-1/4 dotdotdot silver">{{ticker.pair}}</div>
                         <div @click="changeTicker(ticker.symbol)" :class="ticker.style" class="w-1/4 dotdotdot text-end">{{formatDisplayPrice(ticker)}}</div>
-                        <div @click="changeTicker(ticker.symbol)" :class="ticker.style" class="w-1/4 dotdotdot text-center">{{ticker.arrow}} {{ticker.percent.toFixed(2)}}</div>
-                        <div class="w-1/4 dotdotdot silver text-end flex gap-2 justify-end">
-                        <span @click="changeTicker(ticker.symbol)" class="text-sm">{{ticker.assetVolume}}</span>
+                        <div @click="changeTicker(ticker.symbol)" :class="ticker.style" class="w-1/5 dotdotdot text-center">{{ticker.arrow}} {{ticker.percent.toFixed(2)}}</div>
+                        <div class="w-[30%] dotdotdot silver text-end flex gap-2 justify-end">
+                        <span @click="changeTicker(ticker.symbol)" class="text-sm whitespace-nowrap">{{ticker.assetVolume}}</span>
                         <span @click="setFavorite(ticker.symbol)">
                             <svg :class="favorites.includes(ticker.symbol) ? 'fill-[--color-primary-yellow]' : 'fill-gray-400'" class="hover:fill-[--color-primary-yellow]" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279-7.416-3.967-7.417 3.967 1.481-8.279-6.064-5.828 8.332-1.151z"/></svg>
                         </span>
