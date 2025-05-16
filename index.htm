@@ -84,6 +84,32 @@
             </button>
             </div>
             
+            <!-- Кнопка Contact и выпадающее меню -->
+            <div class="flex items-center absolute top-0 left-1/2 transform -translate-x-1/2 z-50">
+                <button 
+                    @click="toggleContactDropdown" 
+                    class="nav-button header-button"
+                >
+                    Contact
+                </button>
+                <div v-if="showContactDropdown" 
+                     class="absolute top-full mt-2 w-40 bg-[--color-bg--300] rounded-lg shadow-lg overflow-hidden z-50"
+                     @click.stop>
+                    <button 
+                        @click="openInTelegramWebApp('http://t.me/LilBitcoinVert'); toggleContactDropdown()" 
+                        class="block w-full text-left px-4 py-2 text-sm text-[--color-primary-silver] hover:bg-[--color-primary-purple]"
+                    >
+                        Contact me
+                    </button>
+                    <button 
+                        @click="openInTelegramWebApp('https://t.me/BitcoinVertical'); toggleContactDropdown()" 
+                        class="block w-full text-left px-4 py-2 text-sm text-[--color-primary-silver] hover:bg-[--color-primary-purple]"
+                    >
+                        Follow
+                    </button>
+                </div>
+            </div>
+
             <div class="absolute top-0 right-0 z-50">
                 <button 
                 @click="toggleNewsScreen" 
@@ -1251,6 +1277,8 @@
                 showCalculator: false,
                 showPortfolio: false,
                 showNewsScreen: false,
+                // Добавляем переменную для выпадающего меню Contact
+                showContactDropdown: false,
                 newsItems: [],
                 newsLoading: false,
                 newsPage: 1,
@@ -2712,6 +2740,10 @@
                 } else {
                     window.open(url, '_blank');
                 }
+            },
+            // Метод для переключения видимости выпадающего меню Contact
+            toggleContactDropdown() {
+                this.showContactDropdown = !this.showContactDropdown;
             },
         },
         mounted() {
