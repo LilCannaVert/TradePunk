@@ -2735,9 +2735,24 @@
                 return intervalMap[timeframe] || '60'; 
             },
             openInTelegramWebApp(url) {
+                console.log('Attempting to open URL in Telegram WebApp:', url);
+                
                 if (window.Telegram?.WebApp) {
-                    window.Telegram.WebApp.openLink(url);
+                    console.log('Telegram WebApp object is available.');
+                    
+                    // Проверяем, является ли ссылка на профиль/канал Telegram (t.me)
+                    if (url.startsWith('https://t.me/') || url.startsWith('tg://')) {
+                         console.log('URL is a Telegram link, using openTelegramLink.');
+                         window.Telegram.WebApp.openTelegramLink(url);
+                    } else {
+                        // Для обычных HTTP/HTTPS ссылок (новости), используем openLink
+                        // Явно указываем force_external: false для открытия во встроенном браузере
+                        console.log('URL is a regular web link, using openLink with force_external: false.');
+                        window.Telegram.WebApp.openLink(url, { force_external: false });
+                    }
+                    
                 } else {
+                    console.log('Telegram WebApp object not available, opening in new tab.');
                     window.open(url, '_blank');
                 }
             },
