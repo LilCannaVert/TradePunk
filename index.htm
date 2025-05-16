@@ -563,7 +563,7 @@
             </div>
         </div>
 
-        <div v-if="showNewsScreen" class="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-y-auto">
+        <div v-if="showNewsScreen" class="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-y-auto pb-24">
             <div class="container mx-auto px-4 py-8">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-[--color-primary-silver]">Crypto News</h2>
@@ -617,7 +617,7 @@
                     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[--color-primary-purple]"></div>
                 </div>
 
-                <div v-if="!newsLoading && newsItems.length > 0" class="flex justify-center mt-8">
+                <div v-if="!newsLoading && newsItems.length > 0" class="flex justify-center my-8">
                     <button @click="loadMoreNews" 
                         class="bg-[--color-primary-purple] text-white px-6 py-3 rounded-lg hover:bg-opacity-80">
                         Load More News
@@ -2263,7 +2263,10 @@
                         console.log('Processing item:', item.id);
                         return {
                             ...item,
-                            categories: (item.categories || '').split('|').filter(Boolean).join(', '),
+                            categories: (item.categories || '').split('|')
+                                .filter(Boolean)
+                                .slice(0, 5)
+                                .join(', '),
                             body: (item.body || '').replace(/<[^>]*>/g, ''),
                             imageurl: item.imageurl || 'https://via.placeholder.com/300x200?text=No+Image'
                         };
