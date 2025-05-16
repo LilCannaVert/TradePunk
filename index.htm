@@ -1284,9 +1284,21 @@
                 totalProfitPercent: 0,
                 lastUpdate: Date.now(),
 
+                // Добавляем переменную для сохранения настроек графика
+                chartSettings: JSON.parse(localStorage.getItem('chartSettings')) || {
+                    interval: '1h', // Дефолтный таймфрейм
+                    studies: [ // Дефолтный список индикаторов
+                        { id: 'MAExp@tv-basicstudies', inputs: { length: 20 } },
+                        { id: 'MAExp@tv-basicstudies', inputs: { length: 50 } },
+                        'RSI@tv-basicstudies',
+                        'MACD@tv-basicstudies',
+                        'StochasticRSI@tv-basicstudies'
+                    ]
+                },
+                
                 // Остальные переменные...
                 container_id: 'chart_container_modal',
-                currentTimeframe: '1h',
+                currentTimeframe: '1h', // Изначально берем из chartSettings.interval в mounted
                 chartModalInstance: null,
                 asks: [],
                 bids: [],
@@ -1542,7 +1554,8 @@
                 if (window.TradingView) {
                     const widget = new TradingView.widget({
                         ...this.options,
-                        interval: this.currentTimeframe ? this.getIntervalValue(this.currentTimeframe) : this.options.interval
+                        interval: this.chartSettings.interval, // Используем загруженный интервал
+                        studies: this.chartSettings.studies, // Используем загруженные индикаторы
                     });
                     window.tvWidget = widget;
                 } else {
@@ -1652,7 +1665,7 @@
             },
             formatTickerPrice(ticker) {
                 const specialPriceTokens = ['PEPE', 'BONK', 'SHIB', '1000SATS', 'BTTC'];
-                const twoDecimalTokens = ['BTC', 'ETH', 'SOL', 'TRUMP', 'AVAX', 'TAO', 'PAXG', 'BCH', 'WBTC', 'ETC', 'ENS', 'INJ', 'MKR', 'LINK', 'COMP', 'QNT', 'EGLD', 'TRB', 'BNB', 'YFI', 'KSM', 'TAO', 'WBETH', 'DASH', 'GMX', 'ALCX', 'GNO', 'BIFI', 'EGLD', 'TRB', 'METIS', 'AUCTION', 'BANANA', 'ZEC', 'DEXE', 'ILV', 'BAR', 'BNSOL', 'ALCX', 'DCR', 'FARM', 'LTC', 'AAVE', 'ORDI'];
+                const twoDecimalTokens = ['BTC', 'ETH', 'SOL', 'TRUMP', 'AVAX', 'TAO', 'PAXG', 'BCH', 'WBTC', 'ETC', 'ENS', 'INJ', 'MKR', 'LINK', 'COMP', 'QNT', 'EGLD', 'TRB', 'BNB', 'YFI', 'KSM', 'TAO', 'WBETH', 'DASH', 'GMX', 'ALCX', 'GNO', 'BIFI', 'EGLD', 'TRB', 'METIS', 'AUCTION', 'BANANA', 'ZEC', 'DEXE', 'ILV', 'BAR', 'BNSOL', 'ALCX', 'DCR', 'FARM'];
             
                 let price;
                 
@@ -2062,6 +2075,9 @@
                 if (this.fullscreenChartInstance) {
                     this.fullscreenChartInstance.setInterval(interval);
                 }
+
+                // Сохраняем настройки графика при изменении таймфрейма
+                this.saveChartSettings();
             },
             setChartTimeframe(timeframe) {
                 this.currentTimeframe = timeframe;
@@ -2145,7 +2161,8 @@
                         width: '100%',
                         height: '100%',
                         symbol: 'BINANCE:' + (this.ticker || 'BTCUSDT'),
-                        interval: this.currentTimeframe ? this.getIntervalValue(this.currentTimeframe) : this.options.interval,
+                        interval: this.chartSettings.interval, // Используем загруженный интервал
+                        studies: this.chartSettings.studies, // Используем загруженные индикаторы
                         onChartReady: () => {
                             console.log('Fullscreen chart ready');
                             window.fullscreenChart = this.fullscreenChartInstance;
@@ -2737,11 +2754,22 @@
                     window.open(url, '_blank');
                 }
             },
+            saveChartSettings() {
+                localStorage.setItem('chartSettings', JSON.stringify({
+                    interval: this.currentTimeframe,
+                    studies: this.chartSettings.studies
+                }));
+                console.log('Chart settings saved:', { interval: this.currentTimeframe, studies: this.chartSettings.studies });
+            },
         },
         mounted() {
             this.sockInit();
             this.appendScript(this.initWidget);
             this.prepareOrderBook();
+            
+            // Устанавливаем currentTimeframe из загруженных настроек
+            this.currentTimeframe = this.chartSettings.interval;
+            
             this.initWidget(); 
             this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
             
