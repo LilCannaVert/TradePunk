@@ -610,7 +610,7 @@
                         <div class="flex justify-between items-center">
                             <a @click.prevent="openInTelegramWebApp(item.url)" 
                                 href="#" 
-                                class="text-[--color-primary-blue] hover:underline cursor-pointer">Read More</a>
+                                class="text-[--color-primary-purple] hover:underline cursor-pointer">Read More</a>
                             <span class="text-sm text-[--color-primary-silver]">Source: {{item.source}}</span>
                         </div>
                     </div>
@@ -2724,17 +2724,13 @@
             },
             openInTelegramWebApp(url) {
                 console.log('Opening URL in Telegram WebApp:', url);
-                console.log('Telegram WebApp object:', this.tg);
                 
-                // Проверяем наличие объекта Telegram WebApp
+                // Проверяем, запущено ли приложение в Telegram
                 if (window.Telegram?.WebApp) {
-                    console.log('Using window.Telegram.WebApp');
-                    window.Telegram.WebApp.openLink(url);
-                } else if (this.tg) {
-                    console.log('Using this.tg');
-                    this.tg.openLink(url);
+                    // Используем Telegram WebApp API для открытия ссылки внутри Telegram
+                    window.Telegram.WebApp.openTelegramLink(url);
                 } else {
-                    console.log('Telegram WebApp not available, opening in new tab');
+                    // Если приложение открыто не в Telegram, используем стандартный способ
                     window.open(url, '_blank');
                 }
             },
