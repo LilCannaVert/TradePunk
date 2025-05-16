@@ -10,13 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        // Инициализация Telegram WebApp
-        if (window.Telegram?.WebApp) {
-            window.Telegram.WebApp.ready();
-            console.log('Telegram WebApp is ready.');
-        } else {
-            console.log('Telegram WebApp not available.');
-        }
+        window.Telegram.WebApp.ready();
     </script>
     
     <style id="loadingScreenStyles">
@@ -834,7 +828,7 @@
         </div>
         </div>
 
-        <div class="pb-40"></div>
+        <div class="pb-20"></div>
     </div>
 
     <script>
@@ -1263,7 +1257,6 @@
                 noMoreNews: false,
                 selectedNewsCategory: '',
                 
-                // Добавляем переменные для калькулятора
                 calcSettings: {
                     investment: null,
                     initialPrice: null,
@@ -1273,7 +1266,6 @@
                 },
                 coins: null,
 
-                // Добавляем переменные для портфолио
                 portfolioForm: {
                     searchQuery: '',
                     selectedCoin: null,
@@ -1289,21 +1281,8 @@
                 totalProfitPercent: 0,
                 lastUpdate: Date.now(),
 
-                // Добавляем переменную для сохранения настроек графика
-                chartSettings: JSON.parse(localStorage.getItem('chartSettings')) || {
-                    interval: '1h', // Дефолтный таймфрейм
-                    studies: [ // Дефолтный список индикаторов
-                        { id: 'MAExp@tv-basicstudies', inputs: { length: 20 } },
-                        { id: 'MAExp@tv-basicstudies', inputs: { length: 50 } },
-                        'RSI@tv-basicstudies',
-                        'MACD@tv-basicstudies',
-                        'StochasticRSI@tv-basicstudies'
-                    ]
-                },
-                
-                // Остальные переменные...
                 container_id: 'chart_container_modal',
-                currentTimeframe: '1h', // Изначально берем из chartSettings.interval в mounted
+                currentTimeframe: '1h',
                 chartModalInstance: null,
                 asks: [],
                 bids: [],
@@ -1320,7 +1299,7 @@
                 options: {
                     autosize: true,
                     symbol: 'BINANCE:BTCUSDT',
-                    interval: '1h', // Изменяем дефолтный интервал на 1h
+                    interval: '1h', 
                     timezone: 'Europe/Moscow',
                     theme: 'dark',
                     style: '1',
@@ -1353,7 +1332,7 @@
                     ],
                     container_id: 'chart_container_modal'
                 },
-                // Добавляем переменные для Mempool
+
                 showMempoolModal: false,
                 mempoolLoading: false,
                 mempoolData: {
@@ -1496,12 +1475,10 @@
                 this.ticker = symbol;
                 this.currentTicker = symbol;
 
-                // Обновляем мини-виджет
                 if (window.tvWidget) {
                     window.tvWidget.setSymbol('BINANCE:' + symbol);
                 }
                 
-                // Обновляем полноэкранный график
                 if (this.showChartScreen && window.fullscreenChart) {
                     try {
                         window.fullscreenChart.setSymbol('BINANCE:' + symbol, () => {
@@ -1509,7 +1486,6 @@
                         });
                     } catch (e) {
                         console.error('Error updating fullscreen chart symbol:', e);
-                        // Если произошла ошибка, переинициализируем график
                         this.$nextTick(() => {
                             this.initFullscreenChart();
                         });
@@ -1559,8 +1535,7 @@
                 if (window.TradingView) {
                     const widget = new TradingView.widget({
                         ...this.options,
-                        interval: this.chartSettings.interval, // Используем загруженный интервал
-                        studies: this.chartSettings.studies, // Используем загруженные индикаторы
+                        interval: this.currentTimeframe ? this.getIntervalValue(this.currentTimeframe) : this.options.interval
                     });
                     window.tvWidget = widget;
                 } else {
@@ -1670,7 +1645,7 @@
             },
             formatTickerPrice(ticker) {
                 const specialPriceTokens = ['PEPE', 'BONK', 'SHIB', '1000SATS', 'BTTC'];
-                const twoDecimalTokens = ['BTC', 'ETH', 'SOL', 'TRUMP', 'AVAX', 'TAO', 'PAXG', 'BCH', 'WBTC', 'ETC', 'ENS', 'INJ', 'MKR', 'LINK', 'COMP', 'QNT', 'EGLD', 'TRB', 'BNB', 'YFI', 'KSM', 'TAO', 'WBETH', 'DASH', 'GMX', 'ALCX', 'GNO', 'BIFI', 'EGLD', 'TRB', 'METIS', 'AUCTION', 'BANANA', 'ZEC', 'DEXE', 'ILV', 'BAR', 'BNSOL', 'ALCX', 'DCR', 'FARM'];
+                const twoDecimalTokens = ['BTC', 'ETH', 'SOL', 'TRUMP', 'AVAX', 'TAO', 'PAXG', 'BCH', 'WBTC', 'ETC', 'ENS', 'INJ', 'MKR', 'LINK', 'COMP', 'QNT', 'EGLD', 'TRB', 'BNB', 'YFI', 'KSM', 'TAO', 'WBETH', 'DASH', 'GMX', 'ALCX', 'GNO', 'BIFI', 'EGLD', 'TRB', 'METIS', 'AUCTION', 'BANANA', 'ZEC', 'DEXE', 'ILV', 'BAR', 'BNSOL', 'ALCX', 'DCR', 'FARM', 'AAVE', 'LTC'];
             
                 let price;
                 
@@ -1684,7 +1659,6 @@
                         price = parseFloat(ticker.close).toFixed(4);
                     }
                 } else {
-                    // Форматирование по умолчанию для не-USDT пар (например, BTC)
                     price = parseFloat(ticker.close).toFixed(8);
                 }
                 
@@ -1823,7 +1797,6 @@
                         }, 0);
                     }
 
-                    // Обновляем данные портфолио при открытии
                     this.updatePortfolioTotals();
                 } else {
                     this.showPortfolio = false;
@@ -1868,14 +1841,12 @@
                 this.portfolioPositions.push(newPosition);
                 localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
 
-                // Сброс формы
                 this.portfolioForm.selectedCoin = null;
                 this.portfolioForm.amount = '';
                 this.portfolioForm.buyPrice = '';
                 this.portfolioForm.searchQuery = '';
                 this.showPortfolioDropdown = false;
 
-                // Обновляем тотальные значения
                 this.updatePortfolioTotals();
             },
             removePortfolioPosition(index) {
@@ -1959,7 +1930,6 @@
                 let totalInvestment = 0;
                 let currentValue = 0;
 
-                // Обновляем каждую позицию с текущими данными
                 this.portfolioPositions = this.portfolioPositions.map(position => {
                     const ticker = this.tickers[position.symbol];
                     if (ticker) {
@@ -1990,7 +1960,6 @@
                 this.totalProfitPercent = totalInvestment > 0 ? 
                     ((currentValue - totalInvestment) / totalInvestment) * 100 : 0;
 
-                // Сохраняем обновленные позиции
                 localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
                 this.lastUpdate = Date.now();
             },
@@ -2070,19 +2039,15 @@
                     '1w': 'W'
                 };
                 
-                const interval = intervalMap[timeframe] || '60'; // По умолчанию 1h
+                const interval = intervalMap[timeframe] || '60'; 
                 
                 if (window.tvWidget) {
                     window.tvWidget.setInterval(interval);
                 }
                 
-                // Обновляем интервал в полноэкранном графике, если он открыт
                 if (this.fullscreenChartInstance) {
                     this.fullscreenChartInstance.setInterval(interval);
                 }
-
-                // Сохраняем настройки графика при изменении таймфрейма
-                this.saveChartSettings();
             },
             setChartTimeframe(timeframe) {
                 this.currentTimeframe = timeframe;
@@ -2166,8 +2131,7 @@
                         width: '100%',
                         height: '100%',
                         symbol: 'BINANCE:' + (this.ticker || 'BTCUSDT'),
-                        interval: this.chartSettings.interval, // Используем загруженный интервал
-                        studies: this.chartSettings.studies, // Используем загруженные индикаторы
+                        interval: this.currentTimeframe ? this.getIntervalValue(this.currentTimeframe) : this.options.interval,
                         onChartReady: () => {
                             console.log('Fullscreen chart ready');
                             window.fullscreenChart = this.fullscreenChartInstance;
@@ -2212,7 +2176,6 @@
                         price = parseFloat(ticker.close).toFixed(4);
                     }
                 } else {
-                    // Форматирование по умолчанию для не-USDT пар (например, BTC)
                     price = parseFloat(ticker.close).toFixed(8);
                 }
                 
@@ -2420,7 +2383,7 @@
                     return;
                 }
                 this.newsPage++;
-                await this.loadNews(); // Добавляем await
+                await this.loadNews(); 
             },
             
             formatNewsDate(timestamp) {
@@ -2481,27 +2444,22 @@
                 try {
                     this.mempoolLoading = true;
 
-                    // Загрузка данных о сложности
                     const difficultyResponse = await fetch('https://mempool.space/api/v1/difficulty-adjustment');
                     const difficultyData = await difficultyResponse.json();
                     this.mempoolData.difficultyAdjustment = difficultyData;
 
-                    // Загрузка данных о ценах
                     const pricesResponse = await fetch('https://mempool.space/api/v1/prices');
                     const pricesData = await pricesResponse.json();
                     this.mempoolData.prices = pricesData;
 
-                    // Загрузка последних блоков
                     const blocksResponse = await fetch('https://mempool.space/api/blocks');
                     const blocksData = await blocksResponse.json();
                     this.mempoolData.blocks = blocksData.slice(0, 10);
 
-                    // Загрузка данных о майнинг-пулах
                     const poolsResponse = await fetch(`https://mempool.space/api/v1/mining/pools/${this.miningPoolsPeriod}`);
                     const poolsData = await poolsResponse.json();
                     this.mempoolData.miningPools = poolsData;
 
-                    // Загрузка данных о хешрейте
                     const hashrateResponse = await fetch('https://mempool.space/api/v1/mining/hashrate/3d');
                     const hashrateData = await hashrateResponse.json();
                     if (hashrateData.currentHashrate) {
@@ -2570,7 +2528,6 @@
                 this.txData = null;
                 
                 try {
-                    // Fetch transaction data
                     const txResponse = await fetch(`https://mempool.space/api/tx/${this.txIdInput.trim()}`);
                     console.log('Transaction lookup response status:', txResponse.status);
                     
@@ -2601,7 +2558,6 @@
                     if (!this.selectedNewsCategory) return true;
                     return item.categories && item.categories.toLowerCase().includes(this.selectedNewsCategory.toLowerCase());
                 }).sort((a, b) => {
-                    // Сортировка только по дате публикации (новые сверху)
                     return b.published_on - a.published_on;
                 });
             },
@@ -2732,7 +2688,6 @@
             saveApiKeys() {
                 localStorage.setItem('apiKeys', JSON.stringify(this.apiKeys));
                 this.showApiSettings = false;
-                // Перезагружаем новости с новыми ключами
                 this.newsPage = 1;
                 this.newsItems = [];
                 this.noMoreNews = false;
@@ -2749,52 +2704,25 @@
                     '1d': 'D',
                     '1w': 'W'
                 };
-                return intervalMap[timeframe] || '60'; // По умолчанию 1h
+                return intervalMap[timeframe] || '60'; 
             },
             openInTelegramWebApp(url) {
                 if (window.Telegram?.WebApp) {
-                    // Используем встроенный браузер Telegram
                     window.Telegram.WebApp.openLink(url);
                 } else {
                     window.open(url, '_blank');
                 }
             },
-            saveChartSettings() {
-                localStorage.setItem('chartSettings', JSON.stringify({
-                    interval: this.currentTimeframe,
-                    studies: this.chartSettings.studies
-                }));
-                console.log('Chart settings saved:', { interval: this.currentTimeframe, studies: this.chartSettings.studies });
-            },
         },
         mounted() {
-            console.log('App mounted.');
-            // Инициализация сокета
             this.sockInit();
-            
-            // Загрузка скрипта TradingView и инициализация виджета после загрузки
-            console.log('Appending TradingView script.');
-            this.appendScript(() => {
-                console.log('TradingView script loaded. Initializing widget.');
-                // Устанавливаем currentTimeframe из загруженных настроек перед инициализацией виджета
-                this.currentTimeframe = this.chartSettings.interval;
-                this.initWidget();
-                
-                // Если полноэкранный график активен при загрузке (например, из сохраненного состояния)
-                // Инициализируем его тоже после загрузки скрипта
-                if (this.showChartScreen) {
-                    this.$nextTick(() => {
-                         console.log('showChartScreen is true, initializing fullscreen chart.');
-                         this.initFullscreenChart();
-                    });
-                }
-            });
-            
-            // Подготовка стакана
+            this.appendScript(this.initWidget);
             this.prepareOrderBook();
+            this.initWidget(); 
+            this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
             
-            // Загрузка состояния портфолио
             this.loadState();
+            
             setTimeout(() => {
                 if (this.portfolioPositions.length === 0) {
                     console.log('Trying to load portfolio state again after delay');
@@ -2802,34 +2730,27 @@
                 }
             }, 2000);
 
-            // Обновление портфолио по таймеру
             setInterval(() => {
                 if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
                     this.updatePortfolioTotals();
                 }
             }, 1000);
 
-            // Обработка кликов вне инпута поиска
             window.addEventListener('click', this.handleClick);
 
-            // Загрузка настроек калькулятора
             const savedSettings = localStorage.getItem('calcSettings');
             if (savedSettings) {
                 this.calcSettings = JSON.parse(savedSettings);
             }
             
-            // Загрузка списка монет для калькулятора
-            // Убедитесь, что axios подключен (в данном файле его нет, возможно он глобально доступен или нужно добавить скрипт)
-            if (typeof axios !== 'undefined') {
-                axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
-                    this.coins = response.data.data.coins;
-                });
-            } else {
-                console.error('Axios is not defined. Cannot fetch coins for calculator.');
-            }
-            
-            // Инициализация Telegram WebApp перенесена в отдельный скрипт выше
+            axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
+                this.coins = response.data.data.coins;
+            });
 
+            if (window.Telegram?.WebApp) {
+                this.tg = window.Telegram.WebApp;
+                console.log('Telegram WebApp initialized:', this.tg);
+            }
         },
         beforeUnmount() {
             this.sockClose();
@@ -2865,7 +2786,6 @@
                     if (!this.selectedNewsCategory) return true;
                     return item.categories && item.categories.toLowerCase().includes(this.selectedNewsCategory.toLowerCase());
                 }).sort((a, b) => {
-                    // Сортировка только по дате публикации (новые сверху)
                     return b.published_on - a.published_on;
                 });
             },
@@ -3563,20 +3483,18 @@
 
     .latest-blocks-table td,
     .latest-blocks-table th {
-        font-size: 0.9rem; /* Размер по умолчанию */
-        padding: 0.5rem; /* Уменьшенные отступы */
+        font-size: 0.9rem; 
+        padding: 0.5rem; 
     }
 
-     /* Для мобильных устройств */
     @media (max-width: 768px) {
         .latest-blocks-table td,
         .latest-blocks-table th {
-            font-size: 0.75rem; /* Меньший размер шрифта */
-            padding: 0.3rem; /* Уменьшенные отступы */
+            font-size: 0.75rem; 
+            padding: 0.3rem; 
         }
     }
 
-    /* News Section Styles */
     .news-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -3683,7 +3601,6 @@
         font-size: 0.875rem;
     }
 
-    /* Loading Animation */
     .news-loading {
         display: flex;
         justify-content: center;
@@ -3706,7 +3623,6 @@
         }
     }
 
-    /* Category Select */
     .news-category-select {
         position: relative;
         min-width: 200px;
