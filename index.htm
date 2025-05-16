@@ -2723,14 +2723,26 @@
                 return intervalMap[timeframe] || '60'; // По умолчанию 1h
             },
             openInTelegramWebApp(url) {
-                console.log('Opening URL in Telegram WebApp:', url);
+                console.log('Opening URL:', url);
                 
-                // Проверяем, запущено ли приложение в Telegram
-                if (window.Telegram?.WebApp) {
-                    // Используем Telegram WebApp API для открытия ссылки внутри Telegram
-                    window.Telegram.WebApp.openTelegramLink(url);
+                // Проверяем, что мы в Telegram Mini App
+                if (window.Telegram?.WebApp?.platform) {
+                    console.log('Platform:', window.Telegram.WebApp.platform);
+                    
+                    // Используем разные подходы в зависимости от платформы
+                    if (window.Telegram.WebApp.platform === 'android' || window.Telegram.WebApp.platform === 'ios') {
+                        // Для мобильных устройств
+                        window.Telegram.WebApp.openLink(url, {
+                            try_instant_view: true,
+                            return_to: 'app'
+                        });
+                    } else {
+                        // Для десктопа
+                        const telegramUrl = `https://t.me/iv?url=${encodeURIComponent(url)}&rhash=`;
+                        window.Telegram.WebApp.openLink(telegramUrl);
+                    }
                 } else {
-                    // Если приложение открыто не в Telegram, используем стандартный способ
+                    // Если не в Telegram, открываем в новом окне
                     window.open(url, '_blank');
                 }
             },
