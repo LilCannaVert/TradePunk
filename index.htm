@@ -1655,14 +1655,19 @@
                 const twoDecimalTokens = ['BTC', 'ETH', 'SOL', 'TRUMP', 'AVAX', 'TAO', 'PAXG', 'BCH', 'WBTC', 'ETC', 'ENS', 'INJ', 'MKR', 'LINK', 'COMP', 'QNT', 'EGLD', 'TRB', 'BNB', 'YFI', 'KSM', 'TAO', 'WBETH', 'DASH', 'GMX', 'ALCX', 'GNO', 'BIFI', 'EGLD', 'TRB', 'METIS', 'AUCTION', 'BANANA', 'ZEC', 'DEXE', 'ILV', 'BAR', 'BNSOL', 'ALCX', 'DCR', 'FARM'];
             
                 let price;
-                const token = ticker.symbol.split('USDT')[0];
                 
-                if (specialPriceTokens.includes(token)) {
-                    price = parseFloat(ticker.close).toFixed(5);
-                } else if (twoDecimalTokens.includes(token)) {
-                    price = parseFloat(ticker.close).toFixed(2);
+                if (ticker.symbol.endsWith('USDT')) {
+                    const token = ticker.symbol.split('USDT')[0];
+                    if (specialPriceTokens.includes(token)) {
+                        price = parseFloat(ticker.close).toFixed(5);
+                    } else if (twoDecimalTokens.includes(token)) {
+                        price = parseFloat(ticker.close).toFixed(2);
+                    } else {
+                        price = parseFloat(ticker.close).toFixed(4);
+                    }
                 } else {
-                    price = parseFloat(ticker.close).toFixed(4);
+                    // Форматирование по умолчанию для не-USDT пар (например, BTC)
+                    price = parseFloat(ticker.close).toFixed(8);
                 }
                 
                 return price;
@@ -2174,14 +2179,19 @@
                 const twoDecimalTokens = ['BTC', 'ETH', 'SOL', 'TRUMP', 'AVAX', 'TAO', 'PAXG', 'BCH', 'WBTC', 'ETC', 'ENS', 'INJ', 'MKR', 'LINK', 'COMP', 'QNT', 'EGLD', 'TRB', 'BNB', 'YFI', 'KSM', 'TAO', 'WBETH', 'DASH', 'GMX', 'ALCX', 'GNO', 'BIFI', 'EGLD', 'TRB', 'METIS', 'AUCTION', 'BANANA', 'ZEC', 'DEXE', 'ILV', 'BAR', 'BNSOL', 'ALCX', 'DCR', 'FARM'];
             
                 let price;
-                const token = ticker.symbol.split('USDT')[0];
                 
-                if (specialPriceTokens.includes(token)) {
-                    price = parseFloat(ticker.close).toFixed(5);
-                } else if (twoDecimalTokens.includes(token)) {
-                    price = parseFloat(ticker.close).toFixed(2);
+                if (ticker.symbol.endsWith('USDT')) {
+                    const token = ticker.symbol.split('USDT')[0];
+                    if (specialPriceTokens.includes(token)) {
+                        price = parseFloat(ticker.close).toFixed(5);
+                    } else if (twoDecimalTokens.includes(token)) {
+                        price = parseFloat(ticker.close).toFixed(2);
+                    } else {
+                        price = parseFloat(ticker.close).toFixed(4);
+                    }
                 } else {
-                    price = parseFloat(ticker.close).toFixed(4);
+                    // Форматирование по умолчанию для не-USDT пар (например, BTC)
+                    price = parseFloat(ticker.close).toFixed(8);
                 }
                 
                 return price;
