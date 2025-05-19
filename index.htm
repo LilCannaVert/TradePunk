@@ -13,9 +13,6 @@
         window.Telegram.WebApp.ready();
     </script>
     
-    <!-- Добавляем библиотеку Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <style id="loadingScreenStyles">
     #loadingScreen {
         position: fixed;
@@ -133,16 +130,24 @@
             <div v-if="tickers[ticker]" class="flex gap-1 flex-grow items-center justify-between delay-200">
                 <div class="w-1/2">
                 <div class="flex gap-1">
-                    <!-- Удаляем этот small элемент, который показывал название пары -->
-                    <!-- <small>{{tickers[ticker]['pair']}}</small> -->
-                    <!-- Span для стрелки и процента был удален ранее -->
-                    <!-- ... -->
+                    <small>{{tickers[ticker]['pair']}}</small>
+                    <span :class="tickers[ticker]['style']">
+                    <span class="mr-1">{{tickers[ticker]['arrow']}}</span>
+                    <span>{{tickers[ticker]['percent'].toFixed(2)}}%</span>
+                    </span>
                 </div>
-                <!-- Div для цены был удален ранее -->
-                <!-- ... -->
+                <div>
+                    <span :class="tickers[ticker]['style']">{{parseNumber(tickers[ticker]['close'], tickers[ticker]['asset'])}}</span>
                 </div>
-                <!-- Блоки 24H Highest и 24H Lowest были удалены ранее -->
-                <!-- ... -->
+                </div>
+                <div class="w-1/2">
+                <small class="block">24H Highest</small>
+                <span>{{parseNumber(tickers[ticker]['high'], tickers[ticker]['asset'])}}</span>
+                </div>
+                <div class="w-1/2">
+                <small class="block">24H Lowest</small>
+                <span>{{parseNumber(tickers[ticker]['low'], tickers[ticker]['asset'])}}</span>
+                </div>
                 <div class="w-1/2 hidden">
                 <small class="block">24H Volume</small>
                 <span>{{parseNumber(tickers[ticker]['tokenVolume'], tickers[ticker]['token'])}} {{tickers[ticker]['token']}}</span>
@@ -470,8 +475,8 @@
             </div>
         </div>
 
-        <div v-if="showPortfolio" id="portfolioModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" @click.stop>
-            <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-xl mx-4" style="overflow-y: auto;" @click.stop>
+        <div v-if="showPortfolio" id="portfolioModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-xl mx-4" @click.stop>
                 <div class="flex justify-between items-center mb-2">
                     <h2 class="text-base font-bold text-[--color-primary-silver]">Portfolio</h2>
                     <button @click="togglePortfolio" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Close</button>
@@ -501,11 +506,6 @@
                             {{ totalProfit >= 0 ? '+' : '' }}${{ totalProfit.toFixed(2) }}
                         </div>
                     </div>
-                </div>
-
-                <!-- Добавляем сюда Canvas для графика -->
-                <div class="mb-4">
-                    <canvas id="portfolioChart" width="400" height="200"></canvas>
                 </div>
 
                 <div class="mb-2 bg-[--color-bg--500] p-3 rounded-lg">
@@ -1388,8 +1388,6 @@
                 },
                 showApiSettings: false,
                 tg: window.Telegram?.WebApp || null,
-                // Добавляем переменную для экземпляра графика портфолио
-                portfolioChartInstance: null, 
             }
         },
         methods: {
@@ -1812,19 +1810,12 @@
                 }
             },
             togglePortfolio() {
-                console.log('Toggling portfolio. Current state:', this.showPortfolio); // Лог состояния
+                console.log('Toggling portfolio');
                 if (!this.showPortfolio) {
                     this.closeAllModals();
                     this.showPortfolio = true;
                     document.body.style.overflow = 'hidden';
-
-                    // Удаляем старый экземпляр графика, если он почему-то остался
-                    if (this.portfolioChartInstance) {
-                        console.log('Destroying existing chart instance before opening modal.');
-                        this.portfolioChartInstance.destroy();
-                        this.portfolioChartInstance = null;
-                    }
-
+                    
                     if (this.showChartScreen) {
                         setTimeout(() => {
                             const portfolioModal = document.getElementById('portfolioModal');
@@ -1832,21 +1823,10 @@
                         }, 0);
                     }
 
-                    this.updatePortfolioTotals(); // Вызывает renderPortfolioChart() в $nextTick
-                    console.log('Portfolio modal opened. updatePortfolioTotals called.');
+                    this.updatePortfolioTotals();
                 } else {
-                    console.log('Closing portfolio modal.');
                     this.showPortfolio = false;
                     document.body.style.overflow = 'auto';
-                    // Уничтожаем экземпляр графика при закрытии модального окна
-                    if (this.portfolioChartInstance) {
-                        console.log('Destroying chart instance on modal close.');
-                        this.portfolioChartInstance.destroy();
-                        this.portfolioChartInstance = null;
-                    } else {
-                         console.log('No chart instance to destroy on modal close.');
-                    }
-                     console.log('Portfolio modal closed.');
                 }
             },
             filterPortfolioCoins() {
@@ -1871,7 +1851,6 @@
                 this.portfolioForm.selectedCoin = ticker;
                 this.portfolioForm.searchQuery = ticker.pair;
                 this.showPortfolioDropdown = false;
-                console.log('Selected coin for portfolio:', ticker); // Лог при выборе монеты
             },
             addPortfolioPosition() {
                 if (!this.portfolioForm.selectedCoin || !this.portfolioForm.amount || !this.portfolioForm.buyPrice) {
@@ -1881,23 +1860,14 @@
 
                 const newPosition = {
                     symbol: this.portfolioForm.selectedCoin.symbol,
-                    pair: this.portfolioForm.selectedCoin.pair,
+                    pair: this.portfolioForm.selectedCoin.pair, // Сохраняем pair тоже
                     amount: parseFloat(this.portfolioForm.amount),
                     buyPrice: parseFloat(this.portfolioForm.buyPrice)
                 };
 
-                console.log('Adding new portfolio position:', newPosition); // Лог перед добавлением
                 this.portfolioPositions.push(newPosition);
-                console.log('Portfolio positions after push:', this.portfolioPositions); // Лог после добавления
-
-                // Сохранение в localStorage
-                try {
-                    localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
-                    console.log('Portfolio positions saved to localStorage.'); // Лог после сохранения
-                } catch (e) {
-                    console.error('Error saving portfolio to localStorage:', e); // Лог ошибки сохранения
-                }
-
+                // Сохраняем в localStorage с ключом 'portfolioPositions'
+                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
 
                 this.portfolioForm.selectedCoin = null;
                 this.portfolioForm.amount = '';
@@ -1909,6 +1879,7 @@
             },
             removePortfolioPosition(index) {
                 this.portfolioPositions.splice(index, 1);
+                // Сохраняем в localStorage с ключом 'portfolioPositions'
                 localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
                 this.updatePortfolioTotals();
             },
@@ -1933,42 +1904,35 @@
                     console.error('Error saving portfolio state:', error);
                 }
             },
-            loadState() { // Этот метод используется в mounted()
-                console.log('Attempting to load portfolio state from localStorage...'); // Лог начала загрузки
+            loadState() {
                 try {
-                    const savedState = localStorage.getItem('portfolioPositions');
+                    const savedState = localStorage.getItem('portfolioState');
                     if (savedState) {
-                        console.log('Found saved state in localStorage. Data:', savedState); // Лог найденных данных
                         try {
                             const positions = JSON.parse(savedState);
-                            console.log('Parsed saved state. Positions:', positions); // Лог распарсенных данных
-
+                            
                             if (!Array.isArray(positions)) {
                                 console.error('Saved portfolio data is not an array:', positions);
-                                localStorage.removeItem('portfolioPositions');
-                                this.portfolioPositions = [];
-                                console.log('Cleared invalid portfolio data from localStorage.');
                                 return;
                             }
-
+                            
                             if (positions.length > 0) {
-                                // Ensure all necessary properties are present, add defaults if not
                                 this.portfolioPositions = positions.map(pos => ({
-                                    symbol: pos.symbol || 'UNKNOWN', // Add default/check
-                                    pair: pos.pair || pos.symbol || 'UNKNOWN/UNKNOWN', // Add default/check
-                                    amount: parseFloat(pos.amount) || 0, // Add default/check
-                                    buyPrice: parseFloat(pos.buyPrice) || 0, // Add default/check
+                                    symbol: pos.symbol,
+                                    pair: pos.pair,
+                                    amount: parseFloat(pos.amount),
+                                    buyPrice: parseFloat(pos.buyPrice),
                                     currentPrice: 0,
                                     currentValue: 0,
                                     profit: 0,
                                     profitPercent: 0
                                 }));
-
-                                console.log('Portfolio state loaded into component data:', this.portfolioPositions); // Лог загруженных в data() позиций
-
+                                
+                                console.log('Portfolio state loaded with', this.portfolioPositions.length, 'positions:', this.portfolioPositions);
+                                
                                 if (Object.keys(this.tickers).length > 0) {
                                     console.log('Tickers available, updating portfolio calculations');
-                                    this.updatePortfolioTotals(); // This also saves state
+                                    this.updatePortfolioTotals();
                                 } else {
                                     console.log('Tickers not yet available, will update when received');
                                 }
@@ -1978,12 +1942,10 @@
                             }
                         } catch (jsonError) {
                             console.error('Error parsing saved portfolio state:', jsonError);
-                            localStorage.removeItem('portfolioPositions');
                             this.portfolioPositions = [];
-                            console.log('Cleared unparseable portfolio data from localStorage.');
                         }
                     } else {
-                        console.log('No saved portfolio state found in localStorage'); // Лог отсутствия данных
+                        console.log('No saved portfolio state found in localStorage');
                         this.portfolioPositions = [];
                     }
                 } catch (error) {
@@ -1992,37 +1954,7 @@
                 }
             },
             updatePortfolioTotals() {
-                console.log('updatePortfolioTotals called. Positions count:', this.portfolioPositions.length);
-                 // Abort if tickers are not loaded yet, update will be triggered when they are
-                 if (Object.keys(this.tickers).length === 0) {
-                     console.log('updatePortfolioTotals: Tickers not loaded, aborting update.');
-                     return;
-                 }
-
-                if (!this.portfolioPositions.length) {
-                     console.log('updatePortfolioTotals: Portfolio is empty, resetting totals and triggering chart destroy.');
-                    this.totalInvestment = 0;
-                    this.currentValue = 0;
-                    this.totalProfit = 0;
-                    this.totalProfitPercent = 0;
-
-                     // Уничтожаем график, если портфолио стало пустым
-                     if (this.portfolioChartInstance) {
-                         console.log('updatePortfolioTotals: Destroying chart due to empty portfolio.');
-                         this.portfolioChartInstance.destroy();
-                         this.portfolioChartInstance = null;
-                     }
-
-                    try {
-                       localStorage.removeItem('portfolioPositions');
-                       console.log('updatePortfolioTotals: Cleared portfolio from localStorage as it is empty.');
-                    } catch(e) {
-                       console.error('updatePortfolioTotals: Error clearing empty portfolio from localStorage:', e);
-                    }
-                    // Render chart (will destroy if no data)
-                    this.renderPortfolioChart(); // Вызываем renderChart даже если пусто, он сам решит уничтожить график
-                    return;
-                }
+                if (!this.portfolioPositions.length) return;
 
                 let totalInvestment = 0;
                 let currentValue = 0;
@@ -2033,7 +1965,7 @@
                         const investment = position.amount * position.buyPrice;
                         const current = position.amount * parseFloat(ticker.close);
                         const profit = current - investment;
-                        const profitPercent = (profit / investment) * 100;
+                        const profitPercent = investment > 0 ? (profit / investment) * 100 : 0; // Изменено для избежания деления на ноль
 
                         totalInvestment += investment;
                         currentValue += current;
@@ -2048,15 +1980,7 @@
                             profitSign: profit >= 0 ? '+' : ''
                         };
                     }
-                    console.warn(`updatePortfolioTotals: Ticker data not found for symbol: ${position.symbol}. Cannot update value.`);
-                    // Если данные тикера недоступны, возвращаем позицию как есть, но сбрасываем current/profit, чтобы не использовать устаревшие значения
-                    return {
-                         ...position,
-                         currentPrice: 0,
-                         currentValue: 0,
-                         profit: position.buyPrice * -1, // Потеря всей инвестиции
-                         profitPercent: -100
-                    };
+                    return position; // Возвращаем позицию без изменений, если тикер не найден
                 });
 
                 this.totalInvestment = totalInvestment;
@@ -2065,28 +1989,8 @@
                 this.totalProfitPercent = totalInvestment > 0 ?
                     ((currentValue - totalInvestment) / totalInvestment) * 100 : 0;
 
-                console.log('updatePortfolioTotals: Portfolio totals updated:', {
-                    totalInvestment: this.totalInvestment,
-                    currentValue: this.currentValue,
-                    totalProfit: this.totalProfit,
-                    totalProfitPercent: this.totalProfitPercent
-                });
-
-                 try {
-                    localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
-                    console.log('updatePortfolioTotals: Updated portfolio state saved to localStorage.');
-                } catch(e) {
-                    console.error('updatePortfolioTotals: Error saving updated portfolio to localStorage:', e);
-                }
-
-                // Отрисовываем/обновляем график только если модальное окно открыто.
-                // renderPortfolioChart сам использует $nextTick.
-                if (this.showPortfolio) {
-                    console.log('updatePortfolioTotals: Portfolio modal is open, calling renderPortfolioChart.');
-                    this.renderPortfolioChart();
-                } else {
-                     console.log('updatePortfolioTotals: Portfolio modal is closed, not rendering chart.');
-                }
+                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
+                this.lastUpdate = Date.now();
             },
             formatPortfolioNumber(number, decimals = 2) {
                 if (typeof number !== 'number') return '0.00';
@@ -2931,161 +2835,29 @@
                     this.addressLoading = false;
                 }
             },
-            // Метод для отрисовки графика портфолио - вызывается при открытии модального окна и при обновлении totals
-            renderPortfolioChart() {
-                console.log('renderPortfolioChart called.');
-
-                 // Если модальное окно закрыто или нет данных для тикеров, не пытаемся рендерить
-                 if (!this.showPortfolio || Object.keys(this.tickers).length === 0) {
-                     console.log('renderPortfolioChart: Aborting render - modal closed or tickers not loaded.');
-                     // Уничтожаем график, если он существует и рендеринг прерван
-                     if (this.portfolioChartInstance) {
-                         console.log('renderPortfolioChart: Destroying chart instance due to abort.');
-                         this.portfolioChartInstance.destroy();
-                         this.portfolioChartInstance = null;
-                     }
-                     return;
-                 }
-
-                 // Ждем следующего тика DOM, чтобы canvas точно присутствовал
-                 this.$nextTick(() => {
-                     console.log('renderPortfolioChart: Inside nextTick, attempting to find canvas.');
-                     const ctx = document.getElementById('portfolioChart');
-
-                     if (!ctx) {
-                         console.error('renderPortfolioChart: Canvas element with ID "portfolioChart" not found after nextTick.');
-                          // Если canvas не найден, уничтожаем график на всякий случай
-                          if (this.portfolioChartInstance) {
-                             console.log('renderPortfolioChart: Destroying chart instance as canvas not found.');
-                             this.portfolioChartInstance.destroy();
-                             this.portfolioChartInstance = null;
-                          }
-                         return;
-                     }
-
-                     console.log('renderPortfolioChart: Canvas element found. Calling actuallyRenderChart.');
-                     this.actuallyRenderChart(ctx);
-                 });
-            },
-
-            // Вспомогательный метод для фактической отрисовки/обновления графика
-            actuallyRenderChart(ctx) {
-                 console.log('actuallyRenderChart called with context:', ctx);
-
-                 // Фильтруем позиции для графика: только те, у которых currentValue > 0
-                 const positionsForChart = this.portfolioPositions.filter(pos => pos.currentValue > 0);
-
-                 if (positionsForChart.length === 0) {
-                     console.log('actuallyRenderChart: No portfolio positions with value > 0 to render chart.');
-                      // Уничтожаем график, если данных нет или все значения равны 0
-                      if (this.portfolioChartInstance) {
-                         console.log('actuallyRenderChart: Destroying chart as no valid data.');
-                         this.portfolioChartInstance.destroy();
-                         this.portfolioChartInstance = null;
-                      }
-                     return;
-                 }
-
-                 console.log('actuallyRenderChart: Preparing chart with VALID positions:', positionsForChart);
-
-                // Подготовка данных для графика
-                const chartData = {
-                    labels: positionsForChart.map(pos => pos.pair), // Используем 'pair' для меток
-                    datasets: [{
-                        data: positionsForChart.map(pos => pos.currentValue),
-                        backgroundColor: [
-                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-                            '#FF9F40', '#8AC054', '#4D5360', '#E7E9ED', '#F7464A',
-                            '#5A5A5A', '#C0C0C0', '#800080', '#3c82f6', '#eab308', '#10b981', '#ef4444',
-                             '#00FFFF', '#FF00FF', '#FFFF00', '#00FF00' // Еще больше цветов
-                        ],
-                        hoverBackgroundColor: [
-                           '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-                            '#FF9F40', '#8AC054', '#4D5360', '#E7E9ED', '#F7464A',
-                            '#5A5A5A', '#C0C0C0', '#800080', '#3c82f6', '#eab308', '#10b981', '#ef4444',
-                             '#00FFFF', '#FF00FF', '#FFFF00', '#00FF00'
-                        ]
-                    }]
-                };
-
-                // Настройки графика
-                const chartOptions = {
-                    responsive: true,
-                    maintainAspectRatio: false, // Важно для контроля размера канваса
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#D1C5C0', // Цвет текста легенды
-                                boxWidth: 20 // Размер цветного квадрата в легенде
-                            },
-                             position: 'right' // Размещение легенды справа
-                        },
-                        tooltip: {
-                             titleColor: '#FFFFFF', // Цвет заголовка подсказки
-                             bodyColor: '#D1C5C0', // Цвет текста подсказки
-                             backgroundColor: 'rgba(0, 0, 0, 0.7)', // Фон подсказки
-                             borderColor: '#800080', // Граница подсказки
-                             borderWidth: 1,
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw;
-                                    const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
-                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
-                                    return `${label}: $${value.toFixed(2)} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    },
-                     layout: { // Добавляем padding, чтобы легенда не перекрывала график
-                         padding: {
-                             left: 10,
-                             right: 150, // Оставьте место для легенды справа
-                             top: 10,
-                             bottom: 10
-                         }
-                     }
-                };
-
-                // Если экземпляр графика уже существует, уничтожаем его перед созданием нового
-                if (this.portfolioChartInstance) {
-                    console.log('actuallyRenderChart: Destroying old chart instance before creating new.');
-                    this.portfolioChartInstance.destroy();
-                    this.portfolioChartInstance = null; // Убедимся, что ссылка обнулена
-                }
-
-                // Создаем новый экземпляр графика
-                console.log('actuallyRenderChart: Creating new chart instance on canvas:', ctx);
-                try {
-                    this.portfolioChartInstance = new Chart(ctx, {
-                        type: 'pie',
-                        data: chartData,
-                        options: chartOptions
-                    });
-                    console.log('actuallyRenderChart: New chart instance created successfully.');
-                } catch(chartError) {
-                    console.error('actuallyRenderChart: Error creating chart instance:', chartError);
-                    this.portfolioChartInstance = null; // Ensure it's null on error
-                }
-            },
         },
         mounted() {
             this.sockInit();
             this.appendScript(this.initWidget);
             this.prepareOrderBook();
-            this.initWidget();
-            this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT'];
-
-            console.log('Mounted: Calling loadState to load portfolio.');
+            this.initWidget(); 
+            this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
+            
             this.loadState();
-            console.log('Mounted: loadState finished. Initial portfolioPositions count:', this.portfolioPositions.length); // Лог количества позиций
+            
+            setTimeout(() => {
+                if (this.portfolioPositions.length === 0) {
+                    console.log('Trying to load portfolio state again after delay');
+                    this.loadState();
+                }
+            }, 2000);
 
-            this.portfolioUpdateInterval = setInterval(() => {
+            setInterval(() => {
                 if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
-                     console.log('Interval triggered: Updating portfolio totals...');
+                    console.log('Updating portfolio totals from interval');
                     this.updatePortfolioTotals();
                 }
-            }, 5000);
+            }, 5000); // Увеличил интервал до 5 секунд, чтобы не перегружать расчеты
 
             window.addEventListener('click', this.handleClick);
 
@@ -3093,31 +2865,15 @@
             if (savedSettings) {
                 this.calcSettings = JSON.parse(savedSettings);
             }
-
-            if (typeof axios !== 'undefined') {
-                 axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
-                    this.coins = response.data.data.coins;
-                     console.log('Mounted: Coinranking data loaded.');
-                 }).catch(error => {
-                    console.error('Mounted: Error fetching coins from Coinranking API:', error);
-                 });
-            } else {
-                 console.warn('Mounted: Axios is not defined. Coinranking API data will not be loaded.');
-            }
-
+            
+            axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
+                this.coins = response.data.data.coins;
+            });
 
             if (window.Telegram?.WebApp) {
                 this.tg = window.Telegram.WebApp;
-                console.log('Mounted: Telegram WebApp initialized.');
+                console.log('Telegram WebApp initialized:', this.tg);
             }
-
-            // Удаляем вызов renderPortfolioChart здесь, т.к. он вызывается из updatePortfolioTotals
-            // if (this.showPortfolio) {
-            //      this.$nextTick(() => {
-            //          this.renderPortfolioChart();
-            //      });
-            // }
-             console.log('Mounted finished.');
         },
         beforeUnmount() {
             this.sockClose();
@@ -3125,16 +2881,6 @@
             if (this.tonUpdateInterval) {
                 clearInterval(this.tonUpdateInterval);
             }
-            // Clear the portfolio update interval
-            if (this.portfolioUpdateInterval) {
-                clearInterval(this.portfolioUpdateInterval);
-            }
-             // Уничтожаем график портфолио при уничтожении компонента
-             if (this.portfolioChartInstance) {
-                 console.log('beforeUnmount: Destroying chart instance.');
-                 this.portfolioChartInstance.destroy();
-                 this.portfolioChartInstance = null;
-             }
         },
         computed: {
             statusMsg() {
@@ -3652,55 +3398,70 @@
 
     #portfolioModal {
         position: fixed;
-        inset: 0; /* Занимает весь экран: top, right, bottom, left установлены в 0 */
-        z-index: 50; /* Должен быть ниже z-index нижней панели (200) */
-        background-color: #000000; /* Непрозрачный черный фон */
-
-        /* Используем flexbox для управления расположением содержимого (внутреннего контейнера) */
+        inset: 0;
         display: flex;
-        flex-direction: column; /* Располагаем содержимое в колонку */
-        align-items: center; /* Центрируем содержимое по горизонтали */
-        /* align-items: flex-start;  - если нужно выравнивание внутреннего блока по левому краю */
-
-        /* Добавляем внутренние отступы к самому модальному окну, чтобы контент не прилипал к краям */
-        padding-top: 20px; /* Отступ сверху */
-        padding-bottom: 100px; /* Отступ снизу, чтобы не перекрывался нижней панелью */
-        padding-left: 10px; /* Отступы по бокам */
-        padding-right: 10px;
-
-        /* Делаем прокручиваемым само модальное окно, включая фон и отступы */
-        overflow-y: auto;
-        overflow-x: hidden; /* Скрываем горизонтальную прокрутку */
-
-        /* Применяем transform и backface-visibility для рендеринга */
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0); /* Для WebKit браузеров (iOS Safari) */
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-        -webkit-overflow-scrolling: touch; /* Улучшает плавность скролла на iOS */
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 50;
+        padding-top: 2vh;
+        padding-bottom: 100px;
+        max-height: calc(100vh - 100px);
     }
 
-    /* Убедимся, что внутренний контейнер модального окна корректно отображается */
     #portfolioModal .bg-[--color-bg--300] {
-        max-width: 600px; /* Ограничиваем максимальную ширину содержимого */
-        width: 100%; /* Занимаем всю доступную ширину внутри модального окна (до max-width) */
-        /* margin: 0 auto; - Не нужно, т.к. родитель (модальное окно) центрирует flex-элементы горизонтально */
-
-        /* Внутренний контейнер не имеет фиксированной max-height или overflow, т.к. прокрутку делает родитель */
-        /* max-height: calc(100vh - 80px); */
-        /* overflow-y: auto; */
-
-        border-radius: 0.5rem;
-        padding: 0.75rem; /* Внутренние отступы содержимого внутри этого блока */
-        background-color: var(--color-bg--300); /* Фон внутреннего контейнера */
-
-        /* Убедитесь, что этот блок не сжимается */
-        flex-shrink: 0;
+        max-height: calc(100vh - 150px);
+        overflow: auto;
+        width: 90%;
+        max-width: 900px;
+    }
+    
+    #portfolioModal .mt-6 {
+        margin-bottom: 15px;
+    }
+    
+    .portfolio-positions-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+        border: 1px solid var(--color-primary-purple);
+        border-radius: 4px;
+        display: block;
+        height: 150px !important;
+        overflow-y: scroll !important;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 4px;
+    }
+    
+    .portfolio-positions-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 4px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\] {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-track {
+        background: var(--color-bg--500);
+        border-radius: 3px;
+    }
+    
+    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-thumb {
+        background-color: var(--color-primary-purple);
+        border-radius: 3px;
     }
 
-    /* Также убедитесь, что инлайн-стиль style="overflow-y: auto;" удален из HTML для div с классом bg-[--color-bg--300] */
-
-    /* Проверьте этот блок в вашем теге <style> */
     .modal-button {
         transition: all 0.3s ease;
         letter-spacing: 0.05em;
@@ -3709,175 +3470,326 @@
         box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
         padding: 0.5rem 1rem;
         border-radius: 0.5rem;
-        color: white !important;
-        /* Ваш фиолетовый фон с анимацией */
+        color: white;
         background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
                     radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
                     radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
         background-size: 200% 200%;
-        animation: lavaLamp 6s infinite ease-in-out !important;
-        /* Убедимся, что нет переопределений, делающих фон прозрачным или серым */
-        /* background-color: transparent !important; - Убедитесь, что подобных правил нет */
-        /* opacity: 1 !important; - Можно добавить на всякий случай, если кажется прозрачной */
+        animation: lavaLamp 6s infinite ease-in-out;
+    }
+    
+    .modal-button:hover {
+        transform: translateY(-2px);
+        background-color: rgba(128, 0, 128, 0.8);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+    
+    .modal-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
     }
 
-    /* Проверьте, что стили для состояния disabled не делают кнопку невидимой,
-       хотя у этой кнопки нет атрибута disabled
-    .modal-button:disabled {
-        opacity: 0.5; // Пример стиля для disabled
+    body.modal-open {
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    body.modal-open .chart-screen-overlay,
+    body.modal-open .modal-on-chart,
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+    
+    body.modal-open .fixed.bottom-0 {
+        pointer-events: auto;
+    }
+
+    .news-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background-color: var(--color-primary-purple, #800080);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .news-screen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 60px; 
+        background-color: var(--color-primary-black, #191b20);
+        z-index: 100;
+        overflow-y: auto;
+    }
+    
+    .news-screen-content {
+        padding: 20px;
+        padding-bottom: 80px; 
+    }
+    
+    .news-item {
+        background-color: var(--color-bg--300, #262932);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .news-item-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .news-item-source {
+        font-size: 0.8rem;
+        color: var(--color-primary-silver, #a0a0a0);
+        margin-bottom: 8px;
+    }
+    
+    .news-item-content {
+        margin-bottom: 10px;
+    }
+    
+    .news-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .news-item-date {
+        font-size: 0.8rem;
+        color: var(--color-primary-yellow, #eab308);
+    }
+    
+    .news-item-link {
+        color: var(--color-primary-yellow, #eab308);
+        text-decoration: underline;
+    }
+
+    .load-more-news-button {
+        display: block;
+        background-color: var(--color-primary-purple);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        margin: 20px auto;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 80%;
+        max-width: 300px;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .load-more-news-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
+    }
+
+    .load-more-news-button:active {
+        transform: translateY(1px);
+    }
+
+    .load-more-news-button:disabled {
+        opacity: 0.7;
         cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
     }
-    */
-
-    /* Если есть другие правила для кнопок, убедитесь, что они не конфликтуют,
-       например, общие стили для button
-    button {
-       // Убедитесь, что здесь нет правил, переопределяющих фон или цвет
-    }
-    */
-
-    /* Общие стили для всех полноэкранных модальных окон (Calculator, Share, Order Book, Mempool, Portfolio) */
-    /* Это позволит избежать дублирования */
-    #calculatorModal,
-    #shareModal,
-    #orderBookModal,
-    #mempoolModal,
-    #portfolioModal {
-         position: fixed;
-         inset: 0; /* Занимает весь экран */
-         z-index: 50; /* Должен быть ниже z-index нижней панели (200) */
-         background-color: #000000; /* Непрозрачный черный фон */
-
-         /* Используем flexbox для расположения содержимого (внутреннего контейнера) */
-         display: flex;
-         flex-direction: column; /* Располагаем содержимое в колонку (сверху вниз) */
-         align-items: center; /* Центрируем содержимое по горизонтали */
-
-         /* Добавляем внутренние отступы к САМОМУ модальному окну.
-            Эти отступы создают "безопасные зоны" и сдвигают контент от краев экрана. */
-         padding-top: 20px; /* Отступ сверху - можно скорректировать, если нужно выше/ниже */
-         padding-bottom: 90px; /* Отступ снизу - должен быть больше высоты нижней панели */
-         padding-left: 10px; /* Отступы по бокам */
-         padding-right: 10px;
-
-         /* Делаем прокручиваемым САМО модальное окно */
-         overflow-y: auto;
-         overflow-x: hidden; /* Скрываем горизонтальную прокрутку */
-
-         /* Применяем transform и backface-visibility для рендеринга */
-         transform: translateZ(0);
-         -webkit-transform: translateZ(0); /* Для WebKit браузеров (iOS Safari) */
-         backface-visibility: hidden;
-         -webkit-backface-visibility: hidden;
-         -webkit-overflow-scrolling: touch; /* Улучшает плавность скролла на iOS */
-    }
-
-    /* СТИЛИ ДЛЯ ВНУТРЕННИХ КОНТЕЙНЕРОВ СОДЕРЖИМОГО МОДАЛЬНЫХ ОКОН */
-    /* Эти стили определяют внешний вид, ширину и отступы самого блока контента.
-       Они расположены вверху родительского flex-контейнера (#...Modal) из-за flex-direction: column
-       и сдвинуты вниз на величину padding-top родителя. */
-
-    /* Стили для внутреннего контейнера Calculator */
-    #calculatorModal .bg-[--color-bg--300] {
-         max-width: 350px; /* Ограничиваем максимальную ширину */
-         width: 100%; /* Занимаем всю доступную ширину (до max-width) */
-         margin: 0 auto; /* Центрируем горизонтально внутри родительского padding */
-
-         /* Внутренний контейнер НЕ имеет фиксированной max-height или overflow,
-            т.к. прокрутку делает родитель (#calculatorModal). */
-         /* max-height: calc(100vh - 80px); */
-         /* overflow-y: auto; */
-
-         border-radius: 0.5rem;
-         padding: 0.75rem; /* Внутренние отступы содержимого */
-         background-color: var(--color-bg--300);
-
-         flex-shrink: 0; /* Предотвращает сжатие блока */
-    }
-
-    /* Стили для внутреннего контейнера Share */
-    #shareModal .bg-[--color-bg--300] {
-         max-width: 900px; /* Ограничиваем максимальную ширину */
-         width: 90%; /* Занимаем большую часть доступной ширины */
-         margin: 0 auto; /* Центрируем */
-
-         /* Удаляем max-height и overflow-y */
-         /* max-height: calc(100vh - 80px); */
-         /* overflow-y: auto; */
-
-         border-radius: 0.5rem;
-         padding: 0.75rem;
-         background-color: var(--color-bg--300);
-
-         flex-shrink: 0;
-    }
-
-    /* Стили для внутреннего контейнера Order Book */
-    #orderBookModal .bg-[--color-bg--300] {
-         max-width: 800px; /* Ограничиваем максимальную ширину */
-         width: 90%; /* Занимаем большую часть доступной ширины */
-         margin: 0 auto; /* Центрируем */
-
-         /* Удаляем max-height и overflow-y */
-         /* max-height: calc(100vh - 80px); */
-         /* overflow-y: auto; */
-
-         border-radius: 0.5rem;
-         padding: 0.75rem;
-         background-color: var(--color-bg--300);
-
-         flex-shrink: 0;
-    }
-
-    /* Стили для внутреннего контейнера Mempool */
-    #mempoolModal .bg-[--color-bg--300] {
-         max-width: 600px; /* Ограничиваем максимальную ширину */
-         width: 90%; /* Занимаем большую часть доступной ширины */
-         margin: 0 auto; /* Центрируем */
-
-         /* Удаляем max-height и overflow-y */
-         /* max-height: calc(100vh - 80px); */
-         /* overflow-y: auto; */
-
-         border-radius: 0.5rem;
-         padding: 0.75rem;
-         background-color: var(--color-bg--300);
-
-         flex-shrink: 0;
-    }
-
-    /* Стили для внутреннего контейнера Portfolio */
-    #portfolioModal .bg-[--color-bg--300] {
-         max-width: 600px; /* Ограничиваем максимальную ширину содержимого */
-         width: 100%; /* Занимаем всю доступную ширину */
-         margin: 0 auto; /* Центрируем горизонтально */
-
-         /* Удаляем max-height и overflow-y */
-         /* max-height: calc(100vh - 80px); */
-         /* overflow-y: auto; */
-
-         border-radius: 0.5rem;
-         padding: 0.75rem; /* Внутренние отступы содержимого */
-         background-color: var(--color-bg--300);
-
-         flex-shrink: 0;
-    }
-
-    /* Также убедитесь, что инлайн-стиль style="overflow-y: auto;" удален из HTML для всех div с классом bg-[--color-bg--300] внутри модальных окон */
 
     .latest-blocks-table td,
     .latest-blocks-table th {
-        font-size: 0.8rem; /* Уменьшаем базовый размер шрифта */
-        padding: 0.5rem;
+        font-size: 0.9rem; 
+        padding: 0.5rem; 
     }
 
     @media (max-width: 768px) {
         .latest-blocks-table td,
         .latest-blocks-table th {
-            font-size: 0.75rem; /* Этот размер останется для очень маленьких экранов */
-            padding: 0.3rem;
+            font-size: 0.75rem; 
+            padding: 0.3rem; 
         }
     }
+
+    .news-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .news-card {
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+
+    .news-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .news-image {
+        position: relative;
+        padding-top: 56.25%;
+        overflow: hidden;
+    }
+
+    .news-image img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .news-card:hover .news-image img {
+        transform: scale(1.05);
+    }
+
+    .news-favorite-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .news-card:hover .news-favorite-btn {
+        opacity: 1;
+    }
+
+    .news-content {
+        padding: 1rem;
+    }
+
+    .news-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .news-category {
+        color: var(--color-primary-yellow);
+        font-weight: 500;
+    }
+
+    .news-date {
+        color: var(--color-primary-silver);
+    }
+
+    .news-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+    }
+
+    .news-excerpt {
+        color: var(--color-primary-silver);
+        font-size: 0.875rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+
+    .news-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .news-read-more {
+        color: var(--color-primary-blue);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+
+    .news-read-more:hover {
+        color: var(--color-primary-purple);
+    }
+
+    .news-source {
+        color: var(--color-primary-silver);
+        font-size: 0.875rem;
+    }
+
+    .news-loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 200px;
+    }
+
+    .news-spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 3px solid var(--color-primary-purple);
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .news-category-select {
+        position: relative;
+        min-width: 200px;
+    }
+
+    .news-category-select select {
+        appearance: none;
+        width: 100%;
+        padding: 0.5rem 2rem 0.5rem 1rem;
+        background-color: var(--color-bg--300);
+        border: 1px solid var(--color-primary-purple);
+        color: white;
+        border-radius: 0.5rem;
+        cursor: pointer;
+    }
+
+    .news-category-select::after {
+        content: '';
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid white;
+        pointer-events: none;
+    }
+
+    .news-load-more {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background-color: var(--color-primary-purple);
+        color: white;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+    }
+
+    .news-load-more:hover {
+        background-color: var(--color-primary-blue);
+    }
+
 </style>
 </body>
 <script>
