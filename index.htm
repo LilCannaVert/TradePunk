@@ -1993,6 +1993,12 @@
             },
             updatePortfolioTotals() {
                 console.log('updatePortfolioTotals called. Positions count:', this.portfolioPositions.length);
+                 // Abort if tickers are not loaded yet, update will be triggered when they are
+                 if (Object.keys(this.tickers).length === 0) {
+                     console.log('updatePortfolioTotals: Tickers not loaded, aborting update.');
+                     return;
+                 }
+
                 if (!this.portfolioPositions.length) {
                      console.log('updatePortfolioTotals: Portfolio is empty, resetting totals and triggering chart destroy.');
                     this.totalInvestment = 0;
@@ -2013,6 +2019,8 @@
                     } catch(e) {
                        console.error('updatePortfolioTotals: Error clearing empty portfolio from localStorage:', e);
                     }
+                    // Render chart (will destroy if no data)
+                    this.renderPortfolioChart(); // Вызываем renderChart даже если пусто, он сам решит уничтожить график
                     return;
                 }
 
@@ -2041,8 +2049,14 @@
                         };
                     }
                     console.warn(`updatePortfolioTotals: Ticker data not found for symbol: ${position.symbol}. Cannot update value.`);
-                    // Если данные тикера недоступны, возвращаем позицию как есть
-                    return position;
+                    // Если данные тикера недоступны, возвращаем позицию как есть, но сбрасываем current/profit, чтобы не использовать устаревшие значения
+                    return {
+                         ...position,
+                         currentPrice: 0,
+                         currentValue: 0,
+                         profit: position.buyPrice * -1, // Потеря всей инвестиции
+                         profitPercent: -100
+                    };
                 });
 
                 this.totalInvestment = totalInvestment;
@@ -2065,12 +2079,11 @@
                     console.error('updatePortfolioTotals: Error saving updated portfolio to localStorage:', e);
                 }
 
-                // Отрисовываем/обновляем график только если модальное окно открыто
+                // Отрисовываем/обновляем график только если модальное окно открыто.
+                // renderPortfolioChart сам использует $nextTick.
                 if (this.showPortfolio) {
-                    console.log('updatePortfolioTotals: Portfolio modal is open, calling renderPortfolioChart in nextTick.');
-                    this.$nextTick(() => {
-                         this.renderPortfolioChart();
-                    });
+                    console.log('updatePortfolioTotals: Portfolio modal is open, calling renderPortfolioChart.');
+                    this.renderPortfolioChart();
                 } else {
                      console.log('updatePortfolioTotals: Portfolio modal is closed, not rendering chart.');
                 }
@@ -2918,70 +2931,62 @@
                     this.addressLoading = false;
                 }
             },
-            // Метод для отрисовки графика портфолио
+            // Метод для отрисовки графика портфолио - вызывается при открытии модального окна и при обновлении totals
             renderPortfolioChart() {
                 console.log('renderPortfolioChart called.');
-                 // Если модальное окно закрыто, не пытаемся рендерить
-                 if (!this.showPortfolio) {
-                     console.log('renderPortfolioChart: Portfolio modal is closed, aborting render.');
+
+                 // Если модальное окно закрыто или нет данных для тикеров, не пытаемся рендерить
+                 if (!this.showPortfolio || Object.keys(this.tickers).length === 0) {
+                     console.log('renderPortfolioChart: Aborting render - modal closed or tickers not loaded.');
+                     // Уничтожаем график, если он существует и рендеринг прерван
+                     if (this.portfolioChartInstance) {
+                         console.log('renderPortfolioChart: Destroying chart instance due to abort.');
+                         this.portfolioChartInstance.destroy();
+                         this.portfolioChartInstance = null;
+                     }
                      return;
                  }
 
-                const ctx = document.getElementById('portfolioChart');
+                 // Ждем следующего тика DOM, чтобы canvas точно присутствовал
+                 this.$nextTick(() => {
+                     console.log('renderPortfolioChart: Inside nextTick, attempting to find canvas.');
+                     const ctx = document.getElementById('portfolioChart');
 
-                if (!ctx) {
-                    console.error('renderPortfolioChart: Canvas element with ID "portfolioChart" not found.');
-                    // Если canvas не найден, попробуем через небольшой setTimeout и рекурсивно вызовем себя
-                    // Увеличим задержку и добавим счетчик попыток, чтобы избежать бесконечного цикла
-                    if (!this._renderChartAttempts) {
-                         this._renderChartAttempts = 0;
-                    }
-                    this._renderChartAttempts++;
-                    if (this._renderChartAttempts < 10) { // Ограничим количество попыток
-                        console.log(`renderPortfolioChart: Retrying to find canvas in ${100 * this._renderChartAttempts}ms. Attempt ${this._renderChartAttempts}`);
-                        setTimeout(() => {
-                            this.renderPortfolioChart(); // Рекурсивный вызов
-                        }, 100 * this._renderChartAttempts); // Увеличиваем задержку при каждой попытке
-                    } else {
-                        console.error('renderPortfolioChart: Failed to find canvas after multiple retries.');
-                        this._renderChartAttempts = 0; // Сбросить счетчик после неудачных попыток
-                    }
-                    return;
-                }
+                     if (!ctx) {
+                         console.error('renderPortfolioChart: Canvas element with ID "portfolioChart" not found after nextTick.');
+                          // Если canvas не найден, уничтожаем график на всякий случай
+                          if (this.portfolioChartInstance) {
+                             console.log('renderPortfolioChart: Destroying chart instance as canvas not found.');
+                             this.portfolioChartInstance.destroy();
+                             this.portfolioChartInstance = null;
+                          }
+                         return;
+                     }
 
-                console.log('renderPortfolioChart: Canvas element found.', ctx);
-                this._renderChartAttempts = 0; // Сбросить счетчик после нахождения canvas
-                this.actuallyRenderChart(ctx);
+                     console.log('renderPortfolioChart: Canvas element found. Calling actuallyRenderChart.');
+                     this.actuallyRenderChart(ctx);
+                 });
             },
 
             // Вспомогательный метод для фактической отрисовки/обновления графика
             actuallyRenderChart(ctx) {
                  console.log('actuallyRenderChart called with context:', ctx);
-                 if (!this.portfolioPositions || this.portfolioPositions.length === 0) {
-                    console.log('actuallyRenderChart: No portfolio positions with value > 0 to render chart.');
-                     // Уничтожаем график, если данных нет или все значения равны 0
-                     if (this.portfolioChartInstance) {
-                         console.log('actuallyRenderChart: Destroying chart due to no valid positions.');
-                         this.portfolioChartInstance.destroy();
-                         this.portfolioChartInstance = null;
-                     }
-                    return;
-                 }
 
                  // Фильтруем позиции для графика: только те, у которых currentValue > 0
                  const positionsForChart = this.portfolioPositions.filter(pos => pos.currentValue > 0);
 
                  if (positionsForChart.length === 0) {
-                     console.log('actuallyRenderChart: All portfolio positions have currentValue 0, not rendering chart.');
+                     console.log('actuallyRenderChart: No portfolio positions with value > 0 to render chart.');
+                      // Уничтожаем график, если данных нет или все значения равны 0
                       if (this.portfolioChartInstance) {
-                         console.log('actuallyRenderChart: Destroying chart as all values are zero.');
+                         console.log('actuallyRenderChart: Destroying chart as no valid data.');
                          this.portfolioChartInstance.destroy();
                          this.portfolioChartInstance = null;
                       }
                      return;
                  }
 
-                 console.log('actuallyRenderChart: Rendering chart with VALID positions:', positionsForChart);
+                 console.log('actuallyRenderChart: Preparing chart with VALID positions:', positionsForChart);
 
                 // Подготовка данных для графика
                 const chartData = {
@@ -3046,7 +3051,7 @@
                 if (this.portfolioChartInstance) {
                     console.log('actuallyRenderChart: Destroying old chart instance before creating new.');
                     this.portfolioChartInstance.destroy();
-                    this.portfolioChartInstance = null;
+                    this.portfolioChartInstance = null; // Убедимся, что ссылка обнулена
                 }
 
                 // Создаем новый экземпляр графика
@@ -3057,7 +3062,7 @@
                         data: chartData,
                         options: chartOptions
                     });
-                    console.log('actuallyRenderChart: New chart instance created successfully.', this.portfolioChartInstance);
+                    console.log('actuallyRenderChart: New chart instance created successfully.');
                 } catch(chartError) {
                     console.error('actuallyRenderChart: Error creating chart instance:', chartError);
                     this.portfolioChartInstance = null; // Ensure it's null on error
@@ -3730,6 +3735,144 @@
        // Убедитесь, что здесь нет правил, переопределяющих фон или цвет
     }
     */
+
+    /* Общие стили для всех полноэкранных модальных окон (Calculator, Share, Order Book, Mempool, Portfolio) */
+    /* Это позволит избежать дублирования */
+    #calculatorModal,
+    #shareModal,
+    #orderBookModal,
+    #mempoolModal,
+    #portfolioModal {
+         position: fixed;
+         inset: 0; /* Занимает весь экран: top, right, bottom, left установлены в 0 */
+         z-index: 50; /* Должен быть ниже z-index нижней панели (200) */
+         background-color: #000000; /* Непрозрачный черный фон */
+
+         /* Используем flexbox для центрирования содержимого (внутреннего контейнера) внутри полного экрана */
+         display: flex;
+         align-items: center; /* Центрирование содержимого по вертикали */
+         justify-content: center; /* Центрирование содержимого по горизонтали */
+
+         /* Само модальное окно не прокручивается, прокручивается внутренний контейнер */
+         overflow-y: hidden;
+
+
+         /* Применяем transform и backface-visibility для рендеринга */
+         transform: translateZ(0);
+         -webkit-transform: translateZ(0); /* Для WebKit браузеров (iOS Safari) */
+         backface-visibility: hidden;
+         -webkit-backface-visibility: hidden;
+    }
+
+    /* Стили для внутреннего контейнера содержимого модального окна (блок с фоном [--color-bg--300]) */
+    /* Применяем к каждому модальному окну индивидуально, чтобы задать max-width и max-height */
+
+    /* Стили для внутреннего контейнера Calculator */
+    #calculatorModal .bg-[--color-bg--300] {
+         max-width: 350px; /* Ограничиваем максимальную ширину */
+         width: 100%; /* Занимаем всю доступную ширину */
+         margin: 0 auto; /* Центрируем */
+
+         /* Устанавливаем максимальную высоту и включаем прокрутку для ВНУТРЕННЕГО контейнера */
+         /* Оставляем отступ сверху и снизу, например, 40px */
+         max-height: calc(100vh - 80px);
+         overflow-y: auto; /* **Делаем ВНУТРЕННИЙ контейнер прокручиваемым** */
+
+         border-radius: 0.5rem;
+         padding: 0.75rem;
+         background-color: var(--color-bg--300);
+
+         -webkit-overflow-scrolling: touch; /* Улучшает плавность скролла на iOS */
+    }
+
+    /* Стили для внутреннего контейнера Share */
+    #shareModal .bg-[--color-bg--300] {
+         max-width: 900px; /* Ограничиваем максимальную ширину */
+         width: 90%; /* Занимаем большую часть доступной ширины */
+         margin: 0 auto; /* Центрируем */
+
+         /* Устанавливаем максимальную высоту и включаем прокрутку для ВНУТРЕННЕГО контейнера */
+         /* Оставляем отступ сверху и снизу, например, 40px */
+         max-height: calc(100vh - 80px);
+         overflow-y: auto; /* **Делаем ВНУТРЕННИЙ контейнер прокручиваемым** */
+
+         border-radius: 0.5rem;
+         padding: 0.75rem;
+         background-color: var(--color-bg--300);
+
+         -webkit-overflow-scrolling: touch; /* Улучшает плавность скролла на iOS */
+    }
+
+    /* Стили для внутреннего контейнера Order Book */
+    #orderBookModal .bg-[--color-bg--300] {
+         max-width: 800px; /* Ограничиваем максимальную ширину */
+         width: 90%; /* Занимаем большую часть доступной ширины */
+         margin: 0 auto; /* Центрируем */
+
+         /* Устанавливаем максимальную высоту и включаем прокрутку для ВНУТРЕННЕГО контейнера */
+         /* Оставляем отступ сверху и снизу, например, 40px */
+         max-height: calc(100vh - 80px);
+         overflow-y: auto; /* **Делаем ВНУТРЕННИЙ контейнер прокручиваемым** */
+
+         border-radius: 0.5rem;
+         padding: 0.75rem;
+         background-color: var(--color-bg--300);
+
+         -webkit-overflow-scrolling: touch; /* Улучшает плавность скролла на iOS */
+    }
+
+    /* Стили для внутреннего контейнера Mempool */
+    #mempoolModal .bg-[--color-bg--300] {
+         max-width: 600px; /* Ограничиваем максимальную ширину */
+         width: 90%; /* Занимаем большую часть доступной ширины */
+         margin: 0 auto; /* Центрируем */
+
+         /* Устанавливаем максимальную высоту и включаем прокрутку для ВНУТРЕННЕГО контейнера */
+         /* Оставляем отступ сверху и снизу, например, 40px */
+         max-height: calc(100vh - 80px);
+         overflow-y: auto; /* **Делаем ВНУТРЕННИЙ контейнер прокручиваемым** */
+
+         border-radius: 0.5rem;
+         padding: 0.75rem;
+         background-color: var(--color-bg--300);
+
+         -webkit-overflow-scrolling: touch; /* Улучшает плавность скролла на iOS */
+    }
+
+    /* Стили для внутреннего контейнера Portfolio */
+    /* Копируем сюда стили, которые мы делали для Portfolio */
+    #portfolioModal .bg-[--color-bg--300] {
+         max-width: 600px; /* Ограничиваем максимальную ширину содержимого */
+         width: 100%; /* Занимаем всю доступную ширину внутри модального окна (до max-width) */
+         margin: 0 auto; /* Центрируем блок по горизонтали */
+
+         /* Устанавливаем максимальную высоту и включаем прокрутку для ВНУТРЕННЕГО контейнера */
+         max-height: calc(100vh - 80px); /* Оставляем небольшой отступ сверху и снизу */
+         overflow-y: auto; /* **Делаем ВНУТРЕННИЙ контейнер прокручиваемым по вертикали** */
+
+         border-radius: 0.5rem;
+         padding: 0.75rem; /* Внутренние отступы содержимого внутри этого блока */
+         background-color: var(--color-bg--300); /* Фон внутреннего контейнера */
+
+         -webkit-overflow-scrolling: touch; /* Улучшает плавность скролла на iOS */
+    }
+
+
+    /* Также убедитесь, что инлайн-стиль style="overflow-y: auto;" удален из HTML для всех div с классом bg-[--color-bg--300] внутри модальных окон */
+
+    .latest-blocks-table td,
+    .latest-blocks-table th {
+        font-size: 0.8rem; /* Уменьшаем базовый размер шрифта */
+        padding: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .latest-blocks-table td,
+        .latest-blocks-table th {
+            font-size: 0.75rem; /* Этот размер останется для очень маленьких экранов */
+            padding: 0.3rem;
+        }
+    }
 </style>
 </body>
 <script>
