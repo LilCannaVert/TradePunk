@@ -458,18 +458,19 @@
             </div>
         </div>
 
-        <div v-if="showCalculator" id="calculatorModal" class="fixed inset-0 flex justify-center bg-black bg-opacity-50 z-50">
-            <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-sm mx-4" @click.stop>
+        <div v-if="showCalculator" id="calculatorModal" class="fixed inset-0 flex items-start bg-black z-50 overflow-y-auto" @click="handleCalculatorModalClick">
+            <div class="flex flex-col bg-[--color-bg--300] rounded-lg p-4 w-full h-full overflow-y-auto" @click.stop>
                 <div class="flex justify-between items-center mb-2 sticky top-0 bg-[--color-bg--300] z-10">
                     <h2 class="text-base font-bold text-[--color-primary-silver]">Calculator</h2>
                     <button @click="toggleCalculator" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
                 </div>
-                <div class="calculator-container">
+                <div class="calculator-container flex-grow overflow-y-auto">
                     <calculator-component 
                         :settings="calcSettings" 
                         :coins="coins" 
                         :tickers="tickers"
-                        @update-settings="updateCalcSettings">
+                        @update-settings="updateCalcSettings"
+                        ref="calculatorComponentRef">
                     </calculator-component>
                 </div>
             </div>
@@ -1055,6 +1056,7 @@
                             v-model="searchQuery"
                             @input="filterCoins"
                             @focus="showDropdown = true"
+                            ref="searchCoinInput"
                             type="text"
                             class="form-control bg-[--color-bg--300] text-white p-1.5 rounded w-full text-sm"
                             placeholder="Search coin..." />
@@ -1077,6 +1079,7 @@
                         <input 
                             v-model="settings.investment"
                             @change="saveChanges()"
+                            ref="investmentInput"
                             type="number"
                             min="0"
                             inputmode="decimal"
@@ -1090,6 +1093,7 @@
                         <input
                             v-model="settings.initialPrice"
                             @change="saveChanges()"
+                            ref="initialPriceInput"
                             type="number"
                             min="0"
                             inputmode="decimal"
@@ -1103,6 +1107,7 @@
                         <input
                             v-model="settings.projectedPrice"
                             @change="saveChanges()"
+                            ref="projectedPriceInput"
                             type="number"
                             min="0"
                             inputmode="decimal"
@@ -1116,6 +1121,7 @@
                         <input
                             v-model="settings.serviceFee"
                             @change="saveChanges()"
+                            ref="serviceFeeInput"
                             type="number"
                             min="0"
                             max="100"
@@ -1130,6 +1136,7 @@
                         <input
                             v-model="settings.taxRate"
                             @change="saveChanges()"
+                            ref="taxRateInput"
                             type="number"
                             min="0"
                             max="100"
@@ -1246,6 +1253,33 @@
             },
             saveChanges() {
                 this.$emit('update-settings', this.settings);
+            },
+            blurInputs() {
+                console.log('blurInputs method called in CalculatorComponent');
+                if (this.$refs.searchCoinInput) {
+                    this.$refs.searchCoinInput.blur();
+                    console.log('Blurred searchCoinInput');
+                }
+                if (this.$refs.investmentInput) {
+                    this.$refs.investmentInput.blur();
+                    console.log('Blurred investmentInput');
+                }
+                if (this.$refs.initialPriceInput) {
+                    this.$refs.initialPriceInput.blur();
+                    console.log('Blurred initialPriceInput');
+                }
+                if (this.$refs.projectedPriceInput) {
+                    this.$refs.projectedPriceInput.blur();
+                    console.log('Blurred projectedPriceInput');
+                }
+                if (this.$refs.serviceFeeInput) {
+                    this.$refs.serviceFeeInput.blur();
+                    console.log('Blurred serviceFeeInput');
+                }
+                if (this.$refs.taxRateInput) {
+                    this.$refs.taxRateInput.blur();
+                    console.log('Blurred taxRateInput');
+                }
             }
         },
         mounted() {
@@ -1774,6 +1808,19 @@
                 } else {
                     this.showCalculator = false;
                     document.body.style.overflow = 'auto';
+                }
+            },
+            handleCalculatorModalClick(event) {
+                // Проверяем, был ли клик непосредственно по контейнеру модального окна Calculator
+                if (event.target.id === 'calculatorModal') {
+                    console.log('Clicked on calculator modal background, attempting to blur inputs.');
+                    // Вызываем метод blurInputs внутри компонента CalculatorComponent
+                    if (this.$refs.calculatorComponentRef && typeof this.$refs.calculatorComponentRef.blurInputs === 'function') {
+                        this.$refs.calculatorComponentRef.blurInputs();
+                        console.log('Called blurInputs on calculator component');
+                    } else {
+                        console.warn('Calculator component ref or blurInputs method not found.');
+                    }
                 }
             },
             updateCalcSettings(settings) {
