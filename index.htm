@@ -475,8 +475,8 @@
             </div>
         </div>
 
-        <div v-if="showPortfolio" id="portfolioModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-xl mx-4" @click.stop>
+        <div v-if="showPortfolio" id="portfolioModal" class="fixed inset-0 flex bg-black z-50 overflow-y-auto">
+            <div class="flex flex-col bg-[--color-bg--300] p-4 w-full h-full overflow-y-auto" @click.stop>
                 <div class="flex justify-between items-center mb-2">
                     <h2 class="text-base font-bold text-[--color-primary-silver]">Portfolio</h2>
                     <button @click="togglePortfolio" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Close</button>
@@ -516,6 +516,7 @@
                                 v-model="portfolioForm.searchQuery"
                                 @input="filterPortfolioCoins"
                                 @focus="showPortfolioDropdown = true"
+                                ref="portfolioCoinSearchInput"
                                 type="text"
                                 class="form-control bg-[--color-bg--300] text-white p-1 rounded w-full text-sm"
                                 placeholder="Search coin..." />
@@ -534,6 +535,7 @@
                         <div class="form-group">
                             <input 
                                 v-model="portfolioForm.amount"
+                                ref="portfolioAmountInput"
                                 type="number"
                                 min="0"
                                 step="0.00000001"
@@ -544,6 +546,7 @@
                         <div class="form-group">
                             <input 
                                 v-model="portfolioForm.buyPrice"
+                                ref="portfolioBuyPriceInput"
                                 type="number"
                                 min="0"
                                 step="0.00000001"
@@ -560,8 +563,8 @@
                     </div>
                 </div>
 
-                <div class="bg-[--color-bg--500] rounded-lg p-3">
-                    <div style="height: 150px; overflow-y: scroll; padding-right: 4px;" class="portfolio-positions-container">
+                <div class="bg-[--color-bg--500] rounded-lg p-3 flex-grow overflow-y-auto">
+                    <div style="padding-right: 4px;">
                         <div v-for="(position, index) in portfolioPositions" 
                             :key="index"
                             class="bg-[--color-bg--300] p-2 rounded-lg mb-2">
@@ -1818,7 +1821,7 @@
                     this.closeAllModals();
                     this.showPortfolio = true;
                     document.body.style.overflow = 'hidden';
-                    
+
                     if (this.showChartScreen) {
                         setTimeout(() => {
                             const portfolioModal = document.getElementById('portfolioModal');
@@ -1830,6 +1833,25 @@
                 } else {
                     this.showPortfolio = false;
                     document.body.style.overflow = 'auto';
+                }
+            },
+            handlePortfolioModalClick(event) {
+                // Проверяем, был ли клик непосредственно по контейнеру модального окна Portfolio
+                if (event.target.id === 'portfolioModal') {
+                     console.log('Clicked on portfolio modal background, attempting to blur inputs.');
+                    // Закрываем клавиатуру, размывая поля ввода
+                    if (this.$refs.portfolioCoinSearchInput) {
+                        this.$refs.portfolioCoinSearchInput.blur();
+                        console.log('Blurred portfolioCoinSearchInput');
+                    }
+                     if (this.$refs.portfolioAmountInput) {
+                        this.$refs.portfolioAmountInput.blur();
+                         console.log('Blurred portfolioAmountInput');
+                    }
+                     if (this.$refs.portfolioBuyPriceInput) {
+                        this.$refs.portfolioBuyPriceInput.blur();
+                         console.log('Blurred portfolioBuyPriceInput');
+                    }
                 }
             },
             filterPortfolioCoins() {
