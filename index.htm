@@ -3474,6 +3474,8 @@
                     radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
         background-size: 200% 200%;
         animation: lavaLamp 6s infinite ease-in-out;
+        user-select: none; /* <-- Added */
+        -webkit-user-select: none; /* <-- Added for Safari */
     }
     
     @keyframes lavaLamp {
@@ -3626,6 +3628,8 @@
                     radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
         background-size: 200% 200%;
         animation: lavaLamp 6s infinite ease-in-out;
+        user-select: none; /* <-- Added */
+        -webkit-user-select: none; /* <-- Added for Safari */
     }
     
     .modal-button:hover {
@@ -3938,6 +3942,16 @@
 
     .news-load-more:hover {
         background-color: var(--color-primary-blue);
+    }
+
+    .cb2 {
+        user-select: none; /* <-- Added */
+        -webkit-user-select: none; /* <-- Added for Safari */
+    }
+
+    .modal-button {
+        user-select: none; /* <-- Added */
+        -webkit-user-select: none; /* <-- Added for Safari */
     }
 
 </style>
