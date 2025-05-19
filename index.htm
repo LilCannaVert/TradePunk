@@ -143,14 +143,6 @@
                     <span :class="tickers[ticker]['style']">{{parseNumber(tickers[ticker]['close'], tickers[ticker]['asset'])}}</span>
                 </div>
                 </div>
-                <div class="w-1/2">
-                <small class="block">24H Highest</small>
-                <span>{{parseNumber(tickers[ticker]['high'], tickers[ticker]['asset'])}}</span>
-                </div>
-                <div class="w-1/2">
-                <small class="block">24H Lowest</small>
-                <span>{{parseNumber(tickers[ticker]['low'], tickers[ticker]['asset'])}}</span>
-                </div>
                 <div class="w-1/2 hidden">
                 <small class="block">24H Volume</small>
                 <span>{{parseNumber(tickers[ticker]['tokenVolume'], tickers[ticker]['token'])}} {{tickers[ticker]['token']}}</span>
@@ -3055,11 +3047,12 @@
 
             console.log('Mounted: Calling loadState to load portfolio.');
             this.loadState();
+            console.log('Mounted: loadState finished. Initial portfolioPositions count:', this.portfolioPositions.length); // Лог количества позиций
 
             this.portfolioUpdateInterval = setInterval(() => {
                 if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
                      console.log('Interval triggered: Updating portfolio totals...');
-                    this.updatePortfolioTotals(); // Этот метод теперь вызывает renderPortfolioChart если модальное окно открыто
+                    this.updatePortfolioTotals();
                 }
             }, 5000);
 
@@ -3622,522 +3615,53 @@
 
     #portfolioModal {
         position: fixed;
-        inset: 0;
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        z-index: 50;
-        padding-top: 2vh;
-        padding-bottom: 100px;
-        max-height: calc(100vh - 100px);
-    }
+        inset: 0; /* Занимает весь экран */
+        z-index: 50; /* Должен быть ниже z-index нижней панели (200) */
+        background-color: rgba(0, 0, 0, 0.5); /* Фон */
 
-    #portfolioModal .bg-[--color-bg--300] {
-        max-height: calc(100vh - 150px);
-        overflow: auto;
-        width: 90%;
-        max-width: 900px;
-    }
-    
-    #portfolioModal .mt-6 {
-        margin-bottom: 15px;
-    }
-    
-    .portfolio-positions-container {
-        scrollbar-width: thin;
-        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
-        border: 1px solid var(--color-primary-purple);
-        border-radius: 4px;
-        display: block;
-        height: 150px !important;
-        overflow-y: scroll !important;
-    }
-    
-    .portfolio-positions-container::-webkit-scrollbar {
-        width: 8px;
-    }
-    
-    .portfolio-positions-container::-webkit-scrollbar-track {
-        background: var(--color-bg--500);
-        border-radius: 4px;
-    }
-    
-    .portfolio-positions-container::-webkit-scrollbar-thumb {
-        background-color: var(--color-primary-purple);
-        border-radius: 4px;
-    }
-    
-    #portfolioModal .grid.max-h-\[300px\] {
-        scrollbar-width: thin;
-        scrollbar-color: var(--color-primary-purple) var(--color-bg--500);
-    }
-    
-    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar {
-        width: 6px;
-    }
-    
-    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-track {
-        background: var(--color-bg--500);
-        border-radius: 3px;
-    }
-    
-    #portfolioModal .grid.max-h-\[300px\]::-webkit-scrollbar-thumb {
-        background-color: var(--color-primary-purple);
-        border-radius: 3px;
-    }
+        /* Используем flexbox для центрирования/выравнивания внутреннего контейнера.
+           align-items: center и justify-content: center центрируют по центру,
+           но могут мешать, если контент должен занимать почти всю высоту.
+           Давайте попробуем просто использовать padding для отступов от верхнего/нижнего края экрана
+           для самого модального окна, а внутренний контейнер сделать блочным элементом.
+        */
+        /* display: flex; Убираем flexbox центрирование для всего модального окна */
+        /* align-items: center; */
+        /* justify-content: center; */
 
-    .modal-button {
-        transition: all 0.3s ease;
-        letter-spacing: 0.05em;
-        font-weight: 600;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        color: white;
-        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
-                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
-                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
-        background-size: 200% 200%;
-        animation: lavaLamp 6s infinite ease-in-out;
-    }
-    
-    .modal-button:hover {
-        transform: translateY(-2px);
-        background-color: rgba(128, 0, 128, 0.8);
-        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
-    }
-    
-    .modal-button:active {
-        transform: translateY(1px);
-        box-shadow: 0 0 8px rgba(128, 0, 128, 0.8);
-    }
+        /* Добавляем внутренние отступы к самому модальному окну, чтобы контент не прилипал к краям и не перекрывался нижней панелью */
+        padding-top: 20px; /* Отступ сверху */
+        padding-bottom: 100px; /* Отступ снизу (больше высоты нижней панели) */
+        padding-left: 10px; /* Отступы по бокам */
+        padding-right: 10px;
+        overflow-y: auto; /* **Делаем прокручиваемым само модальное окно** */
 
-    body.modal-open {
-        overflow: hidden;
-        pointer-events: none;
-    }
-    
-    body.modal-open .chart-screen-overlay,
-    body.modal-open .modal-on-chart,
-    body.modal-open .fixed.bottom-0 {
-        pointer-events: auto;
-    }
-    
-    body.modal-open .fixed.bottom-0 {
-        pointer-events: auto;
-    }
 
-    .news-button {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 10;
-        background-color: var(--color-primary-purple, #800080);
-        color: white;
-        padding: 6px 12px;
-        border-radius: 4px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-    
-    .news-screen-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 60px; 
-        background-color: var(--color-primary-black, #191b20);
-        z-index: 100;
-        overflow-y: auto;
-    }
-    
-    .news-screen-content {
-        padding: 20px;
-        padding-bottom: 80px; 
-    }
-    
-    .news-item {
-        background-color: var(--color-bg--300, #262932);
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 15px;
-    }
-    
-    .news-item-title {
-        font-weight: bold;
-        margin-bottom: 8px;
-    }
-    
-    .news-item-source {
-        font-size: 0.8rem;
-        color: var(--color-primary-silver, #a0a0a0);
-        margin-bottom: 8px;
-    }
-    
-    .news-item-content {
-        margin-bottom: 10px;
-    }
-    
-    .news-item-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 10px;
-    }
-    
-    .news-item-date {
-        font-size: 0.8rem;
-        color: var(--color-primary-yellow, #eab308);
-    }
-    
-    .news-item-link {
-        color: var(--color-primary-yellow, #eab308);
-        text-decoration: underline;
-    }
-
-    .load-more-news-button {
-        display: block;
-        background-color: var(--color-primary-purple);
-        color: white;
-        text-align: center;
-        padding: 10px;
-        margin: 20px auto;
-        border-radius: 8px;
-        cursor: pointer;
-        width: 80%;
-        max-width: 300px;
-        font-weight: bold;
-        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
-        transition: all 0.3s ease;
-    }
-
-    .load-more-news-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0 15px rgba(128, 0, 128, 0.8);
-    }
-
-    .load-more-news-button:active {
-        transform: translateY(1px);
-    }
-
-    .load-more-news-button:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-        transform: translateY(0);
-        box-shadow: 0 0 5px rgba(128, 0, 128, 0.4);
-    }
-
-    .latest-blocks-table td,
-    .latest-blocks-table th {
-        font-size: 0.9rem; 
-        padding: 0.5rem; 
-    }
-
-    @media (max-width: 768px) {
-        .latest-blocks-table td,
-        .latest-blocks-table th {
-            font-size: 0.75rem; 
-            padding: 0.3rem; 
-        }
-    }
-
-    .news-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .news-card {
-        position: relative;
-        overflow: hidden;
-        transition: transform 0.3s ease;
-    }
-
-    .news-card:hover {
-        transform: translateY(-4px);
-    }
-
-    .news-image {
-        position: relative;
-        padding-top: 56.25%;
-        overflow: hidden;
-    }
-
-    .news-image img {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.3s ease;
-    }
-
-    .news-card:hover .news-image img {
-        transform: scale(1.05);
-    }
-
-    .news-favorite-btn {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        z-index: 10;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-    }
-
-    .news-card:hover .news-favorite-btn {
-        opacity: 1;
-    }
-
-    .news-content {
-        padding: 1rem;
-    }
-
-    .news-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-        font-size: 0.875rem;
-    }
-
-    .news-category {
-        color: var(--color-primary-yellow);
-        font-weight: 500;
-    }
-
-    .news-date {
-        color: var(--color-primary-silver);
-    }
-
-    .news-title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        line-height: 1.4;
-    }
-
-    .news-excerpt {
-        color: var(--color-primary-silver);
-        font-size: 0.875rem;
-        line-height: 1.5;
-        margin-bottom: 1rem;
-    }
-
-    .news-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .news-read-more {
-        color: var(--color-primary-blue);
-        text-decoration: none;
-        font-weight: 500;
-        transition: color 0.2s ease;
-    }
-
-    .news-read-more:hover {
-        color: var(--color-primary-purple);
-    }
-
-    .news-source {
-        color: var(--color-primary-silver);
-        font-size: 0.875rem;
-    }
-
-    .news-loading {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 200px;
-    }
-
-    .news-spinner {
-        width: 3rem;
-        height: 3rem;
-        border: 3px solid var(--color-primary-purple);
-        border-top-color: transparent;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    .news-category-select {
-        position: relative;
-        min-width: 200px;
-    }
-
-    .news-category-select select {
-        appearance: none;
-        width: 100%;
-        padding: 0.5rem 2rem 0.5rem 1rem;
-        background-color: var(--color-bg--300);
-        border: 1px solid var(--color-primary-purple);
-        color: white;
-        border-radius: 0.5rem;
-        cursor: pointer;
-    }
-
-    .news-category-select::after {
-        content: '';
-        position: absolute;
-        right: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 0;
-        height: 0;
-        border-left: 5px solid transparent;
-        border-right: 5px solid transparent;
-        border-top: 5px solid white;
-        pointer-events: none;
-    }
-
-    .news-load-more {
-        display: inline-block;
-        padding: 0.75rem 1.5rem;
-        background-color: var(--color-primary-purple);
-        color: white;
-        border-radius: 0.5rem;
-        font-weight: 500;
-        transition: background-color 0.2s ease;
-    }
-
-    .news-load-more:hover {
-        background-color: var(--color-primary-blue);
-    }
-
-    /* Добавьте эти стили в ваш блок <style> */
-    body, html {
-        height: 100%;
-        overflow: hidden; /* Предотвращаем прокрутку основного документа */
-        margin: 0; /* Убедимся, что нет стандартных отступов */
-        padding: 0;
-    }
-
-    #app {
-        height: 100%; /* #app занимает всю высоту body */
-        display: flex;
-        flex-direction: column; /* Располагаем дочерние элементы в колонку */
-        overflow: hidden; /* Основная прокрутка будет внутри */
-    }
-
-    /* Убедимся, что контент между хедером и футером может прокручиваться и занимает доступное пространство */
-    /* .relative.p-2 - это div, который оборачивает секции tickers, charts, modals, etc. */
-    #app > .relative.p-2 {
-        flex-grow: 1; /* Этот блок будет расширяться, занимая доступное место */
-        overflow-y: auto; /* Делаем его прокручиваемым по вертикали */
-        overflow-x: hidden; /* Скрываем горизонтальную прокрутку */
-        display: flex;
-        flex-direction: column; /* Содержимое внутри тоже может быть в колонку */
-        padding-bottom: 120px; /* Добавляем отступ снизу, чтобы контент не перекрывался нижней панелью */
-        /* padding-top: 60px;  Возможно потребуется отступ сверху, если есть фиксированный хедер */
-    }
-
-    /* Применяем transform и backface-visibility к фиксированным элементам */
-    .fixed.bottom-0 {
-         transform: translateZ(0);
-         -webkit-transform: translateZ(0); /* Для WebKit браузеров (iOS Safari) */
-         backface-visibility: hidden;
-         -webkit-backface-visibility: hidden;
-         /* Ваши существующие стили для нижней панели остаются */
-         background-color: var(--color-bg--300); /* Пример существующего стиля */
-         box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5); /* Пример существующего стиля */
-         padding: 18px 0;
-         pointer-events: auto !important;
-         z-index: 200 !important;
-    }
-
-    /* Применяем transform к модальным окнам */
-    #portfolioModal,
-    #shareModal,
-    #calculatorModal,
-    #orderBookModal,
-    #mempoolModal {
+        /* Применяем transform и backface-visibility */
         transform: translateZ(0);
-        -webkit-transform: translateZ(0);
+        -webkit-transform: translateZ(0); /* Для WebKit браузеров (iOS Safari) */
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
-        /* Ваши существующие стили для модальных окон остаются */
-         position: fixed; /* Убедимся, что они fixed */
-         inset: 0;
-         display: flex;
-         align-items: center;
-         justify-content: center;
-         background-color: rgba(0, 0, 0, 0.5);
-         z-index: 50; /* z-index модальных окон должен быть меньше z-index нижней панели */
     }
 
-    /* Убедимся, что контейнер внутри модального окна Portfolio прокручивается */
+    /* Убедимся, что внутренний контейнер модального окна корректно отображается */
     #portfolioModal .bg-[--color-bg--300] {
-         max-height: calc(100vh - 150px); /* Можно скорректировать по необходимости */
-         overflow-y: auto; /* Делаем внутренний контейнер прокручиваемым */
-         /* остальные стили контейнера остаются */
-         width: 90%;
-         max-width: 900px;
-         border-radius: 0.5rem;
-         padding: 0.75rem;
+        max-width: 600px; /* Ограничиваем максимальную ширину */
+        width: 100%; /* Занимаем всю доступную ширину */
+        margin: 0 auto; /* Центрируем блок по горизонтали */
+
+        /* Удаляем max-height и overflow-y: auto отсюда,
+           так как прокрутку теперь делает родитель (#portfolioModal)
+        */
+        /* max-height: calc(100vh - 150px); */
+        /* overflow-y: auto; */
+
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        background-color: var(--color-bg--300); /* Фон */
     }
 
-
-    /* Важно: Убедитесь, что у выпадающего списка поиска монет в портфолио
-       остается достаточно высокий z-index, чтобы он был поверх остального содержимого модального окна.
-       Мы установили его на 100 ранее, это должно быть нормально, так как модальное окно 50, а нижняя панель 200.
-    */
-    #portfolioModal .form-group .absolute.z-100 { /* Используем z-100 из Tailwind */
-         z-index: 100; /* Явно указываем z-index, если Tailwind класс не работает */
-    }
-
-
-    /* Возможно, нужно добавить отступ для самого списка позиций в портфолио,
-       чтобы его содержимое не оказывалось под формой добавления или графиком при прокрутке */
-    /* .portfolio-positions-container {
-        margin-bottom: 20px; /* Пример отступа */
-    /* } */
-
-    /* Обновите эти стили в вашем блоке <style> */
-    #portfolioModal {
-         position: fixed;
-         /* Удаляем inset: 0 и центрирующие flexbox свойства */
-         top: 50px; /* Явно позиционируем 50px от верхнего края */
-         /* bottom: 80px; Оставляем место снизу для нижней панели (ее высота около 80px) */
-         bottom: 90px; /* Давайте увеличим отступ снизу для надежности */
-         left: 10px; /* Отступы слева и справа */
-         right: 10px;
-         z-index: 50; /* Должен быть ниже z-index нижней панели */
-         background-color: rgba(0, 0, 0, 0.5); /* Фон */
-         display: flex; /* Возвращаем flexbox, чтобы центрировать/расположить внутренний контейнер */
-         align-items: flex-start; /* Выравниваем содержимое по верху */
-         justify-content: center; /* Центрируем по горизонтали */
-
-         /* Применяем transform и backface-visibility */
-         transform: translateZ(0);
-         -webkit-transform: translateZ(0);
-         backface-visibility: hidden;
-         -webkit-backface-visibility: hidden;
-    }
-
-    /* Убедимся, что внутренний контейнер модального окна корректно занимает доступное пространство и прокручивается */
-    #portfolioModal .bg-[--color-bg--300] {
-         /* max-height: calc(100vh - 150px); Удаляем эту max-height,
-            теперь высота будет определяться пространством между top и bottom модального окна */
-         width: 100%; /* Занимаем всю доступную ширину внутри модального окна */
-         max-width: 600px; /* Ограничиваем максимальную ширину */
-         height: 100%; /* Занимаем всю доступную высоту между top и bottom модального окна */
-         overflow-y: auto; /* Делаем внутренний контейнер прокручиваемым */
-         border-radius: 0.5rem;
-         padding: 0.75rem;
-         background-color: var(--color-bg--300); /* Фон */
-         /* Убедимся, что инлайн стиль style="overflow-y: auto;" удален из HTML,
-            теперь управляем overflow только в CSS */
-    }
+    /* Также удалите инлайн-стиль style="overflow-y: auto;" из HTML для div с классом bg-[--color-bg--300] */
 
 </style>
 </body>
