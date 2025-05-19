@@ -133,9 +133,16 @@
             <div v-if="tickers[ticker]" class="flex gap-1 flex-grow items-center justify-between delay-200">
                 <div class="w-1/2">
                 <div class="flex gap-1">
-                    <small>{{tickers[ticker]['pair']}}</small>
+                    <!-- Удаляем этот small элемент, который показывал название пары -->
+                    <!-- <small>{{tickers[ticker]['pair']}}</small> -->
+                    <!-- Span для стрелки и процента был удален ранее -->
+                    <!-- ... -->
                 </div>
+                <!-- Div для цены был удален ранее -->
+                <!-- ... -->
                 </div>
+                <!-- Блоки 24H Highest и 24H Lowest были удалены ранее -->
+                <!-- ... -->
                 <div class="w-1/2 hidden">
                 <small class="block">24H Volume</small>
                 <span>{{parseNumber(tickers[ticker]['tokenVolume'], tickers[ticker]['token'])}} {{tickers[ticker]['token']}}</span>
@@ -3644,44 +3651,85 @@
         z-index: 50; /* Должен быть ниже z-index нижней панели (200) */
         background-color: #000000; /* Непрозрачный черный фон */
 
-        /* Используем flexbox для центрирования содержимого (внутреннего контейнера) внутри полного экрана */
+        /* Используем flexbox для управления расположением содержимого (внутреннего контейнера) */
         display: flex;
-        align-items: center; /* Центрирование содержимого по вертикали */
-        justify-content: center; /* Центрирование содержимого по горизонтали */
+        flex-direction: column; /* Располагаем содержимое в колонку */
+        align-items: center; /* Центрируем содержимое по горизонтали */
+        /* align-items: flex-start;  - если нужно выравнивание внутреннего блока по левому краю */
 
-        /* Само модальное окно не прокручивается */
-        overflow-y: hidden;
+        /* Добавляем внутренние отступы к самому модальному окну, чтобы контент не прилипал к краям */
+        padding-top: 20px; /* Отступ сверху */
+        padding-bottom: 100px; /* Отступ снизу, чтобы не перекрывался нижней панелью */
+        padding-left: 10px; /* Отступы по бокам */
+        padding-right: 10px;
 
+        /* Делаем прокручиваемым само модальное окно, включая фон и отступы */
+        overflow-y: auto;
+        overflow-x: hidden; /* Скрываем горизонтальную прокрутку */
 
         /* Применяем transform и backface-visibility для рендеринга */
         transform: translateZ(0);
         -webkit-transform: translateZ(0); /* Для WebKit браузеров (iOS Safari) */
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
+        -webkit-overflow-scrolling: touch; /* Улучшает плавность скролла на iOS */
     }
 
-    /* Убедимся, что внутренний контейнер модального окна корректно отображается и прокручивается */
+    /* Убедимся, что внутренний контейнер модального окна корректно отображается */
     #portfolioModal .bg-[--color-bg--300] {
         max-width: 600px; /* Ограничиваем максимальную ширину содержимого */
         width: 100%; /* Занимаем всю доступную ширину внутри модального окна (до max-width) */
-        margin: 0 auto; /* Центрируем блок по горизонтали, хотя с justify-content: center на родителе это может быть не строго необходимо, но безопасно */
+        /* margin: 0 auto; - Не нужно, т.к. родитель (модальное окно) центрирует flex-элементы горизонтально */
 
-        /* Устанавливаем максимальную высоту, чтобы внутренний контейнер помещался на экране, и включаем прокрутку для него */
-        /* max-height: calc(100vh - [необходимый отступ сверху и снизу]); */
-        /* Учитываем хедер модального окна и небольшой отступ. Например, оставим 80px свободных. */
-        max-height: calc(100vh - 80px);
-        overflow-y: auto; /* **Делаем ВНУТРЕННИЙ контейнер прокручиваемым по вертикали** */
+        /* Внутренний контейнер не имеет фиксированной max-height или overflow, т.к. прокрутку делает родитель */
+        /* max-height: calc(100vh - 80px); */
+        /* overflow-y: auto; */
 
         border-radius: 0.5rem;
         padding: 0.75rem; /* Внутренние отступы содержимого внутри этого блока */
         background-color: var(--color-bg--300); /* Фон внутреннего контейнера */
 
-        /* Дополнительные стили для улучшения скролла */
-        -webkit-overflow-scrolling: touch; /* Улучшает плавность скролла на iOS */
+        /* Убедитесь, что этот блок не сжимается */
+        flex-shrink: 0;
     }
 
     /* Также убедитесь, что инлайн-стиль style="overflow-y: auto;" удален из HTML для div с классом bg-[--color-bg--300] */
 
+    /* Проверьте этот блок в вашем теге <style> */
+    .modal-button {
+        transition: all 0.3s ease;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: white !important;
+        /* Ваш фиолетовый фон с анимацией */
+        background: radial-gradient(circle at 30% 30%, rgba(128, 0, 128, 0.6), transparent),
+                    radial-gradient(circle at 70% 70%, rgba(128, 0, 128, 0.4), transparent),
+                    radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
+        background-size: 200% 200%;
+        animation: lavaLamp 6s infinite ease-in-out !important;
+        /* Убедимся, что нет переопределений, делающих фон прозрачным или серым */
+        /* background-color: transparent !important; - Убедитесь, что подобных правил нет */
+        /* opacity: 1 !important; - Можно добавить на всякий случай, если кажется прозрачной */
+    }
+
+    /* Проверьте, что стили для состояния disabled не делают кнопку невидимой,
+       хотя у этой кнопки нет атрибута disabled
+    .modal-button:disabled {
+        opacity: 0.5; // Пример стиля для disabled
+        cursor: not-allowed;
+    }
+    */
+
+    /* Если есть другие правила для кнопок, убедитесь, что они не конфликтуют,
+       например, общие стили для button
+    button {
+       // Убедитесь, что здесь нет правил, переопределяющих фон или цвет
+    }
+    */
 </style>
 </body>
 <script>
