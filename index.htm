@@ -139,9 +139,6 @@
                     <span>{{tickers[ticker]['percent'].toFixed(2)}}%</span>
                     </span>
                 </div>
-                <div>
-                    <span :class="tickers[ticker]['style']">{{parseNumber(tickers[ticker]['close'], tickers[ticker]['asset'])}}</span>
-                </div>
                 </div>
                 <div class="w-1/2 hidden">
                 <small class="block">24H Volume</small>
@@ -2920,71 +2917,100 @@
             },
             // Метод для отрисовки графика портфолио
             renderPortfolioChart() {
-                console.log('renderPortfolioChart called.'); // Лог вызова
+                console.log('renderPortfolioChart called.');
+                 // Если модальное окно закрыто, не пытаемся рендерить
+                 if (!this.showPortfolio) {
+                     console.log('renderPortfolioChart: Portfolio modal is closed, aborting render.');
+                     return;
+                 }
+
                 const ctx = document.getElementById('portfolioChart');
 
                 if (!ctx) {
                     console.error('renderPortfolioChart: Canvas element with ID "portfolioChart" not found.');
-                    // Возможно, canvas еще не в DOM, попробуем через небольшой setTimeout
-                    setTimeout(() => {
-                        const ctxRetry = document.getElementById('portfolioChart');
-                        if (ctxRetry) {
-                            console.log('renderPortfolioChart: Canvas found on retry, attempting to render...');
-                            this.actuallyRenderChart(ctxRetry);
-                        } else {
-                            console.error('renderPortfolioChart: Canvas element still not found after retry.');
-                        }
-                    }, 50); // Небольшая задержка
+                    // Если canvas не найден, попробуем через небольшой setTimeout и рекурсивно вызовем себя
+                    // Увеличим задержку и добавим счетчик попыток, чтобы избежать бесконечного цикла
+                    if (!this._renderChartAttempts) {
+                         this._renderChartAttempts = 0;
+                    }
+                    this._renderChartAttempts++;
+                    if (this._renderChartAttempts < 10) { // Ограничим количество попыток
+                        console.log(`renderPortfolioChart: Retrying to find canvas in ${100 * this._renderChartAttempts}ms. Attempt ${this._renderChartAttempts}`);
+                        setTimeout(() => {
+                            this.renderPortfolioChart(); // Рекурсивный вызов
+                        }, 100 * this._renderChartAttempts); // Увеличиваем задержку при каждой попытке
+                    } else {
+                        console.error('renderPortfolioChart: Failed to find canvas after multiple retries.');
+                        this._renderChartAttempts = 0; // Сбросить счетчик после неудачных попыток
+                    }
                     return;
                 }
 
                 console.log('renderPortfolioChart: Canvas element found.', ctx);
+                this._renderChartAttempts = 0; // Сбросить счетчик после нахождения canvas
                 this.actuallyRenderChart(ctx);
             },
 
             // Вспомогательный метод для фактической отрисовки/обновления графика
             actuallyRenderChart(ctx) {
-                 console.log('actuallyRenderChart called with context:', ctx); // Лог вызова
+                 console.log('actuallyRenderChart called with context:', ctx);
                  if (!this.portfolioPositions || this.portfolioPositions.length === 0) {
-                    console.log('actuallyRenderChart: No portfolio positions to render chart.');
-                     // Уничтожаем график, если данных нет
+                    console.log('actuallyRenderChart: No portfolio positions with value > 0 to render chart.');
+                     // Уничтожаем график, если данных нет или все значения равны 0
                      if (this.portfolioChartInstance) {
-                         console.log('actuallyRenderChart: Destroying chart due to no positions.');
+                         console.log('actuallyRenderChart: Destroying chart due to no valid positions.');
                          this.portfolioChartInstance.destroy();
                          this.portfolioChartInstance = null;
                      }
                     return;
                  }
 
-                 console.log('actuallyRenderChart: Rendering chart with positions:', this.portfolioPositions);
+                 // Фильтруем позиции для графика: только те, у которых currentValue > 0
+                 const positionsForChart = this.portfolioPositions.filter(pos => pos.currentValue > 0);
+
+                 if (positionsForChart.length === 0) {
+                     console.log('actuallyRenderChart: All portfolio positions have currentValue 0, not rendering chart.');
+                      if (this.portfolioChartInstance) {
+                         console.log('actuallyRenderChart: Destroying chart as all values are zero.');
+                         this.portfolioChartInstance.destroy();
+                         this.portfolioChartInstance = null;
+                      }
+                     return;
+                 }
+
+                 console.log('actuallyRenderChart: Rendering chart with VALID positions:', positionsForChart);
 
                 // Подготовка данных для графика
                 const chartData = {
-                    labels: this.portfolioPositions.map(pos => pos.symbol),
+                    labels: positionsForChart.map(pos => pos.pair), // Используем 'pair' для меток
                     datasets: [{
-                        data: this.portfolioPositions.map(pos => pos.currentValue),
+                        data: positionsForChart.map(pos => pos.currentValue),
                         backgroundColor: [
                             '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
                             '#FF9F40', '#8AC054', '#4D5360', '#E7E9ED', '#F7464A',
-                            '#5A5A5A', '#C0C0C0', '#800080', '#3c82f6', '#eab308', '#10b981', '#ef4444' // Добавим больше цветов
+                            '#5A5A5A', '#C0C0C0', '#800080', '#3c82f6', '#eab308', '#10b981', '#ef4444',
+                             '#00FFFF', '#FF00FF', '#FFFF00', '#00FF00' // Еще больше цветов
                         ],
                         hoverBackgroundColor: [
                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
                             '#FF9F40', '#8AC054', '#4D5360', '#E7E9ED', '#F7464A',
-                            '#5A5A5A', '#C0C0C0', '#800080', '#3c82f6', '#eab308', '#10b981', '#ef4444'
+                            '#5A5A5A', '#C0C0C0', '#800080', '#3c82f6', '#eab308', '#10b981', '#ef4444',
+                             '#00FFFF', '#FF00FF', '#FFFF00', '#00FF00'
                         ]
                     }]
                 };
 
-                // Настройки графика (цвет текста легенды и подсказок нужно задать правильно)
+                // Настройки графика
                 const chartOptions = {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: false, // Важно для контроля размера канваса
                     plugins: {
                         legend: {
                             labels: {
-                                color: '#D1C5C0' // Цвет текста легенды
-                            }
+                                color: '#D1C5C0', // Цвет текста легенды
+                                boxWidth: 20 // Размер цветного квадрата в легенде
+                            },
+                             position: 'right' // Размещение легенды справа
                         },
                         tooltip: {
                              titleColor: '#FFFFFF', // Цвет заголовка подсказки
@@ -3003,24 +3029,22 @@
                             }
                         }
                     },
-                    // Убедимся, что фон области графика прозрачен, если контейнер имеет свой фон
-                    // elements: {
-                    //     arc: {
-                    //         backgroundColor: chartData.datasets[0].backgroundColor,
-                    //         borderColor: '#000', // Граница сегментов
-                    //         borderWidth: 1
-                    //     }
-                    // }
+                     layout: { // Добавляем padding, чтобы легенда не перекрывала график
+                         padding: {
+                             left: 10,
+                             right: 150, // Оставьте место для легенды справа
+                             top: 10,
+                             bottom: 10
+                         }
+                     }
                 };
 
                 // Если экземпляр графика уже существует, уничтожаем его перед созданием нового
-                // Это более надежно при повторном создании canvas
                 if (this.portfolioChartInstance) {
                     console.log('actuallyRenderChart: Destroying old chart instance before creating new.');
                     this.portfolioChartInstance.destroy();
-                    this.portfolioChartInstance = null; // Убедимся, что ссылка обнулена
+                    this.portfolioChartInstance = null;
                 }
-
 
                 // Создаем новый экземпляр графика
                 console.log('actuallyRenderChart: Creating new chart instance on canvas:', ctx);
@@ -3030,12 +3054,11 @@
                         data: chartData,
                         options: chartOptions
                     });
-                    console.log('actuallyRenderChart: New chart instance created successfully.');
+                    console.log('actuallyRenderChart: New chart instance created successfully.', this.portfolioChartInstance);
                 } catch(chartError) {
                     console.error('actuallyRenderChart: Error creating chart instance:', chartError);
-                    this.portfolioChartInstance = null;
+                    this.portfolioChartInstance = null; // Ensure it's null on error
                 }
-
             },
         },
         mounted() {
@@ -3098,6 +3121,12 @@
             if (this.portfolioUpdateInterval) {
                 clearInterval(this.portfolioUpdateInterval);
             }
+             // Уничтожаем график портфолио при уничтожении компонента
+             if (this.portfolioChartInstance) {
+                 console.log('beforeUnmount: Destroying chart instance.');
+                 this.portfolioChartInstance.destroy();
+                 this.portfolioChartInstance = null;
+             }
         },
         computed: {
             statusMsg() {
@@ -3617,24 +3646,21 @@
         position: fixed;
         inset: 0; /* Занимает весь экран */
         z-index: 50; /* Должен быть ниже z-index нижней панели (200) */
-        background-color: rgba(0, 0, 0, 0.5); /* Фон */
+        background-color: #000000; /* Непрозрачный черный фон (вместо rgba) */
 
-        /* Используем flexbox для центрирования/выравнивания внутреннего контейнера.
-           align-items: center и justify-content: center центрируют по центру,
-           но могут мешать, если контент должен занимать почти всю высоту.
-           Давайте попробуем просто использовать padding для отступов от верхнего/нижнего края экрана
-           для самого модального окна, а внутренний контейнер сделать блочным элементом.
-        */
-        /* display: flex; Убираем flexbox центрирование для всего модального окна */
-        /* align-items: center; */
-        /* justify-content: center; */
+        /* Убираем padding, так как окно теперь занимает весь экран */
+        /* padding-top: 20px; */
+        /* padding-bottom: 100px; */
+        /* padding-left: 10px; */
+        /* padding-right: 10px; */
 
-        /* Добавляем внутренние отступы к самому модальному окну, чтобы контент не прилипал к краям и не перекрывался нижней панелью */
-        padding-top: 20px; /* Отступ сверху */
-        padding-bottom: 100px; /* Отступ снизу (больше высоты нижней панели) */
-        padding-left: 10px; /* Отступы по бокам */
-        padding-right: 10px;
-        overflow-y: auto; /* **Делаем прокручиваемым само модальное окно** */
+        /* Модальное окно будет flex-контейнером для центрирования своего содержимого */
+        display: flex;
+        align-items: center; /* Центрирование содержимого по вертикали */
+        justify-content: center; /* Центрирование содержимого по горизонтали */
+
+        /* Прокрутку теперь должен делать внутренний контейнер */
+        overflow-y: hidden; /* Убедимся, что само модальное окно не прокручивается */
 
 
         /* Применяем transform и backface-visibility */
@@ -3644,24 +3670,22 @@
         -webkit-backface-visibility: hidden;
     }
 
-    /* Убедимся, что внутренний контейнер модального окна корректно отображается */
+    /* Убедимся, что внутренний контейнер модального окна корректно отображается и прокручивается */
     #portfolioModal .bg-[--color-bg--300] {
-        max-width: 600px; /* Ограничиваем максимальную ширину */
-        width: 100%; /* Занимаем всю доступную ширину */
-        margin: 0 auto; /* Центрируем блок по горизонтали */
+        max-width: 600px; /* Ограничиваем максимальную ширину содержимого */
+        width: 100%; /* Занимаем всю доступную ширину внутри модального окна */
+        /* margin: 0 auto; Это не нужно при центрировании flexbox родителя */
 
-        /* Удаляем max-height и overflow-y: auto отсюда,
-           так как прокрутку теперь делает родитель (#portfolioModal)
-        */
-        /* max-height: calc(100vh - 150px); */
-        /* overflow-y: auto; */
+        /* Устанавливаем максимальную высоту и включаем прокрутку для ВНУТРЕННЕГО контейнера */
+        max-height: calc(100vh - 40px); /* Оставляем небольшой отступ сверху и снизу */
+        overflow-y: auto; /* Делаем ВНУТРЕННИЙ контейнер прокручиваемым по вертикали */
 
         border-radius: 0.5rem;
         padding: 0.75rem;
-        background-color: var(--color-bg--300); /* Фон */
+        background-color: var(--color-bg--300); /* Фон внутреннего контейнера */
     }
 
-    /* Также удалите инлайн-стиль style="overflow-y: auto;" из HTML для div с классом bg-[--color-bg--300] */
+    /* Убедитесь, что инлайн-стиль style="overflow-y: auto;" удален из HTML у div с классом bg-[--color-bg--300] */
 
 </style>
 </body>
