@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -12,6 +13,9 @@
     <script>
         window.Telegram.WebApp.ready();
     </script>
+    
+    <!-- Добавляем библиотеку Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style id="loadingScreenStyles">
     #loadingScreen {
@@ -84,7 +88,6 @@
             </button>
             </div>
             
-            <!-- Кнопка Contact и выпадающее меню -->
             <div class="flex items-center absolute top-0 left-1/2 transform -translate-x-1/2 z-50">
                 <button 
                     @click="toggleContactDropdown" 
@@ -477,7 +480,8 @@
         </div>
 
         <div v-if="showPortfolio" id="portfolioModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-xl mx-4" @click.stop>
+            <!-- Добавляем инлайн-стиль для прокрутки модального окна -->
+            <div class="bg-[--color-bg--300] rounded-lg p-3 w-full max-w-xl mx-4" style="overflow-y: auto;" @click.stop>
                 <div class="flex justify-between items-center mb-2">
                     <h2 class="text-base font-bold text-[--color-primary-silver]">Portfolio</h2>
                     <button @click="togglePortfolio" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Close</button>
@@ -507,6 +511,11 @@
                             {{ totalProfit >= 0 ? '+' : '' }}${{ totalProfit.toFixed(2) }}
                         </div>
                     </div>
+                </div>
+
+                <!-- Добавляем сюда Canvas для графика -->
+                <div class="mb-4">
+                    <canvas id="portfolioChart" width="400" height="200"></canvas>
                 </div>
 
                 <div class="mb-2 bg-[--color-bg--500] p-3 rounded-lg">
@@ -1277,7 +1286,6 @@
                 showCalculator: false,
                 showPortfolio: false,
                 showNewsScreen: false,
-                // Добавляем переменную для выпадающего меню Contact
                 showContactDropdown: false,
                 newsItems: [],
                 newsLoading: false,
@@ -1390,6 +1398,8 @@
                 },
                 showApiSettings: false,
                 tg: window.Telegram?.WebApp || null,
+                // Добавляем переменную для экземпляра графика портфолио
+                portfolioChartInstance: null, 
             }
         },
         methods: {
@@ -1826,9 +1836,18 @@
                     }
 
                     this.updatePortfolioTotals();
+                    // Вызываем отрисовку графика при открытии модального окна
+                    this.$nextTick(() => {
+                        this.renderPortfolioChart();
+                    });
                 } else {
                     this.showPortfolio = false;
                     document.body.style.overflow = 'auto';
+                    // Уничтожаем экземпляр графика при закрытии модального окна
+                    if (this.portfolioChartInstance) {
+                        this.portfolioChartInstance.destroy();
+                        this.portfolioChartInstance = null;
+                    }
                 }
             },
             filterPortfolioCoins() {
@@ -1853,6 +1872,7 @@
                 this.portfolioForm.selectedCoin = ticker;
                 this.portfolioForm.searchQuery = ticker.pair;
                 this.showPortfolioDropdown = false;
+                console.log('Selected coin for portfolio:', ticker); // Лог при выборе монеты
             },
             addPortfolioPosition() {
                 if (!this.portfolioForm.selectedCoin || !this.portfolioForm.amount || !this.portfolioForm.buyPrice) {
@@ -1862,12 +1882,23 @@
 
                 const newPosition = {
                     symbol: this.portfolioForm.selectedCoin.symbol,
+                    pair: this.portfolioForm.selectedCoin.pair,
                     amount: parseFloat(this.portfolioForm.amount),
                     buyPrice: parseFloat(this.portfolioForm.buyPrice)
                 };
 
+                console.log('Adding new portfolio position:', newPosition); // Лог перед добавлением
                 this.portfolioPositions.push(newPosition);
-                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
+                console.log('Portfolio positions after push:', this.portfolioPositions); // Лог после добавления
+
+                // Сохранение в localStorage
+                try {
+                    localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
+                    console.log('Portfolio positions saved to localStorage.'); // Лог после сохранения
+                } catch (e) {
+                    console.error('Error saving portfolio to localStorage:', e); // Лог ошибки сохранения
+                }
+
 
                 this.portfolioForm.selectedCoin = null;
                 this.portfolioForm.amount = '';
@@ -1903,35 +1934,42 @@
                     console.error('Error saving portfolio state:', error);
                 }
             },
-            loadState() {
+            loadState() { // Этот метод используется в mounted()
+                console.log('Attempting to load portfolio state from localStorage...'); // Лог начала загрузки
                 try {
-                    const savedState = localStorage.getItem('portfolioState');
+                    const savedState = localStorage.getItem('portfolioPositions');
                     if (savedState) {
+                        console.log('Found saved state in localStorage. Data:', savedState); // Лог найденных данных
                         try {
                             const positions = JSON.parse(savedState);
-                            
+                            console.log('Parsed saved state. Positions:', positions); // Лог распарсенных данных
+
                             if (!Array.isArray(positions)) {
                                 console.error('Saved portfolio data is not an array:', positions);
+                                localStorage.removeItem('portfolioPositions');
+                                this.portfolioPositions = [];
+                                console.log('Cleared invalid portfolio data from localStorage.');
                                 return;
                             }
-                            
+
                             if (positions.length > 0) {
+                                // Ensure all necessary properties are present, add defaults if not
                                 this.portfolioPositions = positions.map(pos => ({
-                                    symbol: pos.symbol,
-                                    pair: pos.pair,
-                                    amount: parseFloat(pos.amount),
-                                    buyPrice: parseFloat(pos.buyPrice),
+                                    symbol: pos.symbol || 'UNKNOWN', // Add default/check
+                                    pair: pos.pair || pos.symbol || 'UNKNOWN/UNKNOWN', // Add default/check
+                                    amount: parseFloat(pos.amount) || 0, // Add default/check
+                                    buyPrice: parseFloat(pos.buyPrice) || 0, // Add default/check
                                     currentPrice: 0,
                                     currentValue: 0,
                                     profit: 0,
                                     profitPercent: 0
                                 }));
-                                
-                                console.log('Portfolio state loaded with', this.portfolioPositions.length, 'positions:', this.portfolioPositions);
-                                
+
+                                console.log('Portfolio state loaded into component data:', this.portfolioPositions); // Лог загруженных в data() позиций
+
                                 if (Object.keys(this.tickers).length > 0) {
                                     console.log('Tickers available, updating portfolio calculations');
-                                    this.updatePortfolioTotals();
+                                    this.updatePortfolioTotals(); // This also saves state
                                 } else {
                                     console.log('Tickers not yet available, will update when received');
                                 }
@@ -1941,10 +1979,12 @@
                             }
                         } catch (jsonError) {
                             console.error('Error parsing saved portfolio state:', jsonError);
+                            localStorage.removeItem('portfolioPositions');
                             this.portfolioPositions = [];
+                            console.log('Cleared unparseable portfolio data from localStorage.');
                         }
                     } else {
-                        console.log('No saved portfolio state found in localStorage');
+                        console.log('No saved portfolio state found in localStorage'); // Лог отсутствия данных
                         this.portfolioPositions = [];
                     }
                 } catch (error) {
@@ -1953,11 +1993,31 @@
                 }
             },
             updatePortfolioTotals() {
-                if (!this.portfolioPositions.length) return;
+                console.log('Updating portfolio totals. Positions count:', this.portfolioPositions.length); // Лог начала обновления
+                if (!this.portfolioPositions.length) {
+                    console.log('Portfolio is empty, resetting totals and destroying chart.');
+                    this.totalInvestment = 0;
+                    this.currentValue = 0;
+                    this.totalProfit = 0;
+                    this.totalProfitPercent = 0;
+                    if (this.portfolioChartInstance) {
+                        this.portfolioChartInstance.destroy();
+                        this.portfolioChartInstance = null;
+                    }
+                     // Also clear localStorage if portfolio becomes empty
+                    try {
+                       localStorage.removeItem('portfolioPositions');
+                       console.log('Cleared portfolio from localStorage as it is empty.');
+                    } catch(e) {
+                       console.error('Error clearing empty portfolio from localStorage:', e);
+                    }
+                    return;
+                }
 
                 let totalInvestment = 0;
                 let currentValue = 0;
 
+                // Map through positions, calculate values, and update totals
                 this.portfolioPositions = this.portfolioPositions.map(position => {
                     const ticker = this.tickers[position.symbol];
                     if (ticker) {
@@ -1969,6 +2029,7 @@
                         totalInvestment += investment;
                         currentValue += current;
 
+                        // Return updated position object
                         return {
                             ...position,
                             currentPrice: parseFloat(ticker.close),
@@ -1979,17 +2040,39 @@
                             profitSign: profit >= 0 ? '+' : ''
                         };
                     }
-                    return position;
+                     // If ticker data is not available, return position as is (or with partial updates if needed)
+                     console.warn(`Ticker data not found for symbol: ${position.symbol}. Cannot update value.`); // Лог предупреждения
+                    return position; // Return original position if ticker data is missing
                 });
 
                 this.totalInvestment = totalInvestment;
                 this.currentValue = currentValue;
                 this.totalProfit = currentValue - totalInvestment;
-                this.totalProfitPercent = totalInvestment > 0 ? 
+                this.totalProfitPercent = totalInvestment > 0 ?
                     ((currentValue - totalInvestment) / totalInvestment) * 100 : 0;
 
-                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
-                this.lastUpdate = Date.now();
+                console.log('Portfolio totals updated:', {
+                    totalInvestment: this.totalInvestment,
+                    currentValue: this.currentValue,
+                    totalProfit: this.totalProfit,
+                    totalProfitPercent: this.totalProfitPercent
+                }); // Лог итогов
+
+                // Save updated state to localStorage
+                 try {
+                    localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
+                    console.log('Updated portfolio state saved to localStorage.'); // Лог сохранения
+                } catch(e) {
+                    console.error('Error saving updated portfolio to localStorage:', e); // Лог ошибки сохранения
+                }
+
+
+                // Update or render the chart if the modal is open
+                if (this.showPortfolio) {
+                    this.$nextTick(() => {
+                         this.renderPortfolioChart();
+                    });
+                }
             },
             formatPortfolioNumber(number, decimals = 2) {
                 if (typeof number !== 'number') return '0.00';
@@ -2834,6 +2917,88 @@
                     this.addressLoading = false;
                 }
             },
+            // Метод для отрисовки графика портфолио
+            renderPortfolioChart() {
+                console.log('Attempting to render portfolio chart');
+                const ctx = document.getElementById('portfolioChart');
+
+                if (!ctx) {
+                    console.error('Canvas element with ID "portfolioChart" not found.');
+                    return;
+                }
+
+                // Подготовка данных для графика
+                const chartData = {
+                    labels: this.portfolioPositions.map(pos => pos.symbol),
+                    datasets: [{
+                        data: this.portfolioPositions.map(pos => pos.currentValue),
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF',
+                            '#FF9F40',
+                            '#8AC054',
+                            '#4D5360',
+                            '#E7E9ED',
+                            '#F7464A'
+                        ],
+                        hoverBackgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF',
+                            '#FF9F40',
+                            '#8AC054',
+                            '#4D5360',
+                            '#E7E9ED',
+                            '#F7464A'
+                        ]
+                    }]
+                };
+
+                // Настройки графика
+                const chartOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '--color-primary-silver' // Цвет текста легенды
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
+                                    return `${label}: $${value.toFixed(2)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                };
+
+                // Если экземпляр графика уже существует, обновляем его данные
+                if (this.portfolioChartInstance) {
+                    console.log('Updating existing chart');
+                    this.portfolioChartInstance.data = chartData;
+                    this.portfolioChartInstance.update();
+                } else {
+                    // Иначе создаем новый экземпляр
+                    console.log('Creating new chart instance');
+                    this.portfolioChartInstance = new Chart(ctx, {
+                        type: 'pie',
+                        data: chartData,
+                        options: chartOptions
+                    });
+                }
+                 console.log('Portfolio chart rendered/updated.');
+            },
         },
         mounted() {
             this.sockInit();
@@ -2872,12 +3037,22 @@
                 this.tg = window.Telegram.WebApp;
                 console.log('Telegram WebApp initialized:', this.tg);
             }
+             // Инициализация графика при монтировании, если модальное окно уже открыто (например, при перезагрузке страницы с открытым модальным окном)
+            if (this.showPortfolio) {
+                 this.$nextTick(() => {
+                     this.renderPortfolioChart();
+                 });
+            }
         },
         beforeUnmount() {
             this.sockClose();
             window.removeEventListener('click', this.handleClick);
             if (this.tonUpdateInterval) {
                 clearInterval(this.tonUpdateInterval);
+            }
+            // Clear the portfolio update interval
+            if (this.portfolioUpdateInterval) {
+                clearInterval(this.portfolioUpdateInterval);
             }
         },
         computed: {
@@ -3774,7 +3949,6 @@
         pointer-events: none;
     }
 
-    /* Load More Button */
     .news-load-more {
         display: inline-block;
         padding: 0.75rem 1.5rem;
