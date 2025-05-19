@@ -458,7 +458,7 @@
             </div>
         </div>
 
-        <div v-if="showCalculator" id="calculatorModal" class="fixed inset-0 flex items-start bg-black z-50 overflow-y-auto" @click="handleCalculatorModalClick">
+        <div v-if="showCalculator" id="calculatorModal" class="fixed inset-0 flex bg-black z-50 overflow-y-auto" @click="handleCalculatorModalClick">
             <div class="flex flex-col bg-[--color-bg--300] rounded-lg p-4 w-full h-full overflow-y-auto" @click.stop>
                 <div class="flex justify-between items-center mb-2 sticky top-0 bg-[--color-bg--300] z-10">
                     <h2 class="text-base font-bold text-[--color-primary-silver]">Calculator</h2>
@@ -596,7 +596,6 @@
                  <!-- Возможно, здесь есть дополнительный контент или отступ, который нужно учесть -->
                  <!-- Например, блок для графика портфолио -->
                  <div class="mt-4 bg-[--color-bg--500] rounded-lg p-3 flex-grow overflow-y-auto"> <!-- Добавлен flex-grow и overflow-y-auto -->
-                     <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Portfolio Chart</h3>
                      <!-- Место для графика -->
                       <div id="portfolioChartContainer" style="width: 100%;"></div> <!-- Увеличил высоту графика для примера -->
                  </div>
