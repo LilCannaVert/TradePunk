@@ -2504,9 +2504,58 @@
             },
             
             async lookupAddress() {
-                if (!this.btcAddressInput.trim()) {
+                if (!this.btcAddressInput || this.btcAddressInput.trim() === '') {
                     this.addressError = 'Please enter a Bitcoin address';
+                    return;
+                }
+
+                this.addressLoading = true;
+                this.addressError = null;
+                this.addressData = null;
+
+                try {
+                    const addressResponse = await fetch(`https://mempool.space/api/address/${this.btcAddressInput.trim()}`);
+                    console.log('Address lookup response status:', addressResponse.status);
+
+                    if (!addressResponse.ok) {
+                        let errorText = `Ошибка HTTP: статус ${addressResponse.status}`;
+                        try {
+                            const errorData = await addressResponse.json();
+                            if (errorData && errorData.error) {
+                                errorText += ` - ${errorData.error}`;
+                            } else if (typeof errorData === 'string') {
+                                errorText += ` - ${errorData}`;
+                            } else if (errorData) {
+                                errorText += ` - ${JSON.stringify(errorData)}`;
+                            }
+                        } catch (parseError) {
+                            console.warn('Failed to parse error response body as JSON/String:', parseError);
+                        }
+                        if (addressResponse.status === 404) {
+                            errorText = `Адрес Bitcoin "${this.btcAddressInput.trim()}" не найден или не имеет транзакций. Пожалуйста, проверьте адрес.`;
+                        } else if (addressResponse.status === 400) {
+                            errorText = `Ошибка запроса (400 Bad Request). Возможно, неверный формат адреса: "${this.btcAddressInput.trim()}".`;
+                        }
+
+                        this.addressError = errorText;
+                        console.error('Address lookup failed with HTTP error:', addressResponse.status, errorText);
+                        this.addressData = null;
+                        return;
+                    }
+
+                    const data = await addressResponse.json();
+                    console.log('Address data loaded successfully:', data);
+
+                    this.addressData = data;
+                    this.addressError = null;
+
+                } catch (error) {
+                    console.error('Error during address lookup fetch operation:', error);
+                    this.addressError = 'Ошибка при выполнении запроса (возможно, проблема с сетью или CORS): ' + error.message;
+                    this.addressData = null;
+                } finally {
                     this.addressLoading = false;
+                    console.log('Address lookup attempt finished.');
                 }
             },
             
@@ -2735,32 +2784,55 @@
                 return intervalMap[timeframe] || '60'; 
             },
             openInTelegramWebApp(url) {
-                console.log('Attempting to open link:', url);
-                if (this.tg) {
-                    console.log('Telegram WebApp is ready.');
-                    try {
-                        // Check if the link is a Telegram internal link (e.g., t.me)
-                        if (url.startsWith('https://t.me/')) {
-                            console.log('Using openTelegramLink for t.me link.');
-                            this.tg.openTelegramLink(url);
-                        } else {
-                            console.log('Using openLink for external link.');
-                            this.tg.openLink(url);
-                        }
-                    } catch (e) {
-                        console.error('Error opening Telegram link:', e);
-                        // Fallback to window.open if Telegram methods fail
-                        console.log('Falling back to window.open.', url);
-                        window.open(url, '_blank');
+                console.log('Attempting to open URL in Telegram WebApp:', url);
+                
+                if (window.Telegram?.WebApp) {
+                    console.log('Telegram WebApp object is available.');
+                    
+                    if (url.startsWith('https://t.me/') || url.startsWith('tg://')) {
+                         console.log('URL is a Telegram link, using openTelegramLink.');
+                         window.Telegram.WebApp.openTelegramLink(url);
+                    } else {
+                        console.log('URL is a regular web link, using openLink with force_external: false.');
+                        window.Telegram.WebApp.openLink(url, { force_external: false });
                     }
+                    
                 } else {
-                    console.log('Telegram WebApp is not ready, falling back to window.open.', url);
+                    console.log('Telegram WebApp object not available, opening in new tab.');
                     window.open(url, '_blank');
                 }
             },
-            // Метод для переключения видимости выпадающего меню Contact
             toggleContactDropdown() {
                 this.showContactDropdown = !this.showContactDropdown;
+            },
+            async lookupBtcAddress() {
+                if (!this.btcAddressInput || this.btcAddressInput.trim() === '') {
+                    this.addressError = 'Please enter a Bitcoin address';
+                    return;
+                }
+
+                this.addressLoading = true;
+                this.addressError = null;
+                this.addressData = null;
+
+                try {
+                    // Fetch address data
+                    const addressResponse = await fetch(`https://mempool.space/api/address/${this.btcAddressInput.trim()}`);
+                    console.log('Address lookup response status:', addressResponse.status);
+
+                    if (!addressResponse.ok) {
+                        throw new Error(`HTTP error! status: ${addressResponse.status}`);
+                    }
+
+                    const addressData = await addressResponse.json();
+                    console.log('Address data loaded:', addressData);
+                    this.addressData = addressData; // Присваивание полученных данных
+                } catch (error) {
+                    console.error('Error looking up address:', error);
+                    this.addressError = 'Error looking up address: ' + error.message;
+                } finally {
+                    this.addressLoading = false;
+                }
             },
         },
         mounted() {
