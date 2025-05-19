@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3962,6 +3961,94 @@
     .news-load-more:hover {
         background-color: var(--color-primary-blue);
     }
+
+    /* Добавьте эти стили в ваш блок <style> */
+    body, html {
+        height: 100%;
+        overflow: hidden; /* Предотвращаем прокрутку основного документа */
+        margin: 0; /* Убедимся, что нет стандартных отступов */
+        padding: 0;
+    }
+
+    #app {
+        height: 100%; /* #app занимает всю высоту body */
+        display: flex;
+        flex-direction: column; /* Располагаем дочерние элементы в колонку */
+        overflow: hidden; /* Основная прокрутка будет внутри */
+    }
+
+    /* Убедимся, что контент между хедером и футером может прокручиваться и занимает доступное пространство */
+    /* .relative.p-2 - это div, который оборачивает секции tickers, charts, modals, etc. */
+    #app > .relative.p-2 {
+        flex-grow: 1; /* Этот блок будет расширяться, занимая доступное место */
+        overflow-y: auto; /* Делаем его прокручиваемым по вертикали */
+        overflow-x: hidden; /* Скрываем горизонтальную прокрутку */
+        display: flex;
+        flex-direction: column; /* Содержимое внутри тоже может быть в колонку */
+        padding-bottom: 120px; /* Добавляем отступ снизу, чтобы контент не перекрывался нижней панелью */
+        /* padding-top: 60px;  Возможно потребуется отступ сверху, если есть фиксированный хедер */
+    }
+
+    /* Применяем transform и backface-visibility к фиксированным элементам */
+    .fixed.bottom-0 {
+         transform: translateZ(0);
+         -webkit-transform: translateZ(0); /* Для WebKit браузеров (iOS Safari) */
+         backface-visibility: hidden;
+         -webkit-backface-visibility: hidden;
+         /* Ваши существующие стили для нижней панели остаются */
+         background-color: var(--color-bg--300); /* Пример существующего стиля */
+         box-shadow: 0 -4px 15px rgba(122, 11, 122, 0.5); /* Пример существующего стиля */
+         padding: 18px 0;
+         pointer-events: auto !important;
+         z-index: 200 !important;
+    }
+
+    /* Применяем transform к модальным окнам */
+    #portfolioModal,
+    #shareModal,
+    #calculatorModal,
+    #orderBookModal,
+    #mempoolModal {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        /* Ваши существующие стили для модальных окон остаются */
+         position: fixed; /* Убедимся, что они fixed */
+         inset: 0;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         background-color: rgba(0, 0, 0, 0.5);
+         z-index: 50; /* z-index модальных окон должен быть меньше z-index нижней панели */
+    }
+
+    /* Убедимся, что контейнер внутри модального окна Portfolio прокручивается */
+    #portfolioModal .bg-[--color-bg--300] {
+         max-height: calc(100vh - 150px); /* Можно скорректировать по необходимости */
+         overflow-y: auto; /* Делаем внутренний контейнер прокручиваемым */
+         /* остальные стили контейнера остаются */
+         width: 90%;
+         max-width: 900px;
+         border-radius: 0.5rem;
+         padding: 0.75rem;
+    }
+
+
+    /* Важно: Убедитесь, что у выпадающего списка поиска монет в портфолио
+       остается достаточно высокий z-index, чтобы он был поверх остального содержимого модального окна.
+       Мы установили его на 100 ранее, это должно быть нормально, так как модальное окно 50, а нижняя панель 200.
+    */
+    #portfolioModal .form-group .absolute.z-100 { /* Используем z-100 из Tailwind */
+         z-index: 100; /* Явно указываем z-index, если Tailwind класс не работает */
+    }
+
+
+    /* Возможно, нужно добавить отступ для самого списка позиций в портфолио,
+       чтобы его содержимое не оказывалось под формой добавления или графиком при прокрутке */
+    /* .portfolio-positions-container {
+        margin-bottom: 20px; /* Пример отступа */
+    /* } */
 
 </style>
 </body>
