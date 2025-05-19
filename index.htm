@@ -1954,33 +1954,53 @@
                 }
             },
             updatePortfolioTotals() {
-                if (!this.portfolioPositions.length) return;
+                if (!this.portfolioPositions.length) {
+                    // Если портфолио пусто, очищаем localStorage и обнуляем общие показатели
+                    localStorage.removeItem('portfolioPositions');
+                    this.totalInvestment = 0;
+                    this.currentValue = 0;
+                    this.totalProfit = 0;
+                    this.totalProfitPercent = 0;
+                    this.lastUpdate = Date.now();
+                    return;
+                }
 
                 let totalInvestment = 0;
                 let currentValue = 0;
 
-                this.portfolioPositions = this.portfolioPositions.map(position => {
+                // Обновляем свойства существующих объектов в массиве
+                this.portfolioPositions.forEach(position => {
                     const ticker = this.tickers[position.symbol];
                     if (ticker) {
                         const investment = position.amount * position.buyPrice;
                         const current = position.amount * parseFloat(ticker.close);
                         const profit = current - investment;
-                        const profitPercent = investment > 0 ? (profit / investment) * 100 : 0; // Изменено для избежания деления на ноль
+                        const profitPercent = investment > 0 ? (profit / investment) * 100 : 0;
+
+                        // Обновляем свойства объекта position напрямую
+                        position.currentPrice = parseFloat(ticker.close);
+                        position.currentValue = current;
+                        position.profit = profit;
+                        position.profitPercent = profitPercent;
+                        position.profitColor = profit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]';
+                        position.profitSign = profit >= 0 ? '+' : '';
 
                         totalInvestment += investment;
                         currentValue += current;
-
-                        return {
-                            ...position,
-                            currentPrice: parseFloat(ticker.close),
-                            currentValue: current,
-                            profit: profit,
-                            profitPercent: profitPercent,
-                            profitColor: profit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]',
-                            profitSign: profit >= 0 ? '+' : ''
-                        };
+                } else {
+                        // Если тикер не найден (например, удален с биржи),
+                        // можно установить текущие значения в 0 или оставить старые
+                        // Пока оставим старые, чтобы не терять информацию о покупке
+                        console.warn(`Ticker not found for portfolio position: ${position.symbol}`);
+                        // position.currentPrice = 0;
+                        // position.currentValue = position.amount * position.buyPrice; // Можно оставить инвест.стоимость
+                        // position.profit = 0;
+                        // position.profitPercent = 0;
+                        // position.profitColor = '';
+                        // position.profitSign = '';
+                        totalInvestment += position.amount * position.buyPrice; // Учитываем инвест.стоимость
+                        currentValue += position.currentValue || (position.amount * position.buyPrice); // Используем последнее значение или инвест.стоимость
                     }
-                    return position; // Возвращаем позицию без изменений, если тикер не найден
                 });
 
                 this.totalInvestment = totalInvestment;
@@ -1989,8 +2009,10 @@
                 this.totalProfitPercent = totalInvestment > 0 ?
                     ((currentValue - totalInvestment) / totalInvestment) * 100 : 0;
 
+                // Сохраняем обновленные данные после расчета и обновления portfolioPositions
                 localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
                 this.lastUpdate = Date.now();
+                console.log('Portfolio data saved to localStorage:', this.portfolioPositions.length, 'positions');
             },
             formatPortfolioNumber(number, decimals = 2) {
                 if (typeof number !== 'number') return '0.00';
