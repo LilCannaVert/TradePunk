@@ -1300,7 +1300,22 @@
                 },
                 showPortfolioDropdown: false,
                 filteredPortfolioCoins: [],
-                portfolioPositions: JSON.parse(localStorage.getItem('portfolioPositions')) || [],
+                portfolioPositions: (() => {
+                    const saved = localStorage.getItem('portfolioPositions');
+                    console.log('Attempting to load portfolioPositions from localStorage. Raw data:', saved);
+                    try {
+                        const parsed = JSON.parse(saved) || [];
+                        if (!Array.isArray(parsed)) {
+                            console.error('Parsed data from localStorage is not an array:', parsed);
+                            return [];
+                        }
+                        console.log('Successfully loaded portfolioPositions:', parsed);
+                        return parsed;
+                    } catch (e) {
+                        console.error('Error parsing portfolioPositions from localStorage:', e);
+                        return [];
+                    }
+                })(),
                 totalInvestment: 0,
                 currentValue: 0,
                 totalProfit: 0,
@@ -1853,21 +1868,34 @@
                 this.showPortfolioDropdown = false;
             },
             addPortfolioPosition() {
+                console.log('addPortfolioPosition called');
                 if (!this.portfolioForm.selectedCoin || !this.portfolioForm.amount || !this.portfolioForm.buyPrice) {
                     alert('Please fill in all fields');
+                    console.warn('addPortfolioPosition stopped: form fields missing.');
                     return;
                 }
 
                 const newPosition = {
                     symbol: this.portfolioForm.selectedCoin.symbol,
-                    pair: this.portfolioForm.selectedCoin.pair, // Сохраняем pair тоже
+                    pair: this.portfolioForm.selectedCoin.pair,
                     amount: parseFloat(this.portfolioForm.amount),
                     buyPrice: parseFloat(this.portfolioForm.buyPrice)
                 };
 
+                console.log('New position created:', newPosition);
+
                 this.portfolioPositions.push(newPosition);
-                // Сохраняем в localStorage с ключом 'portfolioPositions'
-                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
+                console.log('portfolioPositions after push:', JSON.parse(JSON.stringify(this.portfolioPositions)));
+
+                try {
+                    const dataToSave = JSON.stringify(this.portfolioPositions);
+                    console.log('Attempting to save to localStorage with key "portfolioPositions":', dataToSave);
+                    localStorage.setItem('portfolioPositions', dataToSave);
+                    console.log('localStorage.setItem called successfully.');
+                } catch (e) {
+                    console.error('Error saving portfolioPositions to localStorage:', e);
+                }
+
 
                 this.portfolioForm.selectedCoin = null;
                 this.portfolioForm.amount = '';
@@ -1875,13 +1903,30 @@
                 this.portfolioForm.searchQuery = '';
                 this.showPortfolioDropdown = false;
 
-                this.updatePortfolioTotals();
+                this.updatePortfolioTotals(); // Этот метод тоже сохраняет
+                console.log('updatePortfolioTotals called after adding position.');
             },
             removePortfolioPosition(index) {
-                this.portfolioPositions.splice(index, 1);
-                // Сохраняем в localStorage с ключом 'portfolioPositions'
-                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
-                this.updatePortfolioTotals();
+                console.log('removePortfolioPosition called for index:', index);
+                if (index >= 0 && index < this.portfolioPositions.length) {
+                    const removedPosition = this.portfolioPositions.splice(index, 1);
+                    console.log('Position removed:', removedPosition);
+                    console.log('portfolioPositions after splice:', JSON.parse(JSON.stringify(this.portfolioPositions)));
+
+                    try {
+                        const dataToSave = JSON.stringify(this.portfolioPositions);
+                        console.log('Attempting to save to localStorage after removal:', dataToSave);
+                        localStorage.setItem('portfolioPositions', dataToSave);
+                        console.log('localStorage.setItem after removal called successfully.');
+                    } catch (e) {
+                        console.error('Error saving portfolioPositions to localStorage after removal:', e);
+                    }
+
+                    this.updatePortfolioTotals(); // Этот метод тоже сохраняет
+                    console.log('updatePortfolioTotals called after removing position.');
+                } else {
+                    console.warn('removePortfolioPosition: Invalid index', index);
+                }
             },
             saveState() {
                 try {
@@ -1954,9 +1999,13 @@
                 }
             },
             updatePortfolioTotals() {
+                console.log('Updating portfolio totals...');
+                // Убрал исходный лог массива, т.к. он уже есть при загрузке и в add/remove
+
                 if (!this.portfolioPositions.length) {
-                    // Если портфолио пусто, очищаем localStorage и обнуляем общие показатели
-                    localStorage.removeItem('portfolioPositions');
+                    console.log('Portfolio is empty. Resetting totals.');
+                    // Убираем localStorage.removeItem отсюда, чтобы он вызывался только при явном удалении всех позиций или сбросе.
+                    // localStorage.removeItem('portfolioPositions');
                     this.totalInvestment = 0;
                     this.currentValue = 0;
                     this.totalProfit = 0;
@@ -1968,8 +2017,7 @@
                 let totalInvestment = 0;
                 let currentValue = 0;
 
-                // Обновляем свойства существующих объектов в массиве
-                this.portfolioPositions.forEach(position => {
+                this.portfolioPositions.forEach((position, index) => {
                     const ticker = this.tickers[position.symbol];
                     if (ticker) {
                         const investment = position.amount * position.buyPrice;
@@ -1987,32 +2035,53 @@
 
                         totalInvestment += investment;
                         currentValue += current;
-                } else {
-                        // Если тикер не найден (например, удален с биржи),
-                        // можно установить текущие значения в 0 или оставить старые
-                        // Пока оставим старые, чтобы не терять информацию о покупке
-                        console.warn(`Ticker not found for portfolio position: ${position.symbol}`);
-                        // position.currentPrice = 0;
-                        // position.currentValue = position.amount * position.buyPrice; // Можно оставить инвест.стоимость
-                        // position.profit = 0;
-                        // position.profitPercent = 0;
-                        // position.profitColor = '';
-                        // position.profitSign = '';
-                        totalInvestment += position.amount * position.buyPrice; // Учитываем инвест.стоимость
-                        currentValue += position.currentValue || (position.amount * position.buyPrice); // Используем последнее значение или инвест.стоимость
+
+                        console.log(`Position ${index} (${position.pair}): Invested=${investment}, Current=${current}, Profit=${profit.toFixed(2)}, Profit%=${profitPercent.toFixed(2)}`);
+
+                    } else {
+                        console.warn(`Ticker not found for portfolio position ${index}: ${position.symbol}. Using last known values.`);
+                        // Если тикер не найден, используем сохраненные buyPrice и amount для investment,
+                        // а для current value используем последнее известное current или investment
+                        const investment = position.amount * position.buyPrice;
+                        const lastKnownCurrentValue = position.currentValue !== undefined ? position.currentValue : investment;
+
+                        totalInvestment += investment;
+                        currentValue += lastKnownCurrentValue; // Используем последнее известное current value или investment
+
+                        // Обновляем только calculated свойства, чтобы сохранить введенные пользователем данные
+                        position.currentPrice = 'N/A'; // Или последний известный, если хотим его показывать
+                        position.currentValue = lastKnownCurrentValue;
+                        position.profit = lastKnownCurrentValue - investment;
+                        position.profitPercent = investment > 0 ? ((lastKnownCurrentValue - investment) / investment) * 100 : 0;
+                         position.profitColor = position.profit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]';
+                        position.profitSign = position.profit >= 0 ? '+' : '';
+                        console.log(`Position ${index} (${position.symbol}) Fallback: Invested=${investment.toFixed(2)}, Using Current=${lastKnownCurrentValue.toFixed(2)}`);
                     }
                 });
 
                 this.totalInvestment = totalInvestment;
                 this.currentValue = currentValue;
                 this.totalProfit = currentValue - totalInvestment;
+                // Убедимся, что деление на ноль обрабатывается корректно для общего процента
                 this.totalProfitPercent = totalInvestment > 0 ?
-                    ((currentValue - totalInvestment) / totalInvestment) * 100 : 0;
+                    ((this.currentValue - this.totalInvestment) / this.totalInvestment) * 100 : 0;
 
-                // Сохраняем обновленные данные после расчета и обновления portfolioPositions
-                localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
+                console.log(`Total Investment (calculated): ${this.totalInvestment.toFixed(2)}`);
+                console.log(`Total Current Value (calculated): ${this.currentValue.toFixed(2)}`);
+                console.log(`Total Profit (calculated): ${this.totalProfit.toFixed(2)}`);
+                console.log(`Total Profit Percent (calculated): ${this.totalProfitPercent.toFixed(2)}%`);
+
+
+                try {
+                     const dataToSave = JSON.stringify(this.portfolioPositions);
+                     console.log('Attempting to save to localStorage from updatePortfolioTotals:', dataToSave);
+                     localStorage.setItem('portfolioPositions', dataToSave);
+                     console.log('localStorage.setItem from updatePortfolioTotals called successfully.');
+                } catch (e) {
+                     console.error('Error saving portfolioPositions from updatePortfolioTotals to localStorage:', e);
+                }
+
                 this.lastUpdate = Date.now();
-                console.log('Portfolio data saved to localStorage:', this.portfolioPositions.length, 'positions');
             },
             formatPortfolioNumber(number, decimals = 2) {
                 if (typeof number !== 'number') return '0.00';
@@ -2876,10 +2945,12 @@
 
             setInterval(() => {
                 if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
-                    console.log('Updating portfolio totals from interval');
+                    console.log('Interval: Calling updatePortfolioTotals');
                     this.updatePortfolioTotals();
+                } else if (this.portfolioPositions.length > 0) {
+                    console.log('Interval: Tickers not yet available, cannot fully update portfolio totals.');
                 }
-            }, 5000); // Увеличил интервал до 5 секунд, чтобы не перегружать расчеты
+            }, 5000);
 
             window.addEventListener('click', this.handleClick);
 
@@ -2895,6 +2966,12 @@
             if (window.Telegram?.WebApp) {
                 this.tg = window.Telegram.WebApp;
                 console.log('Telegram WebApp initialized:', this.tg);
+            }
+
+            // Логирование после загрузки из localStorage
+            console.log('Mounted: Initial portfolioPositions length:', this.portfolioPositions.length);
+            if (this.portfolioPositions.length > 0) {
+                 console.log('Mounted: Initial portfolioPositions content:', JSON.parse(JSON.stringify(this.portfolioPositions)));
             }
         },
         beforeUnmount() {
