@@ -161,7 +161,7 @@
         </header>
             <div class="delimiter my-2"></div>
 
-        <section class="mb-2" v-if="!showMempoolModal && !showPortfolio && !showCalculator && !showShareModal && !showOrderBookModal && !showSettings && !showChartScreen && !showChartModal">
+        <section class="mb-2">
             <div class="flex gap-2 flex-col lg:flex-row">
             <div class="tickers w-full max-w-[500px] mx-auto"> 
                 <div class="mb-1">
@@ -1615,64 +1615,44 @@
                 }
             },
             async prepareOrderBook() {
-                console.log('Fetching Order Book data for symbol:', this.ticker); // Added log
                 await fetch('https://api.binance.com/api/v3/depth?symbol=' + this.ticker + '&limit=100')
                 .then(response => response.json())
                 .then(data => {
-                    console.log('Order Book Data:', data); // Existing log
+                    console.log('Order Book Data:', data);
+                    this.asks = data.asks;
+                    this.bids = data.bids;
 
-                    if (data && data.asks && data.bids) { // Check if data is valid
-                        this.asks = data.asks;
-                        this.bids = data.bids;
-
-                        for (let i = 0; i < this.asks.length; i++) {
-                            var arr = this.asks.map(x => {
-                                return Number(x[1]);
-                            });
-                            this.asks[i].push(arr.slice(0, i + 1).reduce((a, b) => a + b));
-                        }
-                        for (let i = 0; i < this.bids.length; i++) {
-                            var arr = this.bids.map(x => {
-                                return Number(x[1]);
-                            });
-                            this.bids[i].push(arr.slice(0, i + 1).reduce((a, b) => a + b));
-                        }
-                        this.maxAsk = Math.max(...this.asks.map(x => { return x[2] }));
-                        console.log('Order Book data processed and assigned.'); // Added log
-                    } else {
-                        console.error('Invalid or empty Order Book data received:', data); // Added log
-                        this.asks = []; // Clear data if invalid
-                        this.bids = [];
+                    for (let i = 0; i < this.asks.length; i++) {
+                        var arr = this.asks.map(x => {
+                            return Number(x[1]);
+                        });
+                        this.asks[i].push(arr.slice(0, i + 1).reduce((a, b) => a + b));
                     }
-                })
-                .catch(error => {
-                    console.error('Error fetching Order Book data:', error); // Added error log
-                    this.asks = []; // Clear data on error
-                    this.bids = [];
+                    for (let i = 0; i < this.bids.length; i++) {
+                        var arr = this.bids.map(x => {
+                            return Number(x[1]);
+                        });
+                        this.bids[i].push(arr.slice(0, i + 1).reduce((a, b) => a + b));
+                    }
                 });
 
-                // The setTimeout here will cause the function to call itself every 500ms,
-                // potentially leading to many requests if the modal is open for a while.
-                // Consider if this is the desired behavior.
-                // setTimeout(async () => { await this.prepareOrderBook() }, 500); // Keep or remove based on desired update frequency
+                this.maxAsk = Math.max(...this.asks.map(x => { return x[2] }));
+                setTimeout(async () => { await this.prepareOrderBook() }, 500);
             },
             toggleOrderBookModal() {
 
                 if (!this.showOrderBookModal) {
                     this.closeAllModals();
-
-                    console.log('Opening Order Book modal'); // Added log
+                    
                     this.showOrderBookModal = true;
                     document.body.classList.add('no-scroll');
-
+                    
                     if (this.showChartScreen) {
                         setTimeout(() => {
                             const orderBookModal = document.getElementById('orderBookModal');
                             if (orderBookModal) orderBookModal.classList.add('modal-on-chart');
                         }, 0);
                     }
-                    // Call prepareOrderBook when opening the modal
-                    this.prepareOrderBook(); // Ensure this is called here
                 } else {
                     this.showOrderBookModal = false;
                     document.body.classList.remove('no-scroll');
