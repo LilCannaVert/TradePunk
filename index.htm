@@ -1300,22 +1300,7 @@
                 },
                 showPortfolioDropdown: false,
                 filteredPortfolioCoins: [],
-                portfolioPositions: (() => {
-                    const saved = localStorage.getItem('portfolioPositions');
-                    console.log('Attempting to load portfolioPositions from localStorage. Raw data:', saved);
-                    try {
-                        const parsed = JSON.parse(saved) || [];
-                        if (!Array.isArray(parsed)) {
-                            console.error('Parsed data from localStorage is not an array:', parsed);
-                            return [];
-                        }
-                        console.log('Successfully loaded portfolioPositions:', parsed);
-                        return parsed;
-                    } catch (e) {
-                        console.error('Error parsing portfolioPositions from localStorage:', e);
-                        return [];
-                    }
-                })(),
+                portfolioPositions: [],
                 totalInvestment: 0,
                 currentValue: 0,
                 totalProfit: 0,
@@ -1887,21 +1872,8 @@
                 this.portfolioPositions.push(newPosition);
                 console.log('portfolioPositions array after push:', JSON.parse(JSON.stringify(this.portfolioPositions)));
 
-                try {
-                    const dataToSave = JSON.stringify(this.portfolioPositions);
-                    console.log('Attempting to save to localStorage with key "portfolioPositions":', dataToSave);
-                    localStorage.setItem('portfolioPositions', dataToSave);
-
-                    // *** Добавляем явное подтверждение чтения после записи ***
-                    const savedDataCheck = localStorage.getItem('portfolioPositions');
-                    console.log('Confirmed data in localStorage immediately after setItem:', savedDataCheck);
-                    // ******************************************************
-
-                    console.log('localStorage.setItem called successfully in addPortfolioPosition.');
-                } catch (e) {
-                    console.error('Error saving portfolioPositions to localStorage in addPortfolioPosition:', e);
-                }
-
+                this.saveState();
+                console.log('saveState called after adding position.');
 
                 this.portfolioForm.selectedCoin = null;
                 this.portfolioForm.amount = '';
@@ -1909,8 +1881,7 @@
                 this.portfolioForm.searchQuery = '';
                 this.showPortfolioDropdown = false;
 
-                this.updatePortfolioTotals(); // Этот метод тоже сохраняет
-                console.log('updatePortfolioTotals called after adding position.');
+                console.log('updatePortfolioTotals will be called by interval or ticker update.');
             },
             removePortfolioPosition(index) {
                 console.log('removePortfolioPosition called for index:', index);
@@ -1919,113 +1890,97 @@
                     console.log('Position removed:', removedPosition);
                     console.log('portfolioPositions array after splice:', JSON.parse(JSON.stringify(this.portfolioPositions)));
 
-                    try {
-                        const dataToSave = JSON.stringify(this.portfolioPositions);
-                        console.log('Attempting to save to localStorage after removal:', dataToSave);
-                        localStorage.setItem('portfolioPositions', dataToSave);
+                    this.saveState();
+                    console.log('saveState called after removing position.');
 
-                        // *** Добавляем явное подтверждение чтения после записи ***
-                        const savedDataCheck = localStorage.getItem('portfolioPositions');
-                        console.log('Confirmed data in localStorage immediately after setItem (removal):', savedDataCheck);
-                        // ******************************************************
-
-                        console.log('localStorage.setItem after removal called successfully.');
-                    } catch (e) {
-                        console.error('Error saving portfolioPositions to localStorage after removal:', e);
-                    }
-
-                    this.updatePortfolioTotals(); // Этот метод тоже сохраняет
-                    console.log('updatePortfolioTotals called after removing position.');
+                    console.log('updatePortfolioTotals will be called by interval or ticker update.');
                 } else {
                     console.warn('removePortfolioPosition: Invalid index', index);
                 }
             },
             saveState() {
+                console.log('saveState method called.');
                 try {
-
                     if (!Array.isArray(this.portfolioPositions)) {
-                        console.error('portfolioPositions is not an array:', this.portfolioPositions);
+                        console.error('saveState: portfolioPositions is not an array:', this.portfolioPositions);
                         return;
                     }
-                    
-                    const portfolioState = this.portfolioPositions.map(pos => ({
+
+                    const portfolioStateToSave = this.portfolioPositions.map(pos => ({
                         symbol: pos.symbol,
                         pair: pos.pair,
-                        amount: parseFloat(pos.amount),  
+                        amount: parseFloat(pos.amount),
                         buyPrice: parseFloat(pos.buyPrice)
                     }));
-                    
-                    localStorage.setItem('portfolioState', JSON.stringify(portfolioState));
-                    console.log('Portfolio state saved with', portfolioState.length, 'positions:', portfolioState);
-                } catch (error) {
-                    console.error('Error saving portfolio state:', error);
+
+                    const dataToSave = JSON.stringify(portfolioStateToSave);
+                    console.log('Attempting to save to localStorage with key "portfolioState":', dataToSave);
+                    localStorage.setItem('portfolioState', dataToSave);
+
+                    const savedDataCheck = localStorage.getItem('portfolioState');
+                    console.log('Confirmed data in localStorage immediately after setItem:', savedDataCheck);
+
+                    console.log('localStorage.setItem called successfully in saveState.');
+
+                } catch (e) {
+                    console.error('Error saving portfolioState to localStorage:', e);
                 }
             },
             loadState() {
+                 console.log('loadState method called.');
                 try {
                     const savedState = localStorage.getItem('portfolioState');
+                    console.log('Attempting to load portfolioState from localStorage. Raw data:', savedState);
                     if (savedState) {
                         try {
                             const positions = JSON.parse(savedState);
-                            
+
                             if (!Array.isArray(positions)) {
-                                console.error('Saved portfolio data is not an array:', positions);
+                                console.error('loadState: Parsed data from localStorage is not an array:', positions);
+                                this.portfolioPositions = []; // Сбрасываем, если данные некорректны
                                 return;
                             }
-                            
-                            if (positions.length > 0) {
-                                this.portfolioPositions = positions.map(pos => ({
-                                    symbol: pos.symbol,
-                                    pair: pos.pair,
-                                    amount: parseFloat(pos.amount),
-                                    buyPrice: parseFloat(pos.buyPrice),
-                                    currentPrice: 0,
-                                    currentValue: 0,
-                                    profit: 0,
-                                    profitPercent: 0
-                                }));
-                                
-                                console.log('Portfolio state loaded with', this.portfolioPositions.length, 'positions:', this.portfolioPositions);
-                                
-                                if (Object.keys(this.tickers).length > 0) {
-                                    console.log('Tickers available, updating portfolio calculations');
-                                    this.updatePortfolioTotals();
-                                } else {
-                                    console.log('Tickers not yet available, will update when received');
-                                }
+
+                            this.portfolioPositions = positions.map(pos => ({
+                                symbol: pos.symbol,
+                                pair: pos.pair,
+                                amount: parseFloat(pos.amount),
+                                buyPrice: parseFloat(pos.buyPrice),
+                                currentPrice: 0,
+                                currentValue: 0,
+                                profit: 0,
+                                profitPercent: 0
+                            }));
+
+                            console.log('Successfully loaded portfolioState:', this.portfolioPositions);
+
+                            if (Object.keys(this.tickers).length > 0) {
+                                console.log('Tickers available in loadState, calling updatePortfolioTotals.');
+                                this.updatePortfolioTotals();
                             } else {
-                                console.log('Saved portfolio state is empty array');
-                                this.portfolioPositions = [];
+                                console.log('Tickers not yet available in loadState, updatePortfolioTotals will run when tickers arrive.');
                             }
+
                         } catch (jsonError) {
-                            console.error('Error parsing saved portfolio state:', jsonError);
-                            this.portfolioPositions = [];
+                            console.error('loadState: Error parsing portfolioState from localStorage:', jsonError);
+                            this.portfolioPositions = []; // Сбрасываем при ошибке парсинга
                         }
                     } else {
-                        console.log('No saved portfolio state found in localStorage');
-                        this.portfolioPositions = [];
+                        console.log('No saved portfolioState found in localStorage.');
+                        this.portfolioPositions = []; // Сбрасываем, если нет сохраненных данных
                     }
                 } catch (error) {
-                    console.error('Error loading portfolio state:', error);
-                    this.portfolioPositions = [];
+                    console.error('loadState: Error accessing localStorage or during load process:', error);
+                     this.portfolioPositions = []; // Сбрасываем при ошибке доступа
                 }
             },
             updatePortfolioTotals() {
                 console.log('Updating portfolio totals...');
-                // Убрал исходный лог массива, т.к. он уже есть при загрузке и в add/remove
+                 console.log('portfolioPositions state at start of updatePortfolioTotals:', JSON.parse(JSON.stringify(this.portfolioPositions)));
+
 
                 if (!this.portfolioPositions.length) {
                     console.log('Portfolio is empty. Resetting totals in memory.');
-                     // Если портфолио пусто в памяти, очищаем и localStorage
-                    try {
-                        console.log('Attempting to remove portfolioPositions from localStorage.');
-                        localStorage.removeItem('portfolioPositions');
-                         const checkAfterRemove = localStorage.getItem('portfolioPositions');
-                         console.log('localStorage after removal:', checkAfterRemove);
-                    } catch(e) {
-                        console.error('Error removing portfolioPositions from localStorage:', e);
-                    }
-
                     this.totalInvestment = 0;
                     this.currentValue = 0;
                     this.totalProfit = 0;
@@ -2036,6 +1991,7 @@
 
                 let totalInvestment = 0;
                 let currentValue = 0;
+                 let tickersNotFound = false; // Флаг для отслеживания найденных тикеров
 
                 this.portfolioPositions.forEach((position, index) => {
                     const ticker = this.tickers[position.symbol];
@@ -2045,7 +2001,6 @@
                         const profit = current - investment;
                         const profitPercent = investment > 0 ? (profit / investment) * 100 : 0;
 
-                        // Обновляем свойства объекта position напрямую
                         position.currentPrice = parseFloat(ticker.close);
                         position.currentValue = current;
                         position.profit = profit;
@@ -2056,56 +2011,36 @@
                         totalInvestment += investment;
                         currentValue += current;
 
-                        // Убрал подробный лог каждой позиции здесь, чтобы не засорять консоль при интервальном обновлении
-                        // console.log(`Position ${index} (${position.pair}): Invested=${investment}, Current=${current}, Profit=${profit.toFixed(2)}, Profit%=${profitPercent.toFixed(2)}`);
-
                     } else {
+                         tickersNotFound = true; // Устанавливаем флаг, если тикер не найден
                         console.warn(`Ticker not found for portfolio position ${index}: ${position.symbol}. Using last known values.`);
-                        // Если тикер не найден, используем сохраненные buyPrice и amount для investment,
-                        // а для current value используем последнее известное current или investment
                         const investment = position.amount * position.buyPrice;
                         const lastKnownCurrentValue = position.currentValue !== undefined ? position.currentValue : investment;
 
                         totalInvestment += investment;
-                        currentValue += lastKnownCurrentValue; // Используем последнее известное current value или investment
+                        currentValue += lastKnownCurrentValue;
 
-                        // Обновляем только calculated свойства, чтобы сохранить введенные пользователем данные
-                        position.currentPrice = 'N/A'; // Или последний известный, если хотим его показывать
+                        position.currentPrice = 'N/A';
                         position.currentValue = lastKnownCurrentValue;
                         position.profit = lastKnownCurrentValue - investment;
                         position.profitPercent = investment > 0 ? ((lastKnownCurrentValue - investment) / investment) * 100 : 0;
                          position.profitColor = position.profit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]';
                         position.profitSign = position.profit >= 0 ? '+' : '';
-                        // console.log(`Position ${index} (${position.symbol}) Fallback: Invested=${investment.toFixed(2)}, Using Current=${lastKnownCurrentValue.toFixed(2)}`);
                     }
                 });
 
                 this.totalInvestment = totalInvestment;
                 this.currentValue = currentValue;
                 this.totalProfit = currentValue - totalInvestment;
-                // Убедимся, что деление на ноль обрабатывается корректно для общего процента
                 this.totalProfitPercent = totalInvestment > 0 ?
                     ((this.currentValue - this.totalInvestment) / this.totalInvestment) * 100 : 0;
 
                 console.log(`updatePortfolioTotals: Calculated Totals: Investment=${this.totalInvestment.toFixed(2)}, Current=${this.currentValue.toFixed(2)}, Profit=${this.totalProfit.toFixed(2)}, Profit%=${this.totalProfitPercent.toFixed(2)}%`);
 
-
-                try {
-                     const dataToSave = JSON.stringify(this.portfolioPositions);
-                     console.log('Attempting to save to localStorage from updatePortfolioTotals:', dataToSave);
-                     localStorage.setItem('portfolioPositions', dataToSave);
-
-                     // *** Добавляем явное подтверждение чтения после записи ***
-                     const savedDataCheck = localStorage.getItem('portfolioPositions');
-                     console.log('Confirmed data in localStorage immediately after setItem (updateTotals):', savedDataCheck);
-                     // ******************************************************
-
-                     console.log('localStorage.setItem from updatePortfolioTotals called successfully.');
-                } catch (e) {
-                     console.error('Error saving portfolioPositions from updatePortfolioTotals to localStorage:', e);
-                }
-
                 this.lastUpdate = Date.now();
+                 if(tickersNotFound) {
+                     console.warn("Some tickers were not found during updatePortfolioTotals. Displayed values might be outdated.");
+                 }
             },
             formatPortfolioNumber(number, decimals = 2) {
                 if (typeof number !== 'number') return '0.00';
@@ -2992,7 +2927,6 @@
                 console.log('Telegram WebApp initialized:', this.tg);
             }
 
-            // Логирование после загрузки из localStorage
             console.log('Mounted: Initial portfolioPositions length:', this.portfolioPositions.length);
             if (this.portfolioPositions.length > 0) {
                  console.log('Mounted: Initial portfolioPositions content:', JSON.parse(JSON.stringify(this.portfolioPositions)));
