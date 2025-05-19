@@ -672,35 +672,35 @@
         </div>
         </div>
 
-        <div v-if="showMempoolModal" 
-            id="mempoolModal" 
-            class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-        <div class="bg-[--color-bg--300] rounded-lg p-4 max-h-[80vh] overflow-y-auto" style="width: 90%; max-width: 600px;" @click.stop>
+        <div v-if="showMempoolModal"
+            id="mempoolModal"
+            class="fixed inset-0 flex bg-black z-50 overflow-y-auto">
+        <div class="flex flex-col bg-[--color-bg--300] p-4 w-full h-full">
             <div class="flex justify-between items-center">
             <h2 class="text-lg font-bold text-[--color-primary-silver]">Bitcoin Mempool</h2>
             <button @click="toggleMempoolModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
             </div>
-            
-            <div v-if="mempoolLoading" class="flex justify-center items-center p-10">
+
+            <div v-if="mempoolLoading" class="flex justify-center items-center p-10 flex-grow">
             <svg class="animate-spin h-10 w-10 text-[--color-primary-yellow]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             </div>
-            
-            <div v-else class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <div v-else class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
 
             <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
                 <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Bitcoin Address Lookup</h3>
                 <div class="flex">
-                <input 
-                    v-model="btcAddressInput" 
-                    type="text" 
-                    placeholder="Enter BTC address" 
+                <input
+                    v-model="btcAddressInput"
+                    type="text"
+                    placeholder="Enter BTC address"
                     class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
                 />
-                <button 
-                    @click="lookupBtcAddress" 
+                <button
+                    @click="lookupBtcAddress"
                     class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
                     :disabled="addressLoading"
                 >
@@ -711,23 +711,23 @@
                     </svg>
                 </button>
                 </div>
-                
+
                 <div v-if="addressData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
                 <div class="grid grid-cols-2 gap-2">
                     <div class="text-sm text-[--color-primary-silver]">Balance:</div>
                     <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum - addressData.chain_stats?.spent_txo_sum) }} BTC</div>
-                    
+
                     <div class="text-sm text-[--color-primary-silver]">Transactions:</div>
                     <div class="text-sm font-mono text-white">{{ addressData.chain_stats?.tx_count || 0 }}</div>
-                    
+
                     <div class="text-sm text-[--color-primary-silver]">Received:</div>
                     <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum) }} BTC</div>
-                    
+
                     <div class="text-sm text-[--color-primary-silver]">Spent:</div>
                     <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.spent_txo_sum) }} BTC</div>
                 </div>
                 </div>
-                
+
                 <div v-if="addressError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
                 {{ addressError }}
                 </div>
@@ -736,14 +736,14 @@
             <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
                 <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Transaction Lookup</h3>
                 <div class="flex">
-                <input 
-                    v-model="txIdInput" 
-                    type="text" 
-                    placeholder="Enter Transaction ID (TXID)" 
+                <input
+                    v-model="txIdInput"
+                    type="text"
+                    placeholder="Enter Transaction ID (TXID)"
                     class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
                 />
-                <button 
-                    @click="lookupBtcTransaction" 
+                <button
+                    @click="lookupBtcTransaction"
                     class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
                     :disabled="txLoading"
                 >
@@ -754,30 +754,30 @@
                     </svg>
                 </button>
                 </div>
-                
+
                 <div v-if="txData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
                 <div class="grid grid-cols-2 gap-2">
                     <div class="text-sm text-[--color-primary-silver]">Transaction ID:</div>
                     <div class="text-sm font-mono text-white truncate">{{ txData.txid }}</div>
-                    
+
                     <div class="text-sm text-[--color-primary-silver]">Status:</div>
                     <div class="text-sm font-mono text-white">
                     <span v-if="txData.status && txData.status.confirmed" class="text-[--color-primary-green]">Confirmed</span>
                     <span v-else class="text-[--color-primary--500]">Unconfirmed</span>
                     </div>
-                    
+
                     <div class="text-sm text-[--color-primary-silver]">Block Height:</div>
                     <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_height ? txData.status.block_height : 'Pending' }}</div>
-                    
+
                     <div class="text-sm text-[--color-primary-silver]">Size:</div>
                     <div class="text-sm font-mono text-white">{{ txData.size }} bytes</div>
-                    
+
                     <div class="text-sm text-[--color-primary-silver]">Weight:</div>
                     <div class="text-sm font-mono text-white">{{ txData.weight }} WU</div>
-                    
+
                     <div class="text-sm text-[--color-primary-silver]">Fee:</div>
                     <div class="text-sm font-mono text-white">{{ formatBtc(txData.fee) }} BTC</div>
-                    
+
                     <div class="text-sm text-[--color-primary-silver]">Time:</div>
                     <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_time ? new Date(txData.status.block_time * 1000).toLocaleString() : 'Pending' }}</div>
                 </div>
@@ -786,8 +786,8 @@
                     <div class="text-sm text-[--color-primary-silver] mb-1">Inputs:</div>
                     <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
                     <div v-for="(vin, index) in txData.vin.slice(0, 3)" :key="index" class="mb-1">
-                        <span class="text-[--color-primary-green]">{{ formatBtc(vin.prevout ? vin.prevout.value : 0) }} BTC</span> 
-                        <span class="text-[--color-primary-silver]">from</span> 
+                        <span class="text-[--color-primary-green]">{{ formatBtc(vin.prevout ? vin.prevout.value : 0) }} BTC</span>
+                        <span class="text-[--color-primary-silver]">from</span>
                         <span class="text-white truncate">{{ vin.prevout ? vin.prevout.scriptpubkey_address : 'Unknown' }}</span>
                     </div>
                     <div v-if="txData.vin.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vin.length - 3 }} more inputs</div>
