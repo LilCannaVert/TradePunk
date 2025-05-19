@@ -1885,15 +1885,21 @@
                 console.log('New position created:', newPosition);
 
                 this.portfolioPositions.push(newPosition);
-                console.log('portfolioPositions after push:', JSON.parse(JSON.stringify(this.portfolioPositions)));
+                console.log('portfolioPositions array after push:', JSON.parse(JSON.stringify(this.portfolioPositions)));
 
                 try {
                     const dataToSave = JSON.stringify(this.portfolioPositions);
                     console.log('Attempting to save to localStorage with key "portfolioPositions":', dataToSave);
                     localStorage.setItem('portfolioPositions', dataToSave);
-                    console.log('localStorage.setItem called successfully.');
+
+                    // *** Добавляем явное подтверждение чтения после записи ***
+                    const savedDataCheck = localStorage.getItem('portfolioPositions');
+                    console.log('Confirmed data in localStorage immediately after setItem:', savedDataCheck);
+                    // ******************************************************
+
+                    console.log('localStorage.setItem called successfully in addPortfolioPosition.');
                 } catch (e) {
-                    console.error('Error saving portfolioPositions to localStorage:', e);
+                    console.error('Error saving portfolioPositions to localStorage in addPortfolioPosition:', e);
                 }
 
 
@@ -1911,12 +1917,18 @@
                 if (index >= 0 && index < this.portfolioPositions.length) {
                     const removedPosition = this.portfolioPositions.splice(index, 1);
                     console.log('Position removed:', removedPosition);
-                    console.log('portfolioPositions after splice:', JSON.parse(JSON.stringify(this.portfolioPositions)));
+                    console.log('portfolioPositions array after splice:', JSON.parse(JSON.stringify(this.portfolioPositions)));
 
                     try {
                         const dataToSave = JSON.stringify(this.portfolioPositions);
                         console.log('Attempting to save to localStorage after removal:', dataToSave);
                         localStorage.setItem('portfolioPositions', dataToSave);
+
+                        // *** Добавляем явное подтверждение чтения после записи ***
+                        const savedDataCheck = localStorage.getItem('portfolioPositions');
+                        console.log('Confirmed data in localStorage immediately after setItem (removal):', savedDataCheck);
+                        // ******************************************************
+
                         console.log('localStorage.setItem after removal called successfully.');
                     } catch (e) {
                         console.error('Error saving portfolioPositions to localStorage after removal:', e);
@@ -2003,9 +2015,17 @@
                 // Убрал исходный лог массива, т.к. он уже есть при загрузке и в add/remove
 
                 if (!this.portfolioPositions.length) {
-                    console.log('Portfolio is empty. Resetting totals.');
-                    // Убираем localStorage.removeItem отсюда, чтобы он вызывался только при явном удалении всех позиций или сбросе.
-                    // localStorage.removeItem('portfolioPositions');
+                    console.log('Portfolio is empty. Resetting totals in memory.');
+                     // Если портфолио пусто в памяти, очищаем и localStorage
+                    try {
+                        console.log('Attempting to remove portfolioPositions from localStorage.');
+                        localStorage.removeItem('portfolioPositions');
+                         const checkAfterRemove = localStorage.getItem('portfolioPositions');
+                         console.log('localStorage after removal:', checkAfterRemove);
+                    } catch(e) {
+                        console.error('Error removing portfolioPositions from localStorage:', e);
+                    }
+
                     this.totalInvestment = 0;
                     this.currentValue = 0;
                     this.totalProfit = 0;
@@ -2036,7 +2056,8 @@
                         totalInvestment += investment;
                         currentValue += current;
 
-                        console.log(`Position ${index} (${position.pair}): Invested=${investment}, Current=${current}, Profit=${profit.toFixed(2)}, Profit%=${profitPercent.toFixed(2)}`);
+                        // Убрал подробный лог каждой позиции здесь, чтобы не засорять консоль при интервальном обновлении
+                        // console.log(`Position ${index} (${position.pair}): Invested=${investment}, Current=${current}, Profit=${profit.toFixed(2)}, Profit%=${profitPercent.toFixed(2)}`);
 
                     } else {
                         console.warn(`Ticker not found for portfolio position ${index}: ${position.symbol}. Using last known values.`);
@@ -2055,7 +2076,7 @@
                         position.profitPercent = investment > 0 ? ((lastKnownCurrentValue - investment) / investment) * 100 : 0;
                          position.profitColor = position.profit >= 0 ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]';
                         position.profitSign = position.profit >= 0 ? '+' : '';
-                        console.log(`Position ${index} (${position.symbol}) Fallback: Invested=${investment.toFixed(2)}, Using Current=${lastKnownCurrentValue.toFixed(2)}`);
+                        // console.log(`Position ${index} (${position.symbol}) Fallback: Invested=${investment.toFixed(2)}, Using Current=${lastKnownCurrentValue.toFixed(2)}`);
                     }
                 });
 
@@ -2066,16 +2087,19 @@
                 this.totalProfitPercent = totalInvestment > 0 ?
                     ((this.currentValue - this.totalInvestment) / this.totalInvestment) * 100 : 0;
 
-                console.log(`Total Investment (calculated): ${this.totalInvestment.toFixed(2)}`);
-                console.log(`Total Current Value (calculated): ${this.currentValue.toFixed(2)}`);
-                console.log(`Total Profit (calculated): ${this.totalProfit.toFixed(2)}`);
-                console.log(`Total Profit Percent (calculated): ${this.totalProfitPercent.toFixed(2)}%`);
+                console.log(`updatePortfolioTotals: Calculated Totals: Investment=${this.totalInvestment.toFixed(2)}, Current=${this.currentValue.toFixed(2)}, Profit=${this.totalProfit.toFixed(2)}, Profit%=${this.totalProfitPercent.toFixed(2)}%`);
 
 
                 try {
                      const dataToSave = JSON.stringify(this.portfolioPositions);
                      console.log('Attempting to save to localStorage from updatePortfolioTotals:', dataToSave);
                      localStorage.setItem('portfolioPositions', dataToSave);
+
+                     // *** Добавляем явное подтверждение чтения после записи ***
+                     const savedDataCheck = localStorage.getItem('portfolioPositions');
+                     console.log('Confirmed data in localStorage immediately after setItem (updateTotals):', savedDataCheck);
+                     // ******************************************************
+
                      console.log('localStorage.setItem from updatePortfolioTotals called successfully.');
                 } catch (e) {
                      console.error('Error saving portfolioPositions from updatePortfolioTotals to localStorage:', e);
