@@ -1820,12 +1820,19 @@
                 }
             },
             togglePortfolio() {
-                console.log('Toggling portfolio');
+                console.log('Toggling portfolio. Current state:', this.showPortfolio); // Лог состояния
                 if (!this.showPortfolio) {
                     this.closeAllModals();
                     this.showPortfolio = true;
                     document.body.style.overflow = 'hidden';
-                    
+
+                    // Удаляем старый экземпляр графика, если он почему-то остался
+                    if (this.portfolioChartInstance) {
+                        console.log('Destroying existing chart instance before opening modal.');
+                        this.portfolioChartInstance.destroy();
+                        this.portfolioChartInstance = null;
+                    }
+
                     if (this.showChartScreen) {
                         setTimeout(() => {
                             const portfolioModal = document.getElementById('portfolioModal');
@@ -1833,19 +1840,21 @@
                         }, 0);
                     }
 
-                    this.updatePortfolioTotals();
-                    // Вызываем отрисовку графика при открытии модального окна
-                    this.$nextTick(() => {
-                        this.renderPortfolioChart();
-                    });
+                    this.updatePortfolioTotals(); // Вызывает renderPortfolioChart() в $nextTick
+                    console.log('Portfolio modal opened. updatePortfolioTotals called.');
                 } else {
+                    console.log('Closing portfolio modal.');
                     this.showPortfolio = false;
                     document.body.style.overflow = 'auto';
                     // Уничтожаем экземпляр графика при закрытии модального окна
                     if (this.portfolioChartInstance) {
+                        console.log('Destroying chart instance on modal close.');
                         this.portfolioChartInstance.destroy();
                         this.portfolioChartInstance = null;
+                    } else {
+                         console.log('No chart instance to destroy on modal close.');
                     }
+                     console.log('Portfolio modal closed.');
                 }
             },
             filterPortfolioCoins() {
@@ -1991,23 +2000,26 @@
                 }
             },
             updatePortfolioTotals() {
-                console.log('Updating portfolio totals. Positions count:', this.portfolioPositions.length); // Лог начала обновления
+                console.log('updatePortfolioTotals called. Positions count:', this.portfolioPositions.length);
                 if (!this.portfolioPositions.length) {
-                    console.log('Portfolio is empty, resetting totals and destroying chart.');
+                     console.log('updatePortfolioTotals: Portfolio is empty, resetting totals and triggering chart destroy.');
                     this.totalInvestment = 0;
                     this.currentValue = 0;
                     this.totalProfit = 0;
                     this.totalProfitPercent = 0;
-                    if (this.portfolioChartInstance) {
-                        this.portfolioChartInstance.destroy();
-                        this.portfolioChartInstance = null;
-                    }
-                     // Also clear localStorage if portfolio becomes empty
+
+                     // Уничтожаем график, если портфолио стало пустым
+                     if (this.portfolioChartInstance) {
+                         console.log('updatePortfolioTotals: Destroying chart due to empty portfolio.');
+                         this.portfolioChartInstance.destroy();
+                         this.portfolioChartInstance = null;
+                     }
+
                     try {
                        localStorage.removeItem('portfolioPositions');
-                       console.log('Cleared portfolio from localStorage as it is empty.');
+                       console.log('updatePortfolioTotals: Cleared portfolio from localStorage as it is empty.');
                     } catch(e) {
-                       console.error('Error clearing empty portfolio from localStorage:', e);
+                       console.error('updatePortfolioTotals: Error clearing empty portfolio from localStorage:', e);
                     }
                     return;
                 }
@@ -2015,7 +2027,6 @@
                 let totalInvestment = 0;
                 let currentValue = 0;
 
-                // Map through positions, calculate values, and update totals
                 this.portfolioPositions = this.portfolioPositions.map(position => {
                     const ticker = this.tickers[position.symbol];
                     if (ticker) {
@@ -2027,7 +2038,6 @@
                         totalInvestment += investment;
                         currentValue += current;
 
-                        // Return updated position object
                         return {
                             ...position,
                             currentPrice: parseFloat(ticker.close),
@@ -2038,9 +2048,9 @@
                             profitSign: profit >= 0 ? '+' : ''
                         };
                     }
-                     // If ticker data is not available, return position as is (or with partial updates if needed)
-                     console.warn(`Ticker data not found for symbol: ${position.symbol}. Cannot update value.`); // Лог предупреждения
-                    return position; // Return original position if ticker data is missing
+                    console.warn(`updatePortfolioTotals: Ticker data not found for symbol: ${position.symbol}. Cannot update value.`);
+                    // Если данные тикера недоступны, возвращаем позицию как есть
+                    return position;
                 });
 
                 this.totalInvestment = totalInvestment;
@@ -2049,27 +2059,28 @@
                 this.totalProfitPercent = totalInvestment > 0 ?
                     ((currentValue - totalInvestment) / totalInvestment) * 100 : 0;
 
-                console.log('Portfolio totals updated:', {
+                console.log('updatePortfolioTotals: Portfolio totals updated:', {
                     totalInvestment: this.totalInvestment,
                     currentValue: this.currentValue,
                     totalProfit: this.totalProfit,
                     totalProfitPercent: this.totalProfitPercent
-                }); // Лог итогов
+                });
 
-                // Save updated state to localStorage
                  try {
                     localStorage.setItem('portfolioPositions', JSON.stringify(this.portfolioPositions));
-                    console.log('Updated portfolio state saved to localStorage.'); // Лог сохранения
+                    console.log('updatePortfolioTotals: Updated portfolio state saved to localStorage.');
                 } catch(e) {
-                    console.error('Error saving updated portfolio to localStorage:', e); // Лог ошибки сохранения
+                    console.error('updatePortfolioTotals: Error saving updated portfolio to localStorage:', e);
                 }
 
-
-                // Update or render the chart if the modal is open
+                // Отрисовываем/обновляем график только если модальное окно открыто
                 if (this.showPortfolio) {
+                    console.log('updatePortfolioTotals: Portfolio modal is open, calling renderPortfolioChart in nextTick.');
                     this.$nextTick(() => {
                          this.renderPortfolioChart();
                     });
+                } else {
+                     console.log('updatePortfolioTotals: Portfolio modal is closed, not rendering chart.');
                 }
             },
             formatPortfolioNumber(number, decimals = 2) {
@@ -2917,41 +2928,43 @@
             },
             // Метод для отрисовки графика портфолио
             renderPortfolioChart() {
-                console.log('Attempting to render portfolio chart...'); // Лог вызова
+                console.log('renderPortfolioChart called.'); // Лог вызова
                 const ctx = document.getElementById('portfolioChart');
 
                 if (!ctx) {
-                    console.error('Canvas element with ID "portfolioChart" not found.');
+                    console.error('renderPortfolioChart: Canvas element with ID "portfolioChart" not found.');
                     // Возможно, canvas еще не в DOM, попробуем через небольшой setTimeout
                     setTimeout(() => {
                         const ctxRetry = document.getElementById('portfolioChart');
                         if (ctxRetry) {
-                            console.log('Canvas found on retry, rendering chart...');
-                            this.actuallyRenderChart(ctxRetry); // Новый вспомогательный метод
+                            console.log('renderPortfolioChart: Canvas found on retry, attempting to render...');
+                            this.actuallyRenderChart(ctxRetry);
                         } else {
-                            console.error('Canvas element still not found after retry.');
+                            console.error('renderPortfolioChart: Canvas element still not found after retry.');
                         }
                     }, 50); // Небольшая задержка
                     return;
                 }
 
-                console.log('Canvas element found.', ctx);
-                this.actuallyRenderChart(ctx); // Переносим логику отрисовки во вспомогательный метод
+                console.log('renderPortfolioChart: Canvas element found.', ctx);
+                this.actuallyRenderChart(ctx);
             },
 
             // Вспомогательный метод для фактической отрисовки/обновления графика
             actuallyRenderChart(ctx) {
+                 console.log('actuallyRenderChart called with context:', ctx); // Лог вызова
                  if (!this.portfolioPositions || this.portfolioPositions.length === 0) {
-                    console.log('No portfolio positions to render chart.');
+                    console.log('actuallyRenderChart: No portfolio positions to render chart.');
                      // Уничтожаем график, если данных нет
                      if (this.portfolioChartInstance) {
+                         console.log('actuallyRenderChart: Destroying chart due to no positions.');
                          this.portfolioChartInstance.destroy();
                          this.portfolioChartInstance = null;
                      }
                     return;
                  }
 
-                 console.log('Rendering chart with positions:', this.portfolioPositions);
+                 console.log('actuallyRenderChart: Rendering chart with positions:', this.portfolioPositions);
 
                 // Подготовка данных для графика
                 const chartData = {
@@ -2961,12 +2974,12 @@
                         backgroundColor: [
                             '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
                             '#FF9F40', '#8AC054', '#4D5360', '#E7E9ED', '#F7464A',
-                             '#5A5A5A', '#C0C0C0' // Добавим еще цветов на всякий случай
+                            '#5A5A5A', '#C0C0C0', '#800080', '#3c82f6', '#eab308', '#10b981', '#ef4444' // Добавим больше цветов
                         ],
                         hoverBackgroundColor: [
-                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                           '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
                             '#FF9F40', '#8AC054', '#4D5360', '#E7E9ED', '#F7464A',
-                            '#5A5A5A', '#C0C0C0'
+                            '#5A5A5A', '#C0C0C0', '#800080', '#3c82f6', '#eab308', '#10b981', '#ef4444'
                         ]
                     }]
                 };
@@ -2978,12 +2991,15 @@
                     plugins: {
                         legend: {
                             labels: {
-                                color: '#D1C5C0' // Цвет текста легенды (используем прямое значение цвета)
+                                color: '#D1C5C0' // Цвет текста легенды
                             }
                         },
                         tooltip: {
                              titleColor: '#FFFFFF', // Цвет заголовка подсказки
                              bodyColor: '#D1C5C0', // Цвет текста подсказки
+                             backgroundColor: 'rgba(0, 0, 0, 0.7)', // Фон подсказки
+                             borderColor: '#800080', // Граница подсказки
+                             borderWidth: 1,
                             callbacks: {
                                 label: function(context) {
                                     const label = context.label || '';
@@ -3003,48 +3019,49 @@
                     //         borderWidth: 1
                     //     }
                     // }
-                     // Удалим background transparent, т.к. Chart.js может его неправильно интерпретировать
                 };
 
-
-                // Если экземпляр графика уже существует, обновляем его данные
+                // Если экземпляр графика уже существует, уничтожаем его перед созданием нового
+                // Это более надежно при повторном создании canvas
                 if (this.portfolioChartInstance) {
-                    console.log('Updating existing chart instance.');
-                    this.portfolioChartInstance.data = chartData;
-                    this.portfolioChartInstance.update();
-                } else {
-                    // Иначе создаем новый экземпляр
-                    console.log('Creating new chart instance.');
+                    console.log('actuallyRenderChart: Destroying old chart instance before creating new.');
+                    this.portfolioChartInstance.destroy();
+                    this.portfolioChartInstance = null; // Убедимся, что ссылка обнулена
+                }
+
+
+                // Создаем новый экземпляр графика
+                console.log('actuallyRenderChart: Creating new chart instance on canvas:', ctx);
+                try {
                     this.portfolioChartInstance = new Chart(ctx, {
                         type: 'pie',
                         data: chartData,
                         options: chartOptions
                     });
+                    console.log('actuallyRenderChart: New chart instance created successfully.');
+                } catch(chartError) {
+                    console.error('actuallyRenderChart: Error creating chart instance:', chartError);
+                    this.portfolioChartInstance = null;
                 }
-                 console.log('Portfolio chart rendering process finished.');
+
             },
         },
         mounted() {
             this.sockInit();
             this.appendScript(this.initWidget);
             this.prepareOrderBook();
-            this.initWidget(); 
-            this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT']; 
-            
-            this.loadState();
-            
-            setTimeout(() => {
-                if (this.portfolioPositions.length === 0) {
-                    console.log('Trying to load portfolio state again after delay');
-                    this.loadState();
-                }
-            }, 2000);
+            this.initWidget();
+            this.favorites = JSON.parse(localStorage.getItem('favorites')) || ['BTCUSDT'];
 
-            setInterval(() => {
+            console.log('Mounted: Calling loadState to load portfolio.');
+            this.loadState();
+
+            this.portfolioUpdateInterval = setInterval(() => {
                 if (this.portfolioPositions.length > 0 && Object.keys(this.tickers).length > 0) {
-                    this.updatePortfolioTotals();
+                     console.log('Interval triggered: Updating portfolio totals...');
+                    this.updatePortfolioTotals(); // Этот метод теперь вызывает renderPortfolioChart если модальное окно открыто
                 }
-            }, 1000);
+            }, 5000);
 
             window.addEventListener('click', this.handleClick);
 
@@ -3052,21 +3069,31 @@
             if (savedSettings) {
                 this.calcSettings = JSON.parse(savedSettings);
             }
-            
-            axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
-                this.coins = response.data.data.coins;
-            });
+
+            if (typeof axios !== 'undefined') {
+                 axios.get('https://api.coinranking.com/v1/public/coins?base=USD&timePeriod=24h').then(response => {
+                    this.coins = response.data.data.coins;
+                     console.log('Mounted: Coinranking data loaded.');
+                 }).catch(error => {
+                    console.error('Mounted: Error fetching coins from Coinranking API:', error);
+                 });
+            } else {
+                 console.warn('Mounted: Axios is not defined. Coinranking API data will not be loaded.');
+            }
+
 
             if (window.Telegram?.WebApp) {
                 this.tg = window.Telegram.WebApp;
-                console.log('Telegram WebApp initialized:', this.tg);
+                console.log('Mounted: Telegram WebApp initialized.');
             }
-             // Инициализация графика при монтировании, если модальное окно уже открыто (например, при перезагрузке страницы с открытым модальным окном)
-            if (this.showPortfolio) {
-                 this.$nextTick(() => {
-                     this.renderPortfolioChart();
-                 });
-            }
+
+            // Удаляем вызов renderPortfolioChart здесь, т.к. он вызывается из updatePortfolioTotals
+            // if (this.showPortfolio) {
+            //      this.$nextTick(() => {
+            //          this.renderPortfolioChart();
+            //      });
+            // }
+             console.log('Mounted finished.');
         },
         beforeUnmount() {
             this.sockClose();
@@ -4074,6 +4101,43 @@
     /* .portfolio-positions-container {
         margin-bottom: 20px; /* Пример отступа */
     /* } */
+
+    /* Обновите эти стили в вашем блоке <style> */
+    #portfolioModal {
+         position: fixed;
+         /* Удаляем inset: 0 и центрирующие flexbox свойства */
+         top: 50px; /* Явно позиционируем 50px от верхнего края */
+         /* bottom: 80px; Оставляем место снизу для нижней панели (ее высота около 80px) */
+         bottom: 90px; /* Давайте увеличим отступ снизу для надежности */
+         left: 10px; /* Отступы слева и справа */
+         right: 10px;
+         z-index: 50; /* Должен быть ниже z-index нижней панели */
+         background-color: rgba(0, 0, 0, 0.5); /* Фон */
+         display: flex; /* Возвращаем flexbox, чтобы центрировать/расположить внутренний контейнер */
+         align-items: flex-start; /* Выравниваем содержимое по верху */
+         justify-content: center; /* Центрируем по горизонтали */
+
+         /* Применяем transform и backface-visibility */
+         transform: translateZ(0);
+         -webkit-transform: translateZ(0);
+         backface-visibility: hidden;
+         -webkit-backface-visibility: hidden;
+    }
+
+    /* Убедимся, что внутренний контейнер модального окна корректно занимает доступное пространство и прокручивается */
+    #portfolioModal .bg-[--color-bg--300] {
+         /* max-height: calc(100vh - 150px); Удаляем эту max-height,
+            теперь высота будет определяться пространством между top и bottom модального окна */
+         width: 100%; /* Занимаем всю доступную ширину внутри модального окна */
+         max-width: 600px; /* Ограничиваем максимальную ширину */
+         height: 100%; /* Занимаем всю доступную высоту между top и bottom модального окна */
+         overflow-y: auto; /* Делаем внутренний контейнер прокручиваемым */
+         border-radius: 0.5rem;
+         padding: 0.75rem;
+         background-color: var(--color-bg--300); /* Фон */
+         /* Убедимся, что инлайн стиль style="overflow-y: auto;" удален из HTML,
+            теперь управляем overflow только в CSS */
+    }
 
 </style>
 </body>
