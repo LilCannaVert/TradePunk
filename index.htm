@@ -1027,7 +1027,7 @@
                             </button>
                         </div>
                  
-                         <div v-if="usdtAddressData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
+                         <div v-if="usdtAddressData" class="mt-4 bg-[--color-bg--300] p-3 rounded overflow-y-auto max-h-[300px]">
                             
                              <template v-if="selectedUsdtNetwork === 'TRC20'">
                                  <h4 class="text-sm font-bold text-[--color-primary-yellow] mb-2">USDT TRC20 Address Info:</h4>
@@ -1088,7 +1088,7 @@
                             </button>
                         </div>
                       
-                         <div v-if="usdtTxData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
+                         <div v-if="usdtTxData" class="mt-4 bg-[--color-bg--300] p-3 rounded overflow-y-auto max-h-[300px]">
                              
                              <template v-if="selectedUsdtNetwork === 'TRC20'">
                                 
@@ -1100,8 +1100,8 @@
 
                                          <div class="text-[--color-primary-silver]">Status:</div>
                                          <div class="font-mono text-white">
-                                             <span :class="getTrc20TxDetails(usdtTxData).confirmed ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
-                                                 {{ getTrc20TxDetails(usdtTxData).confirmed ? 'Confirmed' : 'Unconfirmed' }}
+                                             <span :class="getTrc20TxDetails(usdtTxData).block && getTrc20TxDetails(usdtTxData).contractRet === 'SUCCESS' ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                                                 {{ getTrc20TxDetails(usdtTxData).block && getTrc20TxDetails(usdtTxData).contractRet === 'SUCCESS' ? 'Confirmed' : 'Unconfirmed' }}
                                              </span>
                                               <span v-if="getTrc20TxDetails(usdtTxData).contractRet && getTrc20TxDetails(usdtTxData).contractRet !== 'SUCCESS'" class="text-red-500 ml-1">({{ getTrc20TxDetails(usdtTxData).contractRet }})</span>
                                          </div>
