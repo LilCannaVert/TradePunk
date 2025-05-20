@@ -476,8 +476,11 @@
             </div>
         </div>
 
-        <div v-if="showPortfolio" id="portfolioModal" class="fixed inset-0 flex bg-black z-50 overflow-y-auto">
-            <div class="flex flex-col bg-[--color-bg--300] p-4 w-full h-full overflow-y-auto" @click.stop>
+        <div v-if="showPortfolio"
+            id="portfolioModal"
+            class="fixed inset-0 flex bg-black z-50 overflow-y-auto"
+            @click.stop="togglePortfolio">
+            <div class="flex flex-col bg-[--color-bg--300] p-4 w-full h-full overflow-y-auto min-h-full" @click.stop>
                 <div class="flex justify-between items-center mb-2">
                     <h2 class="text-base font-bold text-[--color-primary-silver]">Portfolio</h2>
                     <button @click="togglePortfolio" class="bg-red-500 text-white px-4 py-2 rounded text-base">Close</button>
@@ -509,7 +512,7 @@
                     </div>
                 </div>
 
-                <div class="mb-2 bg-[--color-bg--500] p-3 rounded-lg">
+                <div class="mb-2 bg-[--color-bg--300] p-3 rounded-lg">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
 
                         <div class="form-group relative">
@@ -564,7 +567,7 @@
                     </div>
                 </div>
 
-                <div class="bg-[--color-bg--500] rounded-lg p-3 flex-grow overflow-y-auto">
+                <div class="bg-[--color-bg--300] rounded-lg p-3 flex-grow overflow-y-auto">
                     <div style="padding-right: 4px;">
                         <div v-for="(position, index) in portfolioPositions" 
                             :key="index"
@@ -594,7 +597,7 @@
                     </div>
                 </div>
                  
-                 <div class="mt-4 bg-[--color-bg--500] rounded-lg p-3 flex-grow flex-grow-2 overflow-y-auto"> 
+                 <div class="mt-4 bg-[--color-bg--300] rounded-lg p-3 flex-grow flex-grow-2 overflow-y-auto"> 
                      
                       <div id="portfolioChartContainer" style="width: 100%;"></div> 
                  </div>
@@ -4276,7 +4279,7 @@
         justify-content: center;
         z-index: 50;
         padding-top: 2vh;
-        padding-bottom: 100px;
+        /* padding-bottom: 100px; */ /* Удаляем или комментируем этот отступ */ {{ removed | padding-bottom: 100px; }}
         max-height: calc(100vh - 100px);
     }
 
