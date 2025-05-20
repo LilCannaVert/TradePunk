@@ -593,11 +593,10 @@
                         </div>
                     </div>
                 </div>
-                 <!-- Возможно, здесь есть дополнительный контент или отступ, который нужно учесть -->
-                 <!-- Например, блок для графика портфолио -->
-                 <div class="mt-4 bg-[--color-bg--500] rounded-lg p-3 flex-grow flex-grow-2 overflow-y-auto"> <!-- Добавлен flex-grow-2 -->
-                     <!-- Место для графика -->
-                      <div id="portfolioChartContainer" style="width: 100%;"></div> <!-- Увеличил высоту графика для примера -->
+                 
+                 <div class="mt-4 bg-[--color-bg--500] rounded-lg p-3 flex-grow flex-grow-2 overflow-y-auto"> 
+                     
+                      <div id="portfolioChartContainer" style="width: 100%;"></div> 
                  </div>
             </div>
         </div>
@@ -688,8 +687,33 @@
             @click="handleMempoolModalClick">
         <div class="flex flex-col bg-[--color-bg--300] p-4 w-full h-full" @click.stop>
             <div class="flex justify-between items-center">
-            <h2 class="text-lg font-bold text-[--color-primary-silver]">Bitcoin Mempool</h2>
+            <h2 class="text-lg font-bold text-[--color-primary-silver]">Mempool</h2>
             <button @click="toggleMempoolModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
+            </div>
+
+            <!-- Валютные кнопки -->
+            <div class="flex justify-center space-x-4 mb-4">
+                <button
+                    @click="selectedMempoolCurrency = 'BTC'"
+                    :class="{'bg-[--color-primary-purple]': selectedMempoolCurrency === 'BTC', 'bg-[--color-bg--500]': selectedMempoolCurrency !== 'BTC'}"
+                    class="text-white px-4 py-2 rounded-lg"
+                >
+                    BTC
+                </button>
+                <button
+                    @click="selectedMempoolCurrency = 'TON'"
+                    :class="{'bg-[--color-primary-purple]': selectedMempoolCurrency === 'TON', 'bg-[--color-bg--500]': selectedMempoolCurrency !== 'TON'}"
+                    class="text-white px-4 py-2 rounded-lg"
+                >
+                    TON
+                </button>
+                <button
+                    @click="selectedMempoolCurrency = 'USDT'; selectedUsdtNetwork = 'TRC20';"
+                    :class="{'bg-[--color-primary-purple]': selectedMempoolCurrency === 'USDT', 'bg-[--color-bg--500]': selectedMempoolCurrency !== 'USDT'}"
+                    class="text-white px-4 py-2 rounded-lg"
+                >
+                    USDT
+                </button>
             </div>
 
             <div v-if="mempoolLoading" class="flex justify-center items-center p-10 flex-grow">
@@ -701,165 +725,433 @@
 
             <div v-else class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
 
-            <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
-                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Bitcoin Address Lookup</h3>
-                <div class="flex">
-                <input
-                    v-model="btcAddressInput"
-                    ref="btcAddressInput"
-                    type="text"
-                    placeholder="Enter BTC address"
-                    class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
-                />
-                <button
-                    @click="lookupBtcAddress"
-                    class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
-                    :disabled="addressLoading"
-                >
-                    <span v-if="!addressLoading">Lookup</span>
-                    <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </button>
-                </div>
-
-                <div v-if="addressData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="text-sm text-[--color-primary-silver]">Balance:</div>
-                    <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum - addressData.chain_stats?.spent_txo_sum) }} BTC</div>
-
-                    <div class="text-sm text-[--color-primary-silver]">Transactions:</div>
-                    <div class="text-sm font-mono text-white">{{ addressData.chain_stats?.tx_count || 0 }}</div>
-
-                    <div class="text-sm text-[--color-primary-silver]">Received:</div>
-                    <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum) }} BTC</div>
-
-                    <div class="text-sm text-[--color-primary-silver]">Spent:</div>
-                    <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.spent_txo_sum) }} BTC</div>
-                </div>
-                </div>
-
-                <div v-if="addressError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
-                {{ addressError }}
-                </div>
-            </div>
-
-            <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
-                <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Transaction Lookup</h3>
-                <div class="flex">
-                <input
-                    v-model="txIdInput"
-                    ref="txIdInput"
-                    type="text"
-                    placeholder="Enter Transaction ID (TXID)"
-                    class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
-                />
-                <button
-                    @click="lookupBtcTransaction"
-                    class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
-                    :disabled="txLoading"
-                >
-                    <span v-if="!txLoading">Lookup</span>
-                    <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </button>
-                </div>
-
-                <div v-if="txData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="text-sm text-[--color-primary-silver]">Transaction ID:</div>
-                    <div class="text-sm font-mono text-white truncate">{{ txData.txid }}</div>
-
-                    <div class="text-sm text-[--color-primary-silver]">Status:</div>
-                    <div class="text-sm font-mono text-white">
-                    <span v-if="txData.status && txData.status.confirmed" class="text-[--color-primary-green]">Confirmed</span>
-                    <span v-else class="text-[--color-primary--500]">Unconfirmed</span>
-                    </div>
-
-                    <div class="text-sm text-[--color-primary-silver]">Block Height:</div>
-                    <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_height ? txData.status.block_height : 'Pending' }}</div>
-
-                    <div class="text-sm text-[--color-primary-silver]">Size:</div>
-                    <div class="text-sm font-mono text-white">{{ txData.size }} bytes</div>
-
-                    <div class="text-sm text-[--color-primary-silver]">Weight:</div>
-                    <div class="text-sm font-mono text-white">{{ txData.weight }} WU</div>
-
-                    <div class="text-sm text-[--color-primary-silver]">Fee:</div>
-                    <div class="text-sm font-mono text-white">{{ formatBtc(txData.fee) }} BTC</div>
-
-                    <div class="text-sm text-[--color-primary-silver]">Time:</div>
-                    <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_time ? new Date(txData.status.block_time * 1000).toLocaleString() : 'Pending' }}</div>
-                </div>
-
-                <div class="mt-3">
-                    <div class="text-sm text-[--color-primary-silver] mb-1">Inputs:</div>
-                    <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
-                    <div v-for="(vin, index) in txData.vin.slice(0, 3)" :key="index" class="mb-1">
-                        <span class="text-[--color-primary-green]">{{ formatBtc(vin.prevout ? vin.prevout.value : 0) }} BTC</span>
-                        <span class="text-[--color-primary-silver]">from</span>
-                        <span class="text-white truncate">{{ vin.prevout ? vin.prevout.scriptpubkey_address : 'Unknown' }}</span>
-                    </div>
-                    <div v-if="txData.vin.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vin.length - 3 }} more inputs</div>
-                    </div>
-                </div>
-
-                <div class="mt-3">
-                    <div class="text-sm text-[--color-primary-silver] mb-1">Outputs:</div>
-                    <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
-                    <div v-for="(vout, index) in txData.vout.slice(0, 3)" :key="index" class="mb-1">
-                        <span class="text-[--color-primary--500]">{{ formatBtc(vout.value) }} BTC</span>
-                        <span class="text-[--color-primary-silver]">to</span>
-                        <span class="text-white truncate">{{ vout.scriptpubkey_address || 'Unknown' }}</span>
-                    </div>
-                    <div v-if="txData.vout.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vout.length - 3 }} more outputs</div>
-                    </div>
-                </div>
-                </div>
-
-                <div v-if="txError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
-                {{ txError }}
-                </div>
-
-                <!-- Current Hashrate Section -->
-                <div class="bg-[--color-bg--500] rounded-lg p-4">
-                    <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Current Hashrate</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="text-sm text-[--color-primary-silver]">Current Hashrate:</div>
-                        <div class="text-sm font-mono text-white">{{ hashrateData.currentHashrate }}</div>
-                        <!-- <div class="text-sm text-[--color-primary-silver]">Average Hashrate:</div>
-                        <div class="text-sm font-mono text-white">{{ hashrateData.averageHashrate }}</div>  Removed Average Hashrate -->
-                        <div class="text-sm text-[--color-primary-silver]">Current Difficulty:</div>
-                        <div class="text-sm font-mono text-white">{{ hashrateData.currentDifficulty }}</div>
-                    </div>
-                </div>
+            <!-- BTC Section -->
+            <template v-if="selectedMempoolCurrency === 'BTC'">
                 <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
-                    <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Latest Blocks</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full latest-blocks-table">
-                        <thead>
-                        <tr class="text-[--color-primary-silver] text-left">
-                            <th class="px-2 py-1">Height</th>
-                            <!-- <th class="px-2 py-1">Hash</th> --> <!-- Removed Hash column -->
-                            <th class="px-2 py-1">Time</th>
-                            <th class="px-2 py-1">Size</th>
-                            <th class="px-2 py-1">Tx Count</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr v-for="block in mempoolData.blocks" :key="block.id" class="text-white hover:bg-[--color-bg--300]">
-                            <td class="px-2 py-1 font-mono">{{ block.height }}</td>
-                            <!--<td class="px-2 py-1 font-mono text-xs truncate max-w-[120px]">{{ block.id }}</td> --> <!-- Removed Hash column -->
-                            <td class="px-2 py-1">{{ formatTimeAgo(block.timestamp) }}</td>
-                            <td class="px-2 py-1">{{ formatBytes(block.size) }}</td>
-                            <td class="px-2 py-1">{{ block.tx_count }}</td>
-                        </tr>
-                        </tbody>
-                    </table>
+                    <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Bitcoin Address Lookup</h3>
+                    <div class="flex">
+                    <input
+                        v-model="btcAddressInput"
+                        ref="btcAddressInput"
+                        type="text"
+                        placeholder="Enter BTC address"
+                        class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                    />
+                    <button
+                        @click="lookupBtcAddress"
+                        class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
+                        :disabled="addressLoading"
+                    >
+                        <span v-if="!addressLoading">Lookup</span>
+                        <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
                     </div>
+
+                    <div v-if="addressData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="text-sm text-[--color-primary-silver]">Balance:</div>
+                        <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum - addressData.chain_stats?.spent_txo_sum) }} BTC</div>
+
+                        <div class="text-sm text-[--color-primary-silver]">Transactions:</div>
+                        <div class="text-sm font-mono text-white">{{ addressData.chain_stats?.tx_count || 0 }}</div>
+
+                        <div class="text-sm text-[--color-primary-silver]">Received:</div>
+                        <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.funded_txo_sum) }} BTC</div>
+
+                        <div class="text-sm text-[--color-primary-silver]">Spent:</div>
+                        <div class="text-sm font-mono text-white">{{ formatBtc(addressData.chain_stats?.spent_txo_sum) }} BTC</div>
+                    </div>
+                    </div>
+
+                    <div v-if="addressError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
+                    {{ addressError }}
+                    </div>
+                </div>
+
+                <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                    <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Transaction Lookup</h3>
+                    <div class="flex">
+                    <input
+                        v-model="txIdInput"
+                        ref="txIdInput"
+                        type="text"
+                        placeholder="Enter Transaction ID (TXID)"
+                        class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                    />
+                    <button
+                        @click="lookupBtcTransaction"
+                        class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
+                        :disabled="txLoading"
+                    >
+                        <span v-if="!txLoading">Lookup</span>
+                        <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                    </div>
+
+                    <div v-if="txData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="text-sm text-[--color-primary-silver]">Transaction ID:</div>
+                        <div class="text-sm font-mono text-white truncate">{{ txData.txid }}</div>
+
+                        <div class="text-sm text-[--color-primary-silver]">Status:</div>
+                        <div class="text-sm font-mono text-white">
+                        <span v-if="txData.status && txData.status.confirmed" class="text-[--color-primary-green]">Confirmed</span>
+                        <span v-else class="text-[--color-primary--500]">Unconfirmed</span>
+                        </div>
+
+                        <div class="text-sm text-[--color-primary-silver]">Block Height:</div>
+                        <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_height ? txData.status.block_height : 'Pending' }}</div>
+
+                        <div class="text-sm text-[--color-primary-silver]">Size:</div>
+                        <div class="text-sm font-mono text-white">{{ txData.size }} bytes</div>
+
+                        <div class="text-sm text-[--color-primary-silver]">Weight:</div>
+                        <div class="text-sm font-mono text-white">{{ txData.weight }} WU</div>
+
+                        <div class="text-sm text-[--color-primary-silver]">Fee:</div>
+                        <div class="text-sm font-mono text-white">{{ formatBtc(txData.fee) }} BTC</div>
+
+                        <div class="text-sm text-[--color-primary-silver]">Time:</div>
+                        <div class="text-sm font-mono text-white">{{ txData.status && txData.status.block_time ? new Date(txData.status.block_time * 1000).toLocaleString() : 'Pending' }}</div>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="text-sm text-[--color-primary-silver] mb-1">Inputs:</div>
+                        <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
+                        <div v-for="(vin, index) in txData.vin.slice(0, 3)" :key="index" class="mb-1">
+                            <span class="text-[--color-primary-green]">{{ formatBtc(vin.prevout ? vin.prevout.value : 0) }} BTC</span>
+                            <span class="text-[--color-primary-silver]">from</span>
+                            <span class="text-white truncate">{{ vin.prevout ? vin.prevout.scriptpubkey_address : 'Unknown' }}</span>
+                        </div>
+                        <div v-if="txData.vin.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vin.length - 3 }} more inputs</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="text-sm text-[--color-primary-silver] mb-1">Outputs:</div>
+                        <div class="text-xs bg-[--color-bg--500] p-2 rounded max-h-20 overflow-y-auto">
+                        <div v-for="(vout, index) in txData.vout.slice(0, 3)" :key="index" class="mb-1">
+                            <span class="text-[--color-primary--500]">{{ formatBtc(vout.value) }} BTC</span>
+                            <span class="text-[--color-primary-silver]">to</span>
+                            <span class="text-white truncate">{{ vout.scriptpubkey_address || 'Unknown' }}</span>
+                        </div>
+                        <div v-if="txData.vout.length > 3" class="text-[--color-primary-silver]">... and {{ txData.vout.length - 3 }} more outputs</div>
+                        </div>
+                    </div>
+                    </div>
+
+                    <div v-if="txError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
+                    {{ txError }}
+                    </div>
+
+              
+                    <div class="bg-[--color-bg--500] rounded-lg p-4">
+                        <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Current Hashrate</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="text-sm text-[--color-primary-silver]">Current Hashrate:</div>
+                            <div class="text-sm font-mono text-white">{{ hashrateData.currentHashrate }}</div>
+                            <!-- <div class="text-sm text-[--color-primary-silver]">Average Hashrate:</div>
+                            <div class="text-sm font-mono text-white">{{ hashrateData.averageHashrate }}</div>  Removed Average Hashrate -->
+                            <div class="text-sm text-[--color-primary-silver]">Current Difficulty:</div>
+                            <div class="text-sm font-mono text-white">{{ hashrateData.currentDifficulty }}</div>
+                        </div>
+                    </div>
+                    <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                        <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">Latest Blocks</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full latest-blocks-table">
+                            <thead>
+                            <tr class="text-[--color-primary-silver] text-left">
+                                <th class="px-2 py-1">Height</th>
+                                <!-- <th class="px-2 py-1">Hash</th> --> <!-- Removed Hash column -->
+                                <th class="px-2 py-1">Time</th>
+                                <th class="px-2 py-1">Size</th>
+                                <th class="px-2 py-1">Tx Count</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="block in mempoolData.blocks" :key="block.id" class="text-white hover:bg-[--color-bg--300]">
+                                <td class="px-2 py-1 font-mono">{{ block.height }}</td>
+                                <!--<td class="px-2 py-1 font-mono text-xs truncate max-w-[120px]">{{ block.id }}</td> --> <!-- Removed Hash column -->
+                                <td class="px-2 py-1">{{ formatTimeAgo(block.timestamp) }}</td>
+                                <td class="px-2 py-1">{{ formatBytes(block.size) }}</td>
+                                <td class="px-2 py-1">{{ block.tx_count }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+                </template>
+
+                <template v-else-if="selectedMempoolCurrency === 'TON'">
+                    <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                        <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">TON Address Lookup</h3>
+                        <div class="flex">
+                            <input
+                                v-model="tonAddressInput"
+                                ref="tonAddressInput"
+                                type="text"
+                                placeholder="Enter TON address"
+                                class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                            />
+                            <button
+                                @click="lookupTonAddress"
+                                class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
+                                :disabled="tonAddressLoading"
+                            >
+                                <span v-if="!tonAddressLoading">Lookup</span>
+                                <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div v-if="tonAddressData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
+                       
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                <div class="text-[--color-primary-silver]">TON Balance:</div>
+                                <div class="font-mono text-white">{{ formatTon(tonAddressData.balance) }} TON</div>
+
+                                <div class="text-[--color-primary-silver]">Status:</div>
+                                <div class="font-mono text-white">{{ tonAddressData.status || 'N/A' }}</div>
+
+                                <div v-if="tonAddressData.date_of_creation" class="text-[--color-primary-silver]">Creation Date:</div>
+                                <div v-if="tonAddressData.date_of_creation" class="font-mono text-white">{{ formatTimestamp(tonAddressData.date_of_creation, 'en-US') }}</div>
+
+                                <div v-if="tonAddressData.last_activity" class="text-[--color-primary-silver]">Last Activity:</div>
+                                <div v-if="tonAddressData.last_activity" class="font-mono text-white">{{ formatTimestamp(tonAddressData.last_activity, 'en-US') }}</div>
+
+                                <div class="text-[--color-primary-silver]">Is Scam:</div>
+                                <div class="font-mono text-white">{{ tonAddressData.is_scam ? 'Yes' : 'No' }}</div>
+
+                                <div class="text-[--color-primary-silver]">Frozen:</div>
+                                <div class="font-mono text-white">{{ tonAddressData.frozen ? 'Yes' : 'No' }}</div>
+
+                                <div v-if="tonAddressData.interfaces && tonAddressData.interfaces.length" class="text-[--color-primary-silver] col-span-2">Interfaces: {{ tonAddressData.interfaces.join(', ') }}</div>
+                            </div>
+
+                            <div v-if="tonJettonBalances && tonJettonBalances.length" class="mt-4">
+                                <h4 class="text-sm font-bold text-[--color-primary-yellow] mb-2">Jetton Balances:</h4>
+                                <div class="bg-[--color-bg--500] p-2 rounded max-h-32 overflow-y-auto text-xs font-mono">
+                                    <div v-for="jetton in tonJettonBalances" :key="jetton.jetton.address" class="mb-1">
+                                        {{ formatTonJettonBalance(jetton.balance, jetton.jetton.decimals) }} {{ jetton.jetton.symbol || jetton.jetton.name || 'Unknown' }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="tonAddressData.transactions && tonAddressData.transactions.length" class="mt-4">
+                                <h4 class="text-sm font-bold text-[--color-primary-yellow] mb-2">Recent Transactions (last 100):</h4>
+                                <div class="bg-[--color-bg--500] p-2 rounded max-h-40 overflow-y-auto text-xs font-mono">
+                                    <div v-for="tx in tonAddressData.transactions" :key="tx.hash" class="mb-2 p-1 border-b border-[--color-bg--300] last:border-b-0">
+                                        <div class="grid grid-cols-2 gap-1">
+                                             <div class="text-[--color-primary-silver]">Hash:</div>
+                                             <div class="text-white truncate">{{ tx.hash }}</div>
+
+                                             <div class="text-[--color-primary-silver]">Time:</div>
+                                             <div class="text-white">{{ formatTimestamp(tx.utime, 'en-US') }}</div>
+
+                                             <div class="text-[--color-primary-silver]">Type:</div>
+                                             <div class="text-white">{{ tx.in_msg ? 'Incoming' : 'Outgoing' }}</div>
+
+                                             <div v-if="tx.in_msg?.value || tx.out_msgs?.length" class="text-[--color-primary-silver]">Amount/Fee:</div>
+                                             <div v-if="tx.in_msg?.value || tx.out_msgs?.length" class="text-white">
+                                                <span v-if="tx.in_msg?.value" class="text-[--color-primary-green]">+{{ formatTon(tx.in_msg.value) }} TON</span><span v-if="tx.in_msg?.value && tx.out_msgs?.length"> / </span>
+                                                <span v-if="tx.out_msgs?.length" class="text-[--color-primary--500]"> - {{ formatTon(tx.out_msgs.reduce((sum, msg) => sum + parseFloat(msg.value), 0) + parseFloat(tx.fee)) }} TON</span>
+                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="tonAddressError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
+                            {{ tonAddressError }}
+                        </div>
+                    </div>
+
+                </template>
+
+                <template v-else-if="selectedMempoolCurrency === 'USDT'">
+                    <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                         
+                        <div class="flex justify-center space-x-4 mb-4">
+                            <button
+                                v-if="false" <!-- Добавьте эту строку -->
+                                @click="selectedUsdtNetwork = 'TON'"
+                                :class="{'bg-[--color-primary-purple]': selectedUsdtNetwork === 'TON', 'bg-[--color-bg--300]': selectedUsdtNetwork !== 'TON'}"
+                                class="text-white px-4 py-2 rounded-lg text-sm"
+                            >
+                                TON
+                            </button>
+                            <button
+                                v-if="false" <!-- Добавьте эту строку -->
+                                @click="selectedUsdtNetwork = 'ERC20'"
+                                :class="{'bg-[--color-primary-purple]': selectedUsdtNetwork === 'ERC20', 'bg-[--color-bg--300]': selectedUsdtNetwork !== 'ERC20'}"
+                                class="text-white px-4 py-2 rounded-lg text-sm"
+                            >
+                                ERC20
+                            </button>
+                            <button
+                                @click="selectedUsdtNetwork = 'TRC20'"
+                                :class="{'bg-[--color-primary-purple]': selectedUsdtNetwork === 'TRC20', 'bg-[--color-bg--300]': selectedUsdtNetwork !== 'TRC20'}"
+                                class="text-white px-4 py-2 rounded-lg text-sm"
+                            >
+                                TRC20
+                            </button>
+                        </div>
+
+                        <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">USDT Address Lookup ({{ selectedUsdtNetwork }})</h3>
+                        <div class="flex">
+                            <input
+                                v-model="usdtAddressInput"
+                                ref="usdtAddressInput"
+                                :placeholder="'Enter USDT address (' + selectedUsdtNetwork + ')'"
+                                class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                            />
+                            <button
+                                @click="lookupUsdtAddress"
+                                class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
+                                :disabled="usdtAddressLoading"
+                            >
+                                <span v-if="!usdtAddressLoading">Lookup</span>
+                                <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                 
+                         <div v-if="usdtAddressData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
+                            
+                             <template v-if="selectedUsdtNetwork === 'TRC20'">
+                                 <h4 class="text-sm font-bold text-[--color-primary-yellow] mb-2">USDT TRC20 Address Info:</h4>
+                                 <div class="grid grid-cols-2 gap-2 text-sm">
+                                     <div class="text-[--color-primary-silver]">Address:</div>
+                                    
+                                     <div class="font-mono text-white break-all">{{ usdtAddressData.address || 'N/A' }}</div>
+
+                                     <div class="text-[--color-primary-silver]">USDT TRC20 Balance:</div>
+                                     
+                                     <div class="font-mono text-white">{{ getTrc20UsdtBalance(usdtAddressData) }} USDT</div>
+
+                                     <div class="text-[--color-primary-silver]">TRX Balance:</div>
+                                      
+                                     <div class="font-mono text-white">{{ getTrc20TrxBalance(usdtAddressData) }} TRX</div>
+
+                                     <div class="text-[--color-primary-silver]">Total Transactions:</div>
+                                    
+                                     <div class="font-mono text-white">{{ usdtAddressData.totalTransactionCount || 'N/A' }}</div>
+                                 </div>
+                                  
+                                 <div v-if="getTrc20UsdtBalance(usdtAddressData) === '0.000000' && getTrc20TrxBalance(usdtAddressData) === 'N/A' && usdtAddressData.totalTransactionCount === undefined" class="mt-3 text-sm text-[--color-primary-silver]">
+                                     Unable to retrieve detailed balance or transaction data for this address.
+                                 </div>
+                             </template>
+
+                             
+                             <div v-else>
+                                 <h4 class="text-sm font-bold text-[--color-primary-yellow] mb-2">Address Info ({{ selectedUsdtNetwork }}):</h4>
+                                
+                                 <pre class="text-xs text-white overflow-x-auto">{{ JSON.stringify(usdtAddressData, null, 2) }}</pre>
+                             </div>
+                         </div>
+                         <div v-if="usdtAddressError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
+                             {{ usdtAddressError }}
+                         </div>
+                    </div>
+
+                    <div class="bg-[--color-bg--500] rounded-lg p-4 col-span-1 md:col-span-2">
+                        <h3 class="text-md font-bold text-[--color-primary-yellow] mb-2">USDT Transaction Lookup ({{ selectedUsdtNetwork }})</h3>
+                        <div class="flex">
+                            <input
+                                v-model="usdtTxIdInput"
+                                ref="usdtTxIdInput"
+                                :placeholder="'Enter USDT Transaction ID (' + selectedUsdtNetwork + ')'"
+                                class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                            />
+                            <button
+                                @click="lookupUsdtTransaction"
+                                class="bg-[--color-primary-purple] text-white px-3 py-2 rounded-r"
+                                :disabled="usdtTxLoading"
+                            >
+                                <span v-if="!usdtTxLoading">Lookup</span>
+                                <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                      
+                         <div v-if="usdtTxData" class="mt-4 bg-[--color-bg--300] p-3 rounded">
+                             
+                             <template v-if="selectedUsdtNetwork === 'TRC20'">
+                                
+                                 <div v-if="getTrc20TxDetails(usdtTxData)">
+                                     <h4 class="text-sm font-bold text-[--color-primary-yellow] mb-2">USDT TRC20 Transaction Info:</h4>
+                                     <div class="grid grid-cols-2 gap-2 text-sm">
+                                         <div class="text-[--color-primary-silver]">Hash:</div>
+                                         <div class="font-mono text-white break-all">{{ getTrc20TxDetails(usdtTxData).hash || 'N/A' }}</div>
+
+                                         <div class="text-[--color-primary-silver]">Status:</div>
+                                         <div class="font-mono text-white">
+                                             <span :class="getTrc20TxDetails(usdtTxData).confirmed ? 'text-[--color-primary-green]' : 'text-[--color-primary--500]'">
+                                                 {{ getTrc20TxDetails(usdtTxData).confirmed ? 'Confirmed' : 'Unconfirmed' }}
+                                             </span>
+                                              <span v-if="getTrc20TxDetails(usdtTxData).contractRet && getTrc20TxDetails(usdtTxData).contractRet !== 'SUCCESS'" class="text-red-500 ml-1">({{ getTrc20TxDetails(usdtTxData).contractRet }})</span>
+                                         </div>
+
+                                         <div class="text-[--color-primary-silver]">Result:</div>
+                                         <div class="font-mono text-white">{{ getTrc20TxDetails(usdtTxData).result || 'N/A' }}</div>
+
+                                         <div class="text-[--color-primary-silver]">Block & Time:</div>
+                                         <div class="font-mono text-white">{{ getTrc20TxDetails(usdtTxData).block ? getTrc20TxDetails(usdtTxData).block + ' (' + formatTimestamp(getTrc20TxDetails(usdtTxData).timestamp / 1000) + ')' : 'Pending' }}</div>
+
+                                         <div class="text-[--color-primary-silver]">Owner Address:</div>
+                                         <div class="font-mono text-white break-all">{{ getTrc20TxDetails(usdtTxData).ownerAddress || 'N/A' }}</div>
+                                     </div>
+
+                                     <div v-if="getTrc20TokenTransferDetails(getTrc20TxDetails(usdtTxData))" class="mt-3">
+                                         <h5 class="text-sm font-bold text-[--color-primary-yellow] mb-1">Token Transfer (USDT):</h5>
+                                         <div class="bg-[--color-bg--500] p-2 rounded text-xs font-mono">
+                                             <div class="grid grid-cols-2 gap-1">
+                                                 <div class="text-[--color-primary-silver]">Amount:</div>
+                                                  
+                                                 <div class="text-white">{{ formatUsdtAmount(getTrc20TokenTransferDetails(getTrc20TxDetails(usdtTxData)).value, getTrc20TokenTransferDetails(getTrc20TxDetails(usdtTxData)).tokenDecimal) }} {{ getTrc20TokenTransferDetails(getTrc20TxDetails(usdtTxData)).tokenAbbr || 'USDT' }}</div>
+
+                                                 <div class="text-[--color-primary-silver]">From:</div>
+                                                  
+                                                 <div class="text-white break-all">{{ getTrc20TokenTransferDetails(getTrc20TxDetails(usdtTxData)).from_address || 'N/A' }}</div>
+
+                                                 <div class="text-[--color-primary-silver]">To:</div>
+                                                  
+                                                 <div class="text-white break-all">{{ getTrc20TokenTransferDetails(getTrc20TxDetails(usdtTxData)).to_address || 'N/A' }}</div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                     <div v-else class="mt-3 text-sm text-[--color-primary-silver]">There is no data on the transfer of TRC20 USDT tokens in this transaction.</div>
+
+                                 </div>
+                                 <div v-else class="text-sm text-[--color-primary-silver]">Hash transaction "{{ usdtTxIdInput }}" not found in received data or is not a TRC20 USDT transaction.</div>
+                             </template>
+
+                             <div v-else>
+                                 <h4 class="text-sm font-bold text-[--color-primary-yellow] mb-2">Transaction Info ({{ selectedUsdtNetwork }}):</h4>
+                                
+                                 <pre class="text-xs text-white overflow-x-auto">{{ JSON.stringify(usdtTxData, null, 2) }}</pre>
+                             </div>
+                         </div>
+                         <div v-if="usdtTxError" class="mt-4 bg-red-900 text-white p-3 rounded text-sm">
+                             {{ usdtTxError }}
+                         </div>
+                    </div>
+                </template>
+
                 </div>
             </div>
             </div>
@@ -1434,6 +1726,21 @@
                 },
                 showApiSettings: false,
                 tg: window.Telegram?.WebApp || null,
+                selectedMempoolCurrency: 'BTC',
+                tonAddressInput: '',
+                tonAddressLoading: false,
+                tonAddressData: null,
+                tonAddressError: null,
+                usdtAddressInput: '',
+                usdtAddressLoading: false,
+                usdtAddressData: null,
+                usdtAddressError: null,
+                usdtTxIdInput: '',
+                usdtTxLoading: false,
+                usdtTxData: null,
+                usdtTxError: null,
+                selectedUsdtNetwork: 'TON',
+                tonJettonBalances: [], 
             }
         },
         methods: {
@@ -1817,10 +2124,8 @@
                 }
             },
             handleCalculatorModalClick(event) {
-                // Проверяем, был ли клик непосредственно по контейнеру модального окна Calculator
                 if (event.target.id === 'calculatorModal') {
                     console.log('Clicked on calculator modal background, attempting to blur inputs.');
-                    // Вызываем метод blurInputs внутри компонента CalculatorComponent
                     if (this.$refs.calculatorComponentRef && typeof this.$refs.calculatorComponentRef.blurInputs === 'function') {
                         this.$refs.calculatorComponentRef.blurInputs();
                         console.log('Called blurInputs on calculator component');
@@ -1889,10 +2194,8 @@
                 }
             },
             handlePortfolioModalClick(event) {
-                // Проверяем, был ли клик непосредственно по контейнеру модального окна Portfolio
                 if (event.target.id === 'portfolioModal') {
                      console.log('Clicked on portfolio modal background, attempting to blur inputs.');
-                    // Закрываем клавиатуру, размывая поля ввода
                     if (this.$refs.portfolioCoinSearchInput) {
                         this.$refs.portfolioCoinSearchInput.blur();
                         console.log('Blurred portfolioCoinSearchInput');
@@ -2015,7 +2318,7 @@
 
                             if (!Array.isArray(positions)) {
                                 console.error('loadState: Parsed data from localStorage is not an array:', positions);
-                                this.portfolioPositions = []; // Сбрасываем, если данные некорректны
+                                this.portfolioPositions = []; 
                                 return;
                             }
 
@@ -2041,15 +2344,15 @@
 
                         } catch (jsonError) {
                             console.error('loadState: Error parsing portfolioState from localStorage:', jsonError);
-                            this.portfolioPositions = []; // Сбрасываем при ошибке парсинга
+                            this.portfolioPositions = []; 
                         }
                     } else {
                         console.log('No saved portfolioState found in localStorage.');
-                        this.portfolioPositions = []; // Сбрасываем, если нет сохраненных данных
+                        this.portfolioPositions = []; 
                     }
                 } catch (error) {
                     console.error('loadState: Error accessing localStorage or during load process:', error);
-                     this.portfolioPositions = []; // Сбрасываем при ошибке доступа
+                     this.portfolioPositions = []; 
                 }
             },
             updatePortfolioTotals() {
@@ -2069,7 +2372,7 @@
 
                 let totalInvestment = 0;
                 let currentValue = 0;
-                 let tickersNotFound = false; // Флаг для отслеживания найденных тикеров
+                 let tickersNotFound = false; 
 
                 this.portfolioPositions.forEach((position, index) => {
                     const ticker = this.tickers[position.symbol];
@@ -2090,7 +2393,7 @@
                         currentValue += current;
 
                     } else {
-                         tickersNotFound = true; // Устанавливаем флаг, если тикер не найден
+                         tickersNotFound = true; 
                         console.warn(`Ticker not found for portfolio position ${index}: ${position.symbol}. Using last known values.`);
                         const investment = position.amount * position.buyPrice;
                         const lastKnownCurrentValue = position.currentValue !== undefined ? position.currentValue : investment;
@@ -2647,7 +2950,7 @@
                     console.log('Address lookup response status:', addressResponse.status);
 
                     if (!addressResponse.ok) {
-                        let errorText = `Ошибка HTTP: статус ${addressResponse.status}`;
+                        let errorText = `HTTP Error: status ${addressResponse.status}`;
                         try {
                             const errorData = await addressResponse.json();
                             if (errorData && errorData.error) {
@@ -2661,9 +2964,9 @@
                             console.warn('Failed to parse error response body as JSON/String:', parseError);
                         }
                         if (addressResponse.status === 404) {
-                            errorText = `Адрес Bitcoin "${this.btcAddressInput.trim()}" не найден или не имеет транзакций. Пожалуйста, проверьте адрес.`;
+                            errorText = `Bitcoin Address "${this.btcAddressInput.trim()}" not found or has no transactions. Please check the address.`;
                         } else if (addressResponse.status === 400) {
-                            errorText = `Ошибка запроса (400 Bad Request). Возможно, неверный формат адреса: "${this.btcAddressInput.trim()}".`;
+                            errorText = `Request error (400 Bad Request). The address format may be incorrect: "${this.btcAddressInput.trim()}".`;
                         }
 
                         this.addressError = errorText;
@@ -2680,7 +2983,7 @@
 
                 } catch (error) {
                     console.error('Error during address lookup fetch operation:', error);
-                    this.addressError = 'Ошибка при выполнении запроса (возможно, проблема с сетью или CORS): ' + error.message;
+                    this.addressError = 'An error occurred while making the request (possibly a network or CORS issue): ' + error.message;
                     this.addressData = null;
                 } finally {
                     this.addressLoading = false;
@@ -2712,6 +3015,12 @@
             formatBtc(satoshis) {
                 if (satoshis === undefined || satoshis === null) return '0';
                 return (satoshis / 100000000).toFixed(8);
+            },
+            
+            formatTon(nanotons) {
+                 if (nanotons === undefined || nanotons === null) return '0';
+                
+                 return (parseFloat(nanotons) / 1000000000).toFixed(9); 
             },
             
             formatPercentage(value) {
@@ -2945,7 +3254,7 @@
                 this.addressData = null;
 
                 try {
-                    // Fetch address data
+                    
                     const addressResponse = await fetch(`https://mempool.space/api/address/${this.btcAddressInput.trim()}`);
                     console.log('Address lookup response status:', addressResponse.status);
 
@@ -2955,7 +3264,7 @@
 
                     const addressData = await addressResponse.json();
                     console.log('Address data loaded:', addressData);
-                    this.addressData = addressData; // Присваивание полученных данных
+                    this.addressData = addressData; 
                 } catch (error) {
                     console.error('Error looking up address:', error);
                     this.addressError = 'Error looking up address: ' + error.message;
@@ -2964,10 +3273,10 @@
                 }
             },
             handleMempoolModalClick(event) {
-                // Проверяем, был ли клик непосредственно по контейнеру модального окна
+                
                 if (event.target.id === 'mempoolModal') {
                     console.log('Clicked on mempool modal background, attempting to blur inputs.');
-                    // Закрываем клавиатуру, размывая поля ввода
+                   
                     if (this.$refs.btcAddressInput) {
                         this.$refs.btcAddressInput.blur();
                         console.log('Blurred btcAddressInput');
@@ -2976,9 +3285,408 @@
                         this.$refs.txIdInput.blur();
                         console.log('Blurred txIdInput');
                     }
+                     if (this.$refs.tonTxIdInput) { 
+                        this.$refs.tonTxIdInput.blur();
+                        console.log('Blurred tonTxIdInput');
+                    }
+
                 }
             },
-        },
+            async lookupTonAddress() {
+                if (!this.tonAddressInput || this.tonAddressInput.trim() === '') {
+                    this.tonAddressError = 'Please enter TON address';
+                    return;
+                }
+
+                this.tonAddressLoading = true;
+                this.tonAddressError = null;
+                this.tonAddressData = null;
+
+                const addressToLookup = this.tonAddressInput.trim();
+
+                try {
+                    const addressResponse = await fetch(`https://tonapi.io/v2/accounts/${addressToLookup}`);
+                    console.log('TON address lookup response status:', addressResponse.status);
+
+                    if (!addressResponse.ok) {
+                        let errorText = `HTTP error while getting address data: status ${addressResponse.status}`;
+                        try {
+                            const errorData = await addressResponse.json();
+                            if (errorData && errorData.error) {
+                                errorText += ` - ${errorData.error}`;
+                            } else if (typeof errorData === 'string') {
+                                errorText += ` - ${errorData}`;
+                            } else if (errorData) {
+                                errorText += ` - ${JSON.stringify(errorData)}`;
+                            }
+                        } catch (parseError) {
+                            errorText = `HTTP error while getting address data: status ${addressResponse.status}. Unable to parse response body.`;
+                            console.warn('Failed to parse the address error response body:', parseError);
+                        }
+                        if (addressResponse.status === 404) {
+                            errorText = `Address TON "${addressToLookup}" not found. Please check the address.`;
+                        } else if (addressResponse.status === 400) {
+                            errorText = `Request error (400 Bad Request) while searching for address. The address format may be incorrect: "${addressToLookup}".`;
+                        }
+
+                        this.tonAddressError = errorText;
+                        console.error('TON address lookup failed with HTTP error:', addressResponse.status, errorText);
+                        this.tonAddressData = null;
+                        return;
+                    }
+
+                    const accountData = await addressResponse.json();
+                    console.log('TON account data loaded successfully:', accountData);
+
+                    const transactionsResponse = await fetch(`https://tonapi.io/v2/accounts/${addressToLookup}/transactions?limit=100`);
+                    console.log('TON transactions lookup response status:', transactionsResponse.status);
+
+                    if (!transactionsResponse.ok) {
+      
+                         console.warn(`Unable to get transactions for address ${addressToLookup}. Status: ${transactionsResponse.status}`);
+                         this.tonAddressData = { ...accountData, transactions_count: 'N/A', total_received_ton: 'N/A', total_sent_ton: 'N/A' };
+                         this.tonAddressError = null; 
+                         return;
+                    }
+
+                    const transactionsData = await transactionsResponse.json();
+                    console.log('TON transactions data loaded successfully:', transactionsData);
+
+                    let totalReceivedNanotons = 0;
+                    let totalSentNanotons = 0;
+                    const transactionsCount = transactionsData.length; 
+
+                    transactionsData.forEach(tx => {
+                       
+                        if (tx.in_msg && tx.in_msg.value) {
+                            totalReceivedNanotons += parseFloat(tx.in_msg.value);
+                        }
+                      
+                        if (tx.out_msgs && Array.isArray(tx.out_msgs)) {
+                            tx.out_msgs.forEach(outMsg => {
+                                if (outMsg.value) {
+                                    totalSentNanotons += parseFloat(outMsg.value);
+                                }
+                            });
+                        }
+                    });
+
+                    this.tonAddressData = {
+                        ...accountData,
+                        transactions: transactionsData, 
+                        transactions_count: transactionsCount, 
+                        total_received_ton: totalReceivedNanotons, 
+                        total_sent_ton: totalSentNanotons 
+                    };
+                    this.tonAddressError = null;
+
+                    const jettonsResponse = await fetch(`https://tonapi.io/v2/accounts/${addressToLookup}/jettons/balances`);
+                    console.log('TON Jettons lookup response status:', jettonsResponse.status);
+
+                    if (!jettonsResponse.ok) {
+                        console.warn(`Unable to retrieve Jettons balances for address ${addressToLookup}. Status: ${jettonsResponse.status}`);
+                        this.tonJettonBalances = []; 
+                    } else {
+                        const jettonsData = await jettonsResponse.json();
+                        console.log('TON Jettons data loaded successfully:', jettonsData);
+              
+                        if (jettonsData.balances && Array.isArray(jettonsData.balances)) {
+                             
+                             this.tonJettonBalances = jettonsData.balances.filter(jetton => parseFloat(jetton.balance) > 0);
+                        } else {
+                            console.warn('Unexpected Jettons data format:', jettonsData);
+                             this.tonJettonBalances = [];
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Error executing TON address or transaction lookup request:', error);
+                    this.tonAddressError = 'Error making TON request (possibly network, CORS or API issue): ' + error.message;
+                    this.tonAddressData = null;
+                } finally {
+                    this.tonAddressLoading = false;
+                    console.log('Attempt to find TON address and transactions completed.');
+                }
+            },
+            async lookupUsdtAddress() {
+                if (!this.usdtAddressInput || this.usdtAddressInput.trim() === '') {
+                    this.usdtAddressError = `Please enter USDT address (${this.selectedUsdtNetwork})`;
+                    return;
+                }
+
+                this.usdtAddressLoading = true;
+                this.usdtAddressError = null;
+                this.usdtAddressData = null;
+
+                const addressToLookup = this.usdtAddressInput.trim();
+                let apiUrl = '';
+
+                try {
+                    switch (this.selectedUsdtNetwork) {
+                        case 'TON':
+                            
+                            apiUrl = `https://tonapi.io/v2/accounts/${addressToLookup}`;
+                            console.log('Lookup TON USDT Address via:', apiUrl);
+                            break;
+                        case 'ERC20':
+                          
+                            apiUrl = `https://api.etherscan.io/api?module=account&action=balance&address=${addressToLookup}&apikey=_API_KEY_HERE`; 
+                            console.log('Lookup ERC20 USDT Address via:', apiUrl);
+                             
+                            break;
+                        case 'TRC20':
+                            
+                            apiUrl = `https://apilist.tronscan.org/api/account?address=${addressToLookup}`;
+                             console.log('Lookup TRC20 USDT Address via:', apiUrl);
+                            break;
+                        default:
+                            this.usdtAddressError = 'Unknown USDT chain.';
+                            this.usdtAddressLoading = false;
+                            console.warn('Unknown USDT chain selected:', this.selectedUsdtNetwork);
+                            return;
+                    }
+
+                    const addressResponse = await fetch(apiUrl);
+                    console.log(`${this.selectedUsdtNetwork} USDT address lookup response status:`, addressResponse.status);
+
+                    if (!addressResponse.ok) {
+                        let errorText = `HTTP Error: status ${addressResponse.status}`;
+                        try {
+                            const errorData = await addressResponse.json();
+                            if (errorData && errorData.error) {
+                                errorText += ` - ${errorData.error}`;
+                            } else if (typeof errorData === 'string') {
+                                errorText += ` - ${errorData}`;
+                            } else if (errorData) {
+                                errorText += ` - ${JSON.stringify(errorData)}`;
+                            }
+                        } catch (parseError) {
+                            errorText = `HTTP Error: status ${addressResponse.status}. Unable to parse response body.`;
+                            console.warn(`Unable to parse the error response body ${this.selectedUsdtNetwork} USDT:`, parseError);
+                        }
+                         if (addressResponse.status === 404) {
+                            errorText = `USDT  Address in chain ${this.selectedUsdtNetwork} "${addressToLookup}" not found.Please check the address.`;
+                        } else if (addressResponse.status === 400) {
+                            errorText = `Request error (400 Bad Request) for network ${this.selectedUsdtNetwork}. The address format may be incorrect: "${addressToLookup}".`;
+                        }
+
+                        this.usdtAddressError = errorText;
+                        console.error(`USDT Address search failed (${this.selectedUsdtNetwork}) HTTP error:`, addressResponse.status, errorText);
+                        this.usdtAddressData = null;
+                        return;
+                    }
+
+                    const data = await addressResponse.json();
+                    console.log(`USDT Address details (${this.selectedUsdtNetwork}) successfully loaded:`, data);
+
+                    this.usdtAddressData = data; 
+                    this.usdtAddressError = null;
+
+                } catch (error) {
+                    console.error(`Error while executing address search request USDT (${this.selectedUsdtNetwork}):`, error);
+                    this.usdtAddressError = `Error executing request (${this.selectedUsdtNetwork}) (maybe there is a problem with the network): ` + error.message;
+                    this.usdtAddressData = null;
+                } finally {
+                    this.usdtAddressLoading = false;
+                    console.log(`Trying to find USDT address (${this.selectedUsdtNetwork}) completed.`);
+                }
+            },
+            async lookupUsdtTransaction() {
+                if (!this.usdtTxIdInput || this.usdtTxIdInput.trim() === '') {
+                    this.usdtTxError = `Please enter the USDT transaction ID (${this.selectedUsdtNetwork})`;
+                    return;
+                }
+
+                this.usdtTxLoading = true;
+                this.usdtTxError = null;
+                this.usdtTxData = null;
+
+                const txIdToLookup = this.usdtTxIdInput.trim();
+                let apiUrl = '';
+
+                try {
+                    switch (this.selectedUsdtNetwork) {
+                        case 'TON':
+                             
+                            apiUrl = `https://tonapi.io/v2/transactions/${txIdToLookup}`;
+                             console.log('Lookup TON USDT Transaction via:', apiUrl);
+                            break;
+                        case 'ERC20':
+                           
+                            apiUrl = `https://api.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=${txIdToLookup}&apikey=_API_KEY_HERE`; 
+                             console.log('Lookup ERC20 USDT Transaction via:', apiUrl);
+                           
+                            break;
+                        case 'TRC20':
+                      
+                            apiUrl = `https://apilist.tronscan.org/api/transaction?hash=${txIdToLookup}`;
+                             console.log('Lookup TRC20 USDT Transaction via:', apiUrl);
+                            break;
+                        default:
+                            this.usdtTxError = 'Unknown chain USDT.';
+                            this.usdtTxLoading = false;
+                             console.warn('Unknown USDT network selected for transaction search:', this.selectedUsdtNetwork);
+                            return;
+                    }
+
+                    const txResponse = await fetch(apiUrl);
+                    console.log(`${this.selectedUsdtNetwork} USDT transaction lookup response status:`, txResponse.status);
+
+                    if (!txResponse.ok) {
+                         let errorText = `Ошибка HTTP: статус ${txResponse.status}`;
+                         try {
+                            const errorData = await txResponse.json();
+                            if (errorData && errorData.error) {
+                                errorText += ` - ${errorData.error}`;
+                            } else if (typeof errorData === 'string') {
+                                errorText += ` - ${errorData}`;
+                            } else if (errorData) {
+                                errorText += ` - ${JSON.stringify(errorData)}`;
+                            }
+                        } catch (parseError) {
+                             errorText = ` Error HTTP: status ${txResponse.status}. Unable to parse response body.`;
+                            console.warn(`Unable to parse the error response body ${this.selectedUsdtNetwork} USDT transaction:`, parseError);
+                        }
+                        if (txResponse.status === 404) {
+                            errorText = `USDT transaction in chain ${this.selectedUsdtNetwork} with ID "${txIdToLookup}" not found. Please check ID.`;
+                        } else if (txResponse.status === 400) {
+                            errorText = `Request Error (400 Bad Request) for chain ${this.selectedUsdtNetwork}. The transaction ID format may be incorrect: "${txIdToLookup}".`;
+                        }
+
+                        this.usdtTxError = errorText;
+                         console.error(`USDT transaction search failed (${this.selectedUsdtNetwork}) with HTTP error:`, txResponse.status, errorText);
+                        this.usdtTxData = null;
+                        return;
+                    }
+
+                    const data = await txResponse.json();
+                    console.log(`USDT transaction data(${this.selectedUsdtNetwork}) successfully loaded:`, data);
+
+                    this.usdtTxData = data; 
+                    this.usdtTxError = null;
+
+                } catch (error) {
+                    console.error(`Error executing USDT transaction search request (${this.selectedUsdtNetwork}):`, error);
+                    this.usdtTxError = `Error executing request (${this.selectedUsdtNetwork}) (maybe there is a problem with the network): ` + error.message;
+                    this.usdtTxData = null;
+                } finally {
+                    this.usdtTxLoading = false;
+                     console.log(`Trying to find USDT transaction (${this.selectedUsdtNetwork}) completed.`);
+                }
+            },
+            
+            formatUsdtAmount(amount, decimals) {
+                 if (amount === undefined || amount === null || typeof decimals !== 'number') return 'N/A';
+
+                 return (parseFloat(amount) / Math.pow(10, decimals)).toFixed(decimals > 6 ? 6 : decimals);
+            },
+             formatTonJettonBalance(balance, decimals) {
+                 if (balance === undefined || balance === null || typeof decimals !== 'number') return 'N/A';
+
+                 return (parseFloat(balance) / Math.pow(10, decimals)).toFixed(decimals > 6 ? 6 : decimals);
+            },
+            
+            getTrc20UsdtBalance(addressData) {
+                if (!addressData || !addressData.trc20token_balances || !Array.isArray(addressData.trc20token_balances)) {
+                    return 'N/A'; 
+                }
+
+                const usdtBalanceInfo = addressData.trc20token_balances.find(
+                    token => token.tokenId === 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
+                );
+
+                if (usdtBalanceInfo) {
+
+                    return this.formatUsdtAmount(usdtBalanceInfo.balance, usdtBalanceInfo.tokenDecimal);
+                }
+
+                return '0.000000'; 
+            },
+
+            getTrc20TrxBalance(addressData) {
+                 if (!addressData || addressData.balance === undefined || addressData.balance === null) {
+                    return 'N/A'; 
+                 }
+
+                 return (parseFloat(addressData.balance) / Math.pow(10, 6)).toFixed(6); 
+            },
+            getTrc20TxDetails(txData) {
+
+                if (!txData || !txData.data || !Array.isArray(txData.data) || txData.data.length === 0) {
+                    return null; 
+                }
+
+                const mainTx = txData.data[0];
+
+                return {
+                    hash: mainTx.hash, 
+                    confirmed: mainTx.confirmed,
+                    contractRet: mainTx.contractRet, 
+                    result: mainTx.result, 
+                    block: mainTx.block,
+                    timestamp: mainTx.timestamp, 
+                    ownerAddress: mainTx.ownerAddress,
+     
+                    rawData: mainTx
+                };
+            },
+            getTrc20TokenTransfer(txData) {
+                if (!txData || !txData.data || !Array.isArray(txData.data)) return null;
+                // Ищем перевод токенов TRC20
+                const trc20Transfer = txData.data.find(tx => tx.tokenId === 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t');
+                if (!trc20Transfer) return null;
+                return {
+                    value: trc20Transfer.value,
+                    tokenDecimal: trc20Transfer.tokenDecimal,
+                    tokenAbbr: trc20Transfer.tokenAbbr,
+                    from_address: trc20Transfer.from_address,
+                    to_address: trc20Transfer.to_address
+                };
+            },
+            getTrc20TokenTransferDetails(txDetails) {
+              
+                if (!txDetails || !txDetails.rawData || !txDetails.rawData.trc20TransferInfo || !Array.isArray(txDetails.rawData.trc20TransferInfo)) {
+                    
+                     if (txDetails.rawData.events && Array.isArray(txDetails.rawData.events)) {
+                   
+                         const transferEvent = txDetails.rawData.events.find(event => 
+                             event.detail && 
+                             event.detail.event_name === 'Transfer' &&
+                             event.contract &&
+                             event.contract === 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' 
+                         );
+                         if (transferEvent && transferEvent.detail.data) {
+                              
+                             return {
+                                 value: transferEvent.detail.data.value, 
+                                 tokenDecimal: 6, 
+                                 tokenAbbr: 'USDT',
+                                 from_address: transferEvent.detail.data.from,
+                                 to_address: transferEvent.detail.data.to
+                             };
+                         }
+                     }
+                    return null;
+                }
+
+                const usdtTransfer = txDetails.rawData.trc20TransferInfo.find(
+                    transfer => transfer.contract_address === 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
+                );
+
+                if (usdtTransfer) {
+                   
+                    return {
+                        value: usdtTransfer.amount_str, 
+                        tokenDecimal: usdtTransfer.decimal, 
+                        tokenAbbr: usdtTransfer.contract_abbr || 'USDT',
+                        from_address: usdtTransfer.transfer_from_address,
+                        to_address: usdtTransfer.transfer_to_address
+                    };
+                }
+
+                return null; 
+            }
+        }, 
         mounted() {
             this.sockInit();
             this.appendScript(this.initWidget);
@@ -3029,7 +3737,7 @@
             this.sockClose();
             window.removeEventListener('click', this.handleClick);
             if (this.tonUpdateInterval) {
-                clearInterval(this.tonUpdateInterval);
+                clearInterval(this.tonUpdateInterval); 
             }
         },
         computed: {
@@ -3115,7 +3823,7 @@
                     this.newsPage = 1;
                     this.newsItems = [];
                     this.noMoreNews = false;
-                    this.loadNews();
+            this.loadNews();
                 },
                 deep: true
             }
@@ -3474,8 +4182,8 @@
                     radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
         background-size: 200% 200%;
         animation: lavaLamp 6s infinite ease-in-out;
-        user-select: none; /* <-- Added */
-        -webkit-user-select: none; /* <-- Added for Safari */
+        user-select: none; 
+        -webkit-user-select: none; 
     }
     
     @keyframes lavaLamp {
@@ -3628,8 +4336,8 @@
                     radial-gradient(circle at 50% 50%, rgba(200, 0, 200, 0.6), transparent);
         background-size: 200% 200%;
         animation: lavaLamp 6s infinite ease-in-out;
-        user-select: none; /* <-- Added */
-        -webkit-user-select: none; /* <-- Added for Safari */
+        user-select: none; 
+        -webkit-user-select: none; 
     }
     
     .modal-button:hover {
@@ -3945,13 +4653,13 @@
     }
 
     .cb2 {
-        user-select: none; /* <-- Added */
-        -webkit-user-select: none; /* <-- Added for Safari */
+        user-select: none; 
+        -webkit-user-select: none; 
     }
 
     .modal-button {
-        user-select: none; /* <-- Added */
-        -webkit-user-select: none; /* <-- Added for Safari */
+        user-select: none; 
+        -webkit-user-select: none; 
     }
 
 </style>
