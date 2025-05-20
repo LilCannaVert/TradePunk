@@ -658,7 +658,7 @@
             </div>
         </div>
 
-        <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
+        <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3" v-show="showBottomNav">
         <div class="container mx-auto flex justify-center">
             <button v-if="!showChartScreen" @click="closeAllModals(); toggleChartScreen()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
             Chart
@@ -736,6 +736,8 @@
                         type="text"
                         placeholder="Enter BTC address"
                         class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                        @focus="showBottomNav = false"
+                        @blur="showBottomNav = true"
                     />
                     <button
                         @click="lookupBtcAddress"
@@ -780,6 +782,8 @@
                         type="text"
                         placeholder="Enter Transaction ID (TXID)"
                         class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                        @focus="showBottomNav = false"
+                        @blur="showBottomNav = true"
                     />
                     <button
                         @click="lookupBtcTransaction"
@@ -899,6 +903,8 @@
                                 type="text"
                                 placeholder="Enter TON address"
                                 class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                                @focus="showBottomNav = false"
+                                @blur="showBottomNav = true"
                             />
                             <button
                                 @click="lookupTonAddress"
@@ -1013,6 +1019,8 @@
                                 ref="usdtAddressInput"
                                 :placeholder="'Enter USDT address (' + selectedUsdtNetwork + ')'"
                                 class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                                @focus="showBottomNav = false"
+                                @blur="showBottomNav = true"
                             />
                             <button
                                 @click="lookupUsdtAddress"
@@ -1074,6 +1082,8 @@
                                 ref="usdtTxIdInput"
                                 :placeholder="'Enter USDT Transaction ID (' + selectedUsdtNetwork + ')'"
                                 class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
+                                @focus="showBottomNav = false"
+                                @blur="showBottomNav = true"
                             />
                             <button
                                 @click="lookupUsdtTransaction"
@@ -3683,7 +3693,7 @@
                     }
                 }
 
-                // ВСТАВЬТЕ ДОБАВЛЕННЫЙ КОД СЮДА:
+                // Проверка поля 'transferred' на верхнем уровне rawData, если стандартные места не дали результат
                 if (txDetails.rawData && txDetails.rawData.transferred !== undefined && txDetails.rawData.transferred !== null) {
                      console.log('Found transferred field in rawData:', txDetails.rawData.transferred);
                      return {
