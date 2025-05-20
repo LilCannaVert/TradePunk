@@ -685,7 +685,7 @@
             id="mempoolModal"
             class="fixed inset-0 flex bg-black z-50 overflow-y-auto"
             @click="handleMempoolModalClick">
-        <div class="flex flex-col bg-[--color-bg--300] p-4 w-full h-full" @click.stop>
+        <div class="flex flex-col bg-[--color-bg--300] p-4 w-full h-full pb-24" @click.stop>
             <div class="flex justify-between items-center">
             <h2 class="text-lg font-bold text-[--color-primary-silver]">Mempool</h2>
             <button @click="toggleMempoolModal" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
@@ -1114,6 +1114,8 @@
 
                                          <div class="text-[--color-primary-silver]">Owner Address:</div>
                                          <div class="font-mono text-white break-all">{{ getTrc20TxDetails(usdtTxData).ownerAddress || 'N/A' }}</div>
+
+
                                      </div>
 
                                      <div v-if="getTrc20TokenTransferDetails(getTrc20TxDetails(usdtTxData))" class="mt-3">
@@ -1134,7 +1136,7 @@
                                              </div>
                                          </div>
                                      </div>
-                                     <div v-else class="mt-3 text-sm text-[--color-primary-silver]">There is no data on the transfer of TRC20 USDT tokens in this transaction.</div>
+                                     <div v-else class="mt-3 text-sm text-[--color-primary-silver]"> </div>
 
                                  </div>
                                  <div v-else class="text-sm text-[--color-primary-silver]">Hash transaction "{{ usdtTxIdInput }}" not found in received data or is not a TRC20 USDT transaction.</div>
@@ -3644,47 +3646,57 @@
                 };
             },
             getTrc20TokenTransferDetails(txDetails) {
-              
-                if (!txDetails || !txDetails.rawData || !txDetails.rawData.trc20TransferInfo || !Array.isArray(txDetails.rawData.trc20TransferInfo)) {
-                    
-                     if (txDetails.rawData.events && Array.isArray(txDetails.rawData.events)) {
-                   
-                         const transferEvent = txDetails.rawData.events.find(event => 
-                             event.detail && 
-                             event.detail.event_name === 'Transfer' &&
-                             event.contract &&
-                             event.contract === 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' 
-                         );
-                         if (transferEvent && transferEvent.detail.data) {
-                              
-                             return {
-                                 value: transferEvent.detail.data.value, 
-                                 tokenDecimal: 6, 
-                                 tokenAbbr: 'USDT',
-                                 from_address: transferEvent.detail.data.from,
-                                 to_address: transferEvent.detail.data.to
-                             };
-                         }
-                     }
+                if (!txDetails || !txDetails.rawData) {
                     return null;
                 }
 
-                const usdtTransfer = txDetails.rawData.trc20TransferInfo.find(
-                    transfer => transfer.contract_address === 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
-                );
-
-                if (usdtTransfer) {
-                   
-                    return {
-                        value: usdtTransfer.amount_str, 
-                        tokenDecimal: usdtTransfer.decimal, 
-                        tokenAbbr: usdtTransfer.contract_abbr || 'USDT',
-                        from_address: usdtTransfer.transfer_from_address,
-                        to_address: usdtTransfer.transfer_to_address
-                    };
+                if (txDetails.rawData.trc20TransferInfo && Array.isArray(txDetails.rawData.trc20TransferInfo)) {
+                    const usdtTransfer = txDetails.rawData.trc20TransferInfo.find(
+                        transfer => transfer.contract_address === 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
+                    );
+                    if (usdtTransfer) {
+                        return {
+                            value: usdtTransfer.amount_str,
+                            tokenDecimal: usdtTransfer.decimal,
+                            tokenAbbr: usdtTransfer.contract_abbr || 'USDT',
+                            from_address: usdtTransfer.transfer_from_address,
+                            to_address: usdtTransfer.transfer_to_address
+                        };
+                    }
                 }
 
-                return null; 
+                if (txDetails.rawData.events && Array.isArray(txDetails.rawData.events)) {
+                    const transferEvent = txDetails.rawData.events.find(event =>
+                        event.detail &&
+                        event.detail.event_name === 'Transfer' &&
+                        event.contract &&
+                        event.contract === 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
+                    );
+                    if (transferEvent && transferEvent.detail.data) {
+                        return {
+                            value: transferEvent.detail.data.value,
+                            tokenDecimal: 6,
+                            tokenAbbr: 'USDT',
+                            from_address: transferEvent.detail.data.from,
+                            to_address: transferEvent.detail.data.to
+                        };
+                    }
+                }
+
+                // ВСТАВЬТЕ ДОБАВЛЕННЫЙ КОД СЮДА:
+                if (txDetails.rawData && txDetails.rawData.transferred !== undefined && txDetails.rawData.transferred !== null) {
+                     console.log('Found transferred field in rawData:', txDetails.rawData.transferred);
+                     return {
+                         value: txDetails.rawData.transferred,
+                         tokenDecimal: 6,
+                         tokenAbbr: 'USDT',
+                         from_address: txDetails.rawData.ownerAddress || 'N/A',
+                         to_address: txDetails.rawData.toAddress || (Array.isArray(txDetails.rawData.toAddressList) ? txDetails.rawData.toAddressList[0] : 'N/A')
+                     };
+                }
+
+
+                return null;
             }
         }, 
         mounted() {
