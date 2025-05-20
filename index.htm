@@ -273,8 +273,7 @@
                             <input
                                 v-model="orderBookSearchQuery"
                                 @input="filterOrderBookCoins"
-                                @focus="showOrderBookDropdown = true; showBottomNav = false"
-                                @blur="showOrderBookDropdown = false; showBottomNav = true"
+                                @focus="showOrderBookDropdown = true"
                                 type="text"
                                 class="form-control bg-[--color-bg--500] text-white p-2 rounded w-full text-sm"
                                 placeholder="Search ticker..." />
@@ -422,9 +421,7 @@
                     <input v-model="tickerSearch" 
                         ref="tickerSearchInput"
                         placeholder="Search tickers..." 
-                        class="w-full p-2 mb-4 border rounded bg-[--color-bg--500] text-white"
-                        @focus="showBottomNav = false"
-                        @blur="showBottomNav = true">
+                        class="w-full p-2 mb-4 border rounded bg-[--color-bg--500] text-white">
                     <div class="grid grid-cols-4 gap-2 max-h-[250px] overflow-y-auto overflow-x-hidden">
                         <div v-for="ticker in filteredShareTickers" 
                             :key="ticker.symbol" 
@@ -519,8 +516,7 @@
                             <input
                                 v-model="portfolioForm.searchQuery"
                                 @input="filterPortfolioCoins"
-                                @focus="showPortfolioDropdown = true; showBottomNav = false"
-                                @blur="showPortfolioDropdown = false; showBottomNav = true"
+                                @focus="showPortfolioDropdown = true"
                                 ref="portfolioCoinSearchInput"
                                 type="text"
                                 class="form-control bg-[--color-bg--300] text-white p-1 rounded w-full text-sm"
@@ -545,10 +541,7 @@
                                 min="0"
                                 step="0.00000001"
                                 class="form-control bg-[--color-bg--300] text-white p-1 rounded w-full text-sm"
-                                placeholder="Amount of coins"
-                                @focus="showBottomNav = false"
-                                @blur="showBottomNav = true"
-                            />
+                                placeholder="Amount of coins" />
                         </div>
 
                         <div class="form-group">
@@ -559,10 +552,7 @@
                                 min="0"
                                 step="0.00000001"
                                 class="form-control bg-[--color-bg--300] text-white p-1 rounded w-full text-sm"
-                                placeholder="Buy price per coin"
-                                @focus="showBottomNav = false"
-                                @blur="showBottomNav = true"
-                            />
+                                placeholder="Buy price per coin" />
                         </div>
 
                         <div class="form-group flex items-end">
@@ -668,7 +658,7 @@
             </div>
         </div>
 
-        <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3" v-show="showBottomNav">
+        <div class="fixed bottom-0 left-0 right-0 bg-[--color-primary-black] border-t-2 border-[--color-primary-purple] z-[150] py-3">
         <div class="container mx-auto flex justify-center">
             <button v-if="!showChartScreen" @click="closeAllModals(); toggleChartScreen()" class="nav-button bg-[--color-primary-blue] text-white rounded font-rajdhani">
             Chart
@@ -746,8 +736,6 @@
                         type="text"
                         placeholder="Enter BTC address"
                         class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
-                        @focus="showBottomNav = false"
-                        @blur="showBottomNav = true"
                     />
                     <button
                         @click="lookupBtcAddress"
@@ -792,8 +780,6 @@
                         type="text"
                         placeholder="Enter Transaction ID (TXID)"
                         class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
-                        @focus="showBottomNav = false"
-                        @blur="showBottomNav = true"
                     />
                     <button
                         @click="lookupBtcTransaction"
@@ -913,8 +899,6 @@
                                 type="text"
                                 placeholder="Enter TON address"
                                 class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
-                                @focus="showBottomNav = false"
-                                @blur="showBottomNav = true"
                             />
                             <button
                                 @click="lookupTonAddress"
@@ -1029,8 +1013,6 @@
                                 ref="usdtAddressInput"
                                 :placeholder="'Enter USDT address (' + selectedUsdtNetwork + ')'"
                                 class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
-                                @focus="showBottomNav = false"
-                                @blur="showBottomNav = true"
                             />
                             <button
                                 @click="lookupUsdtAddress"
@@ -1092,8 +1074,6 @@
                                 ref="usdtTxIdInput"
                                 :placeholder="'Enter USDT Transaction ID (' + selectedUsdtNetwork + ')'"
                                 class="flex-1 px-3 py-2 bg-[--color-bg--300] text-white rounded-l focus:outline-none"
-                                @focus="showBottomNav = false"
-                                @blur="showBottomNav = true"
                             />
                             <button
                                 @click="lookupUsdtTransaction"
@@ -1375,8 +1355,7 @@
                         <input
                             v-model="searchQuery"
                             @input="filterCoins"
-                            @focus="showDropdown = true; showBottomNav = false"
-                            @blur="showDropdown = false; showBottomNav = true"
+                            @focus="showDropdown = true"
                             ref="searchCoinInput"
                             type="text"
                             class="form-control bg-[--color-bg--300] text-white p-1.5 rounded w-full text-sm"
@@ -1400,8 +1379,6 @@
                         <input 
                             v-model="settings.investment"
                             @change="saveChanges()"
-                            @focus="showBottomNav = false"
-                            @blur="showBottomNav = true"
                             ref="investmentInput"
                             type="number"
                             min="0"
@@ -1416,8 +1393,6 @@
                         <input
                             v-model="settings.initialPrice"
                             @change="saveChanges()"
-                            @focus="showBottomNav = false"
-                            @blur="showBottomNav = true"
                             ref="initialPriceInput"
                             type="number"
                             min="0"
@@ -1432,8 +1407,6 @@
                         <input
                             v-model="settings.projectedPrice"
                             @change="saveChanges()"
-                            @focus="showBottomNav = false"
-                            @blur="showBottomNav = true"
                             ref="projectedPriceInput"
                             type="number"
                             min="0"
@@ -1448,8 +1421,6 @@
                         <input
                             v-model="settings.serviceFee"
                             @change="saveChanges()"
-                            @focus="showBottomNav = false"
-                            @blur="showBottomNav = true"
                             ref="serviceFeeInput"
                             type="number"
                             min="0"
@@ -1465,8 +1436,6 @@
                         <input
                             v-model="settings.taxRate"
                             @change="saveChanges()"
-                            @focus="showBottomNav = false"
-                            @blur="showBottomNav = true"
                             ref="taxRateInput"
                             type="number"
                             min="0"
@@ -3714,7 +3683,7 @@
                     }
                 }
 
-                // Проверка поля 'transferred' на верхнем уровне rawData, если стандартные места не дали результат
+                // ВСТАВЬТЕ ДОБАВЛЕННЫЙ КОД СЮДА:
                 if (txDetails.rawData && txDetails.rawData.transferred !== undefined && txDetails.rawData.transferred !== null) {
                      console.log('Found transferred field in rawData:', txDetails.rawData.transferred);
                      return {
